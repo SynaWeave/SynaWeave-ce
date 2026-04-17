@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<!-- authenticated web control-plane shell for the first Sprint 1 runtime path -->
+<!-- this page proves sign-in workspace bootstrap durable actions and job visibility -->
+<html lang="en">
+
+<head>
+	<!-- keep the head small so local static serving stays easy to inspect and debug -->
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>SynaWeave Workspace</title>
+	<link rel="stylesheet" href="./styles.css" />
+</head>
+
+<body>
+	<!-- keep one centered shell so the first proof page remains visually simple -->
+	<main class="shell">
+		<!-- keep the app header visible so the runtime proof reads like one coherent surface -->
+		<header class="hero">
+			<p class="eyebrow">Sprint 1 • D2 runtime • D3 baseline</p>
+			<h1>SynaWeave Workspace</h1>
+			<p class="lede">Sign in with an email, create a durable action, run the background digest, and confirm the same identity in the extension.</p>
+		</header>
+
+		<!-- keep sign-in isolated so signed-out and signed-in states remain easy to test -->
+		<section id="auth-card" class="card">
+			<h2>Sign in</h2>
+			<label for="email-input">Email</label>
+			<input id="email-input" type="email" placeholder="you@example.com" />
+			<button id="sign-in-button" type="button">Start workspace session</button>
+			<p class="hint">Use the same email in the extension to prove cross-surface identity continuity.</p>
+		</section>
+
+		<!-- keep workspace reads hidden until auth succeeds so route behavior fails closed by default -->
+		<section id="workspace-card" class="card hidden">
+			<div class="row between">
+				<h2>Workspace</h2>
+				<button id="sign-out-button" type="button">Sign out</button>
+			</div>
+			<p><strong>User:</strong> <span id="identity-email">—</span></p>
+			<p><strong>Bridge code:</strong> <span id="bridge-code">—</span></p>
+			<p><strong>Workspace:</strong> <span id="workspace-id">—</span></p>
+			<label for="action-input">Durable note</label>
+			<textarea id="action-input" rows="4" placeholder="Capture the first durable workspace thought here."></textarea>
+			<div class="row">
+				<button id="save-action-button" type="button">Write durable action</button>
+				<button id="run-job-button" type="button">Run digest job</button>
+			</div>
+			<p><strong>Latest digest:</strong> <span id="last-digest">—</span></p>
+			<p><strong>Latest eval:</strong> <span id="latest-eval">—</span></p>
+			<ul id="recent-actions" class="list"></ul>
+		</section>
+
+		<!-- keep runtime status always visible so operators can diagnose the proof path quickly -->
+		<section class="card">
+			<h2>Runtime status</h2>
+			<p id="status-line">Waiting for local runtime.</p>
+		</section>
+	</main>
+
+	<!-- keep the browser logic separate so the shell markup stays readable -->
+	<script src="./app.js"></script>
+</body>
+
+</html>
