@@ -1,0 +1,39 @@
+#!/usr/bin/env perl
+#  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# TL;DR  -->  auto-sync Bun and hook-safe environment updates after branch checkouts that change dependency files
+#
+# - Later Extension Points:
+#   --> add narrower watched file groups only when hook-triggered local toolchains expand
+#
+# - Role:
+#   --> detect checkout-driven changes to canonical dependency files
+#   --> run the shared hook-safe environment sync command without blocking checkout completion on sync failure
+#
+# - Exports:
+#   --> `post-checkout` hook entrypoint
+#
+# - Consumed By:
+#   --> local git hook execution after `python3 tools/install_hooks.py`
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+use strict;
+use warnings;
+
+my ($old_ref, $new_ref, $is_branch_checkout) = @ARGV;
+my $empty_tree = '4b825dc642cb6eb9a060e54bf8d69288fbee4904';
+
+exit 0 if !defined $is_branch_checkout || $is_branch_checkout ne '1';
+exit 0 if !defined $new_ref || $new_ref =~ /^0+$/;
+
+$old_ref = $empty_tree if !defined $old_ref || $old_ref =~ /^0+$/;
+
+my $changed = qx{git diff --name-only $old_ref $new_ref -- package.json bun.lock requirements-dev.txt 2>/dev/null};
+exit 0 if $changed eq q{};
+
+print "post-checkout: syncing local environment\n";
+my $sync_exit = system('python3', '-m', 'tools.dev.sync_environment', 'sync', '--mode', 'hook') >> 8;
+
+if ($sync_exit != 0) {
+    print "post-checkout: environment sync failed; run python3 -m tools.dev.sync_environment sync\n";
+}
+
+exit 0;

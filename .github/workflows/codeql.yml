@@ -1,0 +1,56 @@
+#  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# TL;DR  -->  run hosted code scanning for the governed repository branch path on GitHub
+#
+# - Later Extension Points:
+#   --> add more code-scanning languages only when new governed runtime surfaces activate on the repo path
+#
+# - Role:
+#   --> configures CodeQL scanning for the repository
+#   --> keeps code-scanning status visible in the hosted merge path without branch-specific residue
+#
+# - Exports:
+#   --> `codeql / codeql-javascript-typescript` hosted check run
+#   --> `codeql / codeql-python` hosted check run
+#
+# - Consumed By:
+#   --> branch protection and pull-request review flows for hosted code scanning
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+name: codeql
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+
+permissions:
+  actions: read
+  contents: read
+  security-events: write
+
+jobs:
+  analyze:
+    name: codeql-${{ matrix.language }}
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language:
+          - javascript-typescript
+          - python
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: "${{ matrix.language }}"
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+
+      - name: Perform CodeQL analysis
+        uses: github/codeql-action/analyze@v3

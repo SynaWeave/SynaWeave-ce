@@ -1,0 +1,42 @@
+#!/usr/bin/env perl
+#  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# TL;DR  -->  run commit-time leak and protected verification gates while warning on stale local tooling
+#
+# - Later Extension Points:
+#   --> add more protected-surface pre-commit checks only when they become durable repo controls
+#
+# - Role:
+#   --> soft-warn when the local Bun or Python environment stamp is stale before commit checks run
+#   --> preserve staged Betterleaks scanning and the protected verification lane
+#
+# - Exports:
+#   --> `pre-commit` hook entrypoint
+#
+# - Consumed By:
+#   --> local git hook execution after `python3 tools/install_hooks.py`
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+use strict;
+use warnings;
+
+sub run_or_exit {
+    my (@command) = @_;
+    system @command;
+    my $exit_code = $? >> 8;
+    exit $exit_code if $exit_code != 0;
+}
+
+my $sync_output = qx{python3 -m tools.dev.sync_environment check 2>&1};
+my $sync_exit = $? >> 8;
+
+if ($sync_exit == 1) {
+    print "pre-commit: environment sync recommended; run python3 -m tools.dev.sync_environment sync\n";
+}
+elsif ($sync_exit == 2) {
+    print "pre-commit: environment check unavailable; continuing\n";
+}
+elsif ($sync_exit != 0) {
+    exit $sync_exit;
+}
+
+run_or_exit('python3', '-m', 'tools.security.betterleaks', '--mode', 'staged');
+run_or_exit('bun', 'run', 'verify:protected');

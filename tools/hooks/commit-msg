@@ -1,0 +1,34 @@
+#!/usr/bin/env sh
+#  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# TL;DR  -->  validate commit messages against the governed commit contract before commits land
+#
+# - Later Extension Points:
+#   --> extend local commit-message feedback only when commit policy grows in the shared verifier
+#
+# - Role:
+#   --> call the Python commit-message verifier with the pending message file path
+#   --> keep shell glue thin instead of duplicating commit policy outside shared verification code
+#
+# - Exports:
+#   --> `commit-msg` hook entrypoint
+#
+# - Consumed By:
+#   --> local git hook execution after `python3 tools/install_hooks.py`
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+set -eu
+
+python3 - "$1" <<'PY'
+import sys
+from pathlib import Path
+
+from tools.verify.commit import check_commit_message_file
+
+ok, issues = check_commit_message_file(Path(sys.argv[1]))
+if ok:
+    print("Commit message accepted")
+    sys.exit(0)
+
+for issue in issues:
+    print(f"Commit message rejected: {issue}")
+sys.exit(1)
+PY

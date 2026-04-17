@@ -1,0 +1,132 @@
+/*  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+TL;DR  -->  preserve the older extension stylesheet as a clearly bounded legacy reference surface
+
+- Later Extension Points:
+  --> delete this file once the legacy style experiment no longer helps migration review
+
+- Role:
+  --> keeps the earlier popup styling snapshot visible for comparison during extension cleanup
+  --> avoids pretending this file is an active stylesheet for the current popup runtime
+
+- Exports:
+  --> legacy selector examples only
+
+- Consumed By:
+  --> maintainers comparing legacy styling decisions during manual extension cleanup
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  */
+
+/* ---------- legacy theme tokens ---------- */
+
+/* keep the old spacing token visible while the active sheet evolves elsewhere */
+:root {
+	--gap: 1vh;
+	--border: 0.5vh solid rgb(41, 114, 126);
+	--bg: rgb(49, 171, 193);
+	--fg: white;
+	--muted: lightgrey;
+}
+
+/* ---------- legacy base shell ---------- */
+
+/* keep the old box model baseline visible for side-by-side review */
+* {
+	box-sizing: border-box;
+}
+
+/* keep the old heading stack compact for migration comparison */
+h1,
+h2 {
+	margin: 0 0 8px 0;
+}
+
+h1 {
+	font-size: 18px;
+}
+
+h2 {
+	font-size: 16px;
+	color: var(--muted);
+}
+
+/* ---------- legacy navbar ---------- */
+
+/* record the earlier single-row navbar strategy for cleanup review */
+.navbar {
+	position: sticky;
+	top: 0;
+	z-index: 1;
+	background: var(--bg);
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--gap);
+	padding: 1.2vh 0;
+	border-bottom: var(--border);
+	margin-bottom: 2vh;
+	flex-wrap: nowrap;
+}
+
+/* keep the old nav sizing rule visible without mixing it into the live sheet */
+.navbar nav {
+	flex: 0 0 auto;
+	display: flex;
+	align-items: center;
+	gap: 1vw;
+}
+
+/* ---------- legacy form controls ---------- */
+
+/* preserve the earlier fixed-width input feel for migration comparison */
+.quick_add textarea,
+.quick_add input {
+	width: 90vw;
+	margin-bottom: 8px;
+	padding: 8px;
+	border: var(--border);
+	border-radius: 6px;
+}
+
+/* keep the old rate-row spacing visible for review */
+.rate {
+	display: flex;
+	gap: 6px;
+	margin-top: 8px;
+}
+
+/* preserve the earlier button shell for styling diffs */
+button {
+	border: var(--border);
+	border-radius: 6px;
+	background: var(--fg);
+	cursor: pointer;
+	list-style-type: none;
+	margin: 0;
+	padding: 0;
+	width: 200px;
+}
+
+button:hover {
+	background: var(--muted);
+}
+
+/* ---------- legacy panel bounds ---------- */
+
+/* keep the old panel-bound document sizing visible for comparison */
+html,
+body {
+	width: 100%;
+	height: 100%;
+	max-width: 100vw;
+	max-height: 100vh;
+	margin: 0;
+	padding: 0;
+	overflow: auto;
+}
+
+/* keep the old body spacing and color choices visible for review */
+body {
+	padding: 2vh 2vw;
+	background: var(--bg);
+	color: var(--fg);
+	font: 14px / 1.4 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+}

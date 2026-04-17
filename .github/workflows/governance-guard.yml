@@ -1,0 +1,64 @@
+#  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# TL;DR  -->  run focused governance verification when protected repo-control surfaces change on GitHub
+#
+# - Later Extension Points:
+#   --> add more hosted governance checks only when new protected control surfaces join the baseline
+#
+# - Role:
+#   --> installs the bounded toolchain needed for governance verification
+#   --> executes the governance-focused verification path for protected control-surface changes
+#
+# - Exports:
+#   --> `governance-guard` workflow status
+#
+# - Consumed By:
+#   --> branch protection and pull-request review flows for governance changes
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+name: governance-guard
+
+on:
+  pull_request:
+    paths:
+      - "AGENTS.md"
+      - "GOVERNANCE.md"
+      - "CONTRIBUTING.md"
+      - "CODE_OF_CONDUCT.md"
+      - "SECURITY.md"
+      - "CLA.md"
+      - "NOTICE"
+      - "TRADEMARKS.md"
+      - ".env.example"
+      - ".github/pull_request_template.md"
+      - "docs/templates.md"
+      - "docs/templates/**"
+
+permissions:
+  contents: read
+
+jobs:
+  governance-guard:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Python tooling
+        run: |
+          python3 -m pip install -r requirements-dev.txt
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install Bun dependencies
+        run: |
+          bun install --frozen-lockfile
+
+      - name: Verify governance completeness
+        run: |
+          bun run verify:governance

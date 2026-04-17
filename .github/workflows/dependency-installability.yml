@@ -1,0 +1,68 @@
+#  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# TL;DR  -->  prove clean dependency installs stay installable without mutating the checked-out repository
+#
+# - Later Extension Points:
+#   --> add stricter lock and manifest assertions only when the repository adopts durable Python lock inputs too
+#
+# - Role:
+#   --> creates a clean temporary repository snapshot for dependency installation checks
+#   --> verifies direct Python tool pins from `requirements-dev.txt` install inside an isolated virtual environment
+#   --> verifies Bun installation from `bun.lock` with a frozen lockfile and confirms the checkout stays clean
+#
+# - Exports:
+#   --> `dependency-installability / dependency-installability` hosted check run
+#
+# - Consumed By:
+#   --> branch protection and pull-request review flows that need a dedicated dependency installability status
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+name: dependency-installability
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+on:
+  push:
+    branches:
+      - "**"
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  dependency-installability:
+    name: dependency-installability
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Create clean repository snapshot
+        run: |
+          perl -MFile::Path=make_path -e 'make_path(@ARGV)' "$RUNNER_TEMP/dependency-installability/repo"
+          git archive --format=tar HEAD | tar -xf - -C "$RUNNER_TEMP/dependency-installability/repo"
+
+      - name: Verify Python direct tool pins install from requirements-dev.txt
+        run: |
+          python3 -m venv "$RUNNER_TEMP/dependency-installability/venv"
+          "$RUNNER_TEMP/dependency-installability/venv/bin/python" -m pip install -r "$RUNNER_TEMP/dependency-installability/repo/requirements-dev.txt"
+          "$RUNNER_TEMP/dependency-installability/venv/bin/python" -m pip freeze | perl -ne 'BEGIN { %expected = map { chomp; split /==/, $_, 2 } <>; %seen = (); $status = 0; } chomp; my ($name, $version) = split /==/, $_, 2; $seen{$name} = $version if defined $version && exists $expected{$name}; END { for my $name (sort keys %expected) { if (!exists $seen{$name}) { print STDERR "missing expected Python tool $name\n"; $status = 1; next; } if ($seen{$name} ne $expected{$name}) { print STDERR "expected $name==$expected{$name} but saw $seen{$name}\n"; $status = 1; } } exit $status; }' "$RUNNER_TEMP/dependency-installability/repo/requirements-dev.txt"
+
+      - name: Verify Bun installation from bun.lock
+        working-directory: ${{ runner.temp }}/dependency-installability/repo
+        run: |
+          bun install --frozen-lockfile
+
+      - name: Confirm checked-out repository stayed clean
+        run: |
+          perl -e 'my @lines = qx/git status --porcelain/; if (@lines) { print STDERR @lines; exit 1; } print "Repository checkout remained clean.\n";'

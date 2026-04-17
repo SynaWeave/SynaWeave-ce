@@ -1,0 +1,70 @@
+#  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# TL;DR  -->  run protected-path verification when shared control surfaces change on GitHub
+#
+# - Later Extension Points:
+#   --> add more protected-path workflow triggers only when new governed shared surfaces become protected
+#
+# - Role:
+#   --> watches protected shared control paths in pull requests
+#   --> executes the pull-request protected verification path when those governed surfaces change
+#
+# - Exports:
+#   --> `protected-paths` workflow status
+#
+# - Consumed By:
+#   --> branch protection and pull-request review flows for protected-path changes
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+name: protected-paths
+
+on:
+  pull_request:
+    paths:
+      - "AGENTS.md"
+      - "GOVERNANCE.md"
+      - "CONTRIBUTING.md"
+      - "CODE_OF_CONDUCT.md"
+      - "SECURITY.md"
+      - "CLA.md"
+      - "NOTICE"
+      - "TRADEMARKS.md"
+      - ".env.example"
+      - ".github/CODEOWNERS"
+      - ".github/pull_request_template.md"
+      - ".github/workflows/**"
+      - "tools/verify/**"
+      - "tools/hooks/**"
+      - "docs/planning/**"
+      - "docs/adrs/**"
+      - "docs/templates/**"
+      - "docs/*.md"
+
+permissions:
+  contents: read
+
+jobs:
+  protected-paths:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Python tooling
+        run: |
+          python3 -m pip install -r requirements-dev.txt
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install Bun dependencies
+        run: |
+          bun install --frozen-lockfile
+
+      - name: Verify protected-path posture
+        run: |
+          bun run verify:protected-pr

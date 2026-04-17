@@ -1,0 +1,54 @@
+#  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# TL;DR  -->  run focused docs verification when canonical documentation surfaces change on GitHub
+#
+# - Later Extension Points:
+#   --> add more hosted docs checks only when the governed docs spine gains new default gates
+#
+# - Role:
+#   --> installs the bounded toolchain needed for docs verification
+#   --> executes the docs-focused verification path for canonical documentation updates
+#
+# - Exports:
+#   --> `docs-guard` workflow status
+#
+# - Consumed By:
+#   --> pull-request review flows for documentation changes that need ADR enforcement
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+name: docs-guard
+
+on:
+  pull_request:
+    paths:
+      - "docs/**"
+      - "README.md"
+
+permissions:
+  contents: read
+
+jobs:
+  docs-guard:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Python tooling
+        run: |
+          python3 -m pip install -r requirements-dev.txt
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install Bun dependencies
+        run: |
+          bun install --frozen-lockfile
+
+      - name: Validate docs and planning shape
+        run: |
+          bun run verify:docs

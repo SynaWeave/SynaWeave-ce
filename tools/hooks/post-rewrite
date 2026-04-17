@@ -1,0 +1,45 @@
+#!/usr/bin/env perl
+#  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# TL;DR  -->  auto-sync Bun and hook-safe environment updates after rewrites that change dependency files
+#
+# - Later Extension Points:
+#   --> add narrower watched file groups only when hook-triggered local toolchains expand
+#
+# - Role:
+#   --> inspect rewrite old-to-new commit pairs for canonical dependency file changes
+#   --> run the shared hook-safe environment sync command without blocking rewrite completion on sync failure
+#
+# - Exports:
+#   --> `post-rewrite` hook entrypoint
+#
+# - Consumed By:
+#   --> local git hook execution after `python3 tools/install_hooks.py`
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+use strict;
+use warnings;
+
+my $empty_tree = '4b825dc642cb6eb9a060e54bf8d69288fbee4904';
+
+while (my $line = <STDIN>) {
+    chomp $line;
+    next if $line eq q{};
+
+    my ($old_ref, $new_ref) = split /\s+/, $line;
+    next if !defined $old_ref || !defined $new_ref || $new_ref =~ /^0+$/;
+
+    $old_ref = $empty_tree if $old_ref =~ /^0+$/;
+
+    my $changed = qx{git diff --name-only $old_ref $new_ref -- package.json bun.lock requirements-dev.txt 2>/dev/null};
+    next if $changed eq q{};
+
+    print "post-rewrite: syncing local environment\n";
+    my $sync_exit = system('python3', '-m', 'tools.dev.sync_environment', 'sync', '--mode', 'hook') >> 8;
+
+    if ($sync_exit != 0) {
+        print "post-rewrite: environment sync failed; run python3 -m tools.dev.sync_environment sync\n";
+    }
+
+    last;
+}
+
+exit 0;
