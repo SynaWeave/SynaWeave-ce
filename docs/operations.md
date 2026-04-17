@@ -60,59 +60,58 @@ The repository is no longer only a prototype extension tree. The current repo al
 * root governance artifacts
 * a shallow monorepo layout under `apps/`, `packages/`, `python/`, `infra/`, `testing/`, and `tools/`
 * a central repository verifier under `tools/verify/`
-* reserved runtime homes for extension, web, API, ingest, MCP, ML, and evaluation work
-* empty scaffold placeholders for the reserved web, API, ingest, MCP, ML, and evaluation homes under `apps/`
+* active runtime homes for extension, web, API, and ingest
+* shared runtime helpers under `python/common/`
+* a local runtime proof store under `build/runtime/`
 
 What it does **not** yet prove as operational truth:
 
-* a bootable web application
-* a bootable API service
-* a bootable job runtime
-* integrated auth across browser and web surfaces
+* cloud deployment proof
 * integrated graph, retrieval, or AI product flows
-* production-ready telemetry, dashboards, or experiment evidence
+* full D3 automation and enforcement across accessibility, observability, and hosted branch controls
 
 ## 📦 Current surface status
 
 ### 🪟 Extension
 
-Current status: **scaffolded**
+Current status: **integrated**
 
 Operational notes:
 
-* the repository reserves `apps/extension` as the browser runtime home
-* the old prototype concept is historically validated, but the rebuilt extension is not yet operational truth
+* `apps/extension` now provides a real side-panel shell for sign-in, capture, durable actions, and digest replay
+* the extension shares identity continuity with the web shell through the API runtime
+* extension host access is now limited to the local API origins; broad page matching remains only for the bounded selection-capture content script path used in Sprint 1
 
 ### 🌐 Web
 
-Current status: **scaffolded**
+Current status: **integrated**
 
 Operational notes:
 
-* `apps/web` exists as an empty reserved control-plane placeholder
-* no bootable web proof exists yet in the rebuild tree
+* `apps/web` now provides a bootable static control-plane shell
+* the web shell signs in, writes one durable action, runs the digest job, and reloads workspace truth
 
 ### ⚙️ API
 
-Current status: **scaffolded**
+Current status: **integrated**
 
 Operational notes:
 
-* `apps/api` exists as an empty reserved request-serving placeholder
-* no bootable service proof exists yet in the rebuild tree
+* `apps/api` now provides liveness, readiness, auth, identity, workspace, job, telemetry, baseline, and metrics routes
+* readiness only reports ready when the sqlite boundary and runtime artifact directory are available
 
 ### 📥 Ingest
 
-Current status: **scaffolded**
+Current status: **integrated**
 
 Operational notes:
 
-* `apps/ingest` exists as an empty reserved run-to-completion placeholder
-* no bootable job proof exists yet in the rebuild tree
+* `apps/ingest` now runs as a separate Python process
+* the worker turns recent workspace actions into a digest and evaluation record
 
 ### 🧰 MCP
 
-Current status: **scaffolded**
+Current status: **integrated**
 
 Operational notes:
 
@@ -143,9 +142,8 @@ Current status: **scaffolded**
 
 Operational notes:
 
-* root `docs/` is the canonical documentation system now
-* GitHub Pages is intended to publish static output from that source later
-* there is no separate documentation runtime in the repo
+* root `docs/` remains the canonical documentation system
+* there is still no separate documentation runtime in the repo
 
 ## 👀 Current quality posture
 
@@ -154,6 +152,7 @@ Current status: **integrated**
 Operational notes:
 
 * the repo already contains governance docs, workflows, hooks, and verifier code
+* runtime-focused unit tests now cover the API path and sqlite-backed runtime store
 * local git hooks exist under `tools/hooks/` and can be installed manually with `bun run hooks:install` for each clone
 * local environment sync is tracked by a git-local stamp under `.git/synaweave/environment-sync.json`
 * `post-checkout`, `post-merge`, and `post-rewrite` auto-sync Bun tooling when `package.json`, `bun.lock`, or `requirements-dev.txt` change, but they only auto-install Python dependencies when the repo owns `.venv/bin/python3`; otherwise they warn operators to run the canonical sync command manually
@@ -161,50 +160,43 @@ Operational notes:
 * `python3 -m tools.verify.main` is the repo-contained proof point for the D1 control baseline, so this section should not stay at **scaffolded** once those controls are aligned and passing locally
 * the hosted `repo-verify` workflow runs `bun run verify`, and that root script now includes ADR validation alongside the other repo-level checks
 * the hosted `dependency-installability` workflow verifies clean Bun installs and direct Python dev-tool pins from the checked-in manifests without mutating the checked-out repository
+* local runtime metrics snapshots, JSONL traces, and sqlite-backed telemetry rows are generated under `build/runtime/` after exercising the runtime path or calling `/metrics`; they are local build artifacts, not tracked repo evidence
+* `infra/docker/` contains local Prometheus, collector, and Grafana scaffolds for the runtime slice
 * hosted merge enforcement such as GitHub rulesets, required checks, and secret-scanning posture still requires GitHub-side confirmation before this file claims platform-enforced protection
-* online AI proof and offline experiment proof are planned, not yet operational
+* automated browser accessibility, collector-routed telemetry, and hosted deployment proof remain incomplete
 
 ## ☁️ Current runtime model
 
 The locked target model is documented in `docs/architecture.md` and `docs/infra.md`, but it is **not** yet operational truth.
 
-Today, the rebuild is best described as a governed platform scaffold with reserved runtime homes and documentation-first controls, not as a deployed multi-runtime product.
+Today, the rebuild is best described as a governed platform with one local runtime proof slice, not as a deployed multi-runtime product.
 
 ## 🔐 Current auth and identity status
 
-Current status: **planned**
+Current status: **integrated**
 
-Locked intended baseline:
+Operational notes:
 
-* passwordless email sign-in first
-* browser-safe public credentials only in browser surfaces
-* privileged credentials only in secure backend runtimes
-* PKCE-capable web flow
-* extension-safe session persistence
-
-This section must not claim auth is integrated until:
-
-* a user can sign in
-* session state persists correctly
-* backend identity verification succeeds
-* browser bundles contain no privileged credentials
+* a user can sign in from web or extension with an email-shaped local session flow
+* session state persists in browser storage across refresh or panel reopen within the bounded local proof path
+* backend identity verification succeeds through bearer-token lookup at the API boundary
+* browser bundles contain no privileged credentials in the current runtime slice
+* this remains a local Sprint 1 proof path, not the final production auth provider
 
 ## 🗃️ Current data-plane status
 
 ### 🗃️ Operational relational data
 
-Current status: **planned**
+Current status: **integrated**
 
-Target operational truth:
+Operational notes:
 
-* user profile and workspace records
-* operational study metadata
-* user-scoped product state
-* backend-owned metadata and runtime records
+* local sqlite stores users, sessions, workspaces, actions, jobs, evals, and telemetry
+* the durable local state lives under `build/runtime/synaweave.sqlite3`
 
 ### 🪣 Artifact storage
 
-Current status: **planned**
+Current status: **integrated**
 
 Target operational truth:
 
@@ -232,47 +224,22 @@ None of these may be treated as operational until the relevant runtime paths and
 
 Current status: **planned**
 
-The reviewed public repo materials do not currently show an operational observability stack in the rebuild state. The rebuild target is:
+Operational notes:
 
-* OpenTelemetry instrumentation
-* OpenTelemetry Collector
-* Prometheus
-* Grafana
-* Langfuse
-
-Operational truth begins only when:
-
-* traces are emitted
-* logs are structured
-* metrics are queryable
-* dashboards exist
-* AI-ready traces appear in Langfuse
-
-Until then, observability remains planned or scaffolded rather than integrated.
+* API and ingest telemetry are durable and queryable through local files plus `/metrics` after a local runtime run emits events
+* web and extension surfaces emit runtime events through the API telemetry endpoint
+* Prometheus, Grafana, and collector files exist under `infra/docker/` as local scaffolds
+* Langfuse, full collector routing, and broader D3 observability proof are not yet operational truth
 
 ## ✅ Current testing status
 
-Current status: **planned**
+Current status: **integrated**
 
-The rebuild target includes a root `testing/` taxonomy with:
+Operational notes:
 
-* unit
-* component
-* integration
-* contract
-* ui
-* e2e
-* security
-* performance
-* accessibility
-* evals
-
-This section must remain honest:
-
-* planned if only specified in docs
-* scaffolded if folders and baseline harnesses exist
-* integrated only when active tests run in CI
-* production-ready only when test gates are enforcing real quality expectations
+* unit tests now cover the runtime store and API critical path
+* manual accessibility and performance baseline files now exist under `testing/`
+* automated browser accessibility and end-to-end runtime coverage still need follow-up wiring
 
 ## 🚦 Current CI and governance status
 
