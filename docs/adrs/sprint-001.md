@@ -81,7 +81,7 @@ This file is the durable reasoning spine for Sprint 001 of the governed rebuild.
   - Verifier unit tests could fail only in CI because exported commit metadata leaks into temporary repositories that should behave like isolated fixtures.
 - ***What known edge cases or failure modes matter here?***
   - Hosted workflows legitimately run against merge references, so documentation and verifier output must still explain why that differs from authored-commit validation.
-  - Placeholder strings can look obviously fake to humans while still matching database or credential patterns strongly enough to trigger automated secret scanners.
+  - Placeholder strings can look fake to humans while still matching database or credential patterns strongly enough to trigger automated secret scanners.
   - Temporary git repositories created during tests may inherit CI commit identity variables unless harness setup explicitly resets or ignores those ambient values.
 - ***Why does this work matter?***
   - Sprint 001 Deliverable 1 was meant to leave repo-contained controls trustworthy, and closeout hardening removes the last mismatches between policy and enforcement semantics.
@@ -96,7 +96,7 @@ This file is the durable reasoning spine for Sprint 001 of the governed rebuild.
   - Clearly synthetic placeholders scale better than realistic-looking examples because security tooling stays high-signal as more example configuration surfaces are added.
   - Test isolation is more scalable than environment-dependent expectations because CI providers and local shells export different commit metadata by default.
 - ***What trade-off did the team accept?***
-  - The team accepted slightly more explicit verifier and workflow semantics so contributors must understand why two repository states can both matter.
+  - The team took slightly more explicit verifier and workflow semantics so contributors must understand why two repository states can both matter.
   - Example placeholders became less lifelike, which sacrifices some immediacy in favor of clearer safety signaling and quieter automated security tooling.
   - Closeout work added more fixture hygiene and reasoning overhead, but that cost was preferable to leaving Sprint 001 controls ambiguously correct.
 
