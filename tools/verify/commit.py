@@ -169,6 +169,20 @@ def _resolve_commit_base(repo_root: Path) -> str | None:
     return _try_git_output(repo_root, ["rev-parse", "--verify", f"{base}^{{commit}}"])
 
 
+def _commit_parent_count(repo_root: Path, commit_ref: str) -> int | None:
+    parents_output = _try_git_output(repo_root, ["rev-list", "--parents", "-n", "1", commit_ref])
+    if not parents_output:
+        return None
+    return max(len(parents_output.split()) - 1, 0)
+
+
+def _should_skip_commit_subject_check(repo_root: Path, commit_ref: str, subject_line: str) -> bool:
+    parent_count = _commit_parent_count(repo_root, commit_ref)
+    if parent_count is not None:
+        return parent_count > 1
+    return subject_line.startswith("Merge pull request")
+
+
 def check_commit_range(repo_root: Path) -> List[str]:
     issues: List[str] = []
     target_head = _resolve_commit_target(repo_root)
@@ -189,6 +203,8 @@ def check_commit_range(repo_root: Path) -> List[str]:
     seen_subjects: dict[str, str] = {}
     for raw_line in log_output.splitlines():
         commit_hash, subject_line = raw_line.split("\x1f", 1)
+        if _should_skip_commit_subject_check(repo_root, commit_hash, subject_line):
+            continue
         subject_issues = validate_message(subject_line)
         for issue in subject_issues:
             issues.append(f"commit {commit_hash[:7]} invalid: {issue}")
@@ -226,7 +242,13 @@ def check_commit_head(repo_root: Path) -> List[str]:
             f"git log failed: {exc}",
         ]
 
-    issues = [f"HEAD commit message invalid: {issue}" for issue in validate_message(message)]
+    subject_line = message.splitlines()[0] if message.splitlines() else ""
+    issues = []
+    if not _should_skip_commit_subject_check(repo_root, target_head, subject_line):
+        issues.extend(
+            f"HEAD commit message invalid: {issue}"
+            for issue in validate_message(message)
+        )
     if base is not None:
         issues.extend(check_commit_range(repo_root))
     return issues
