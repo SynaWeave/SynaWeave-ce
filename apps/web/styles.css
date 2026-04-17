@@ -1,0 +1,137 @@
+/*  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+TL;DR  -->  style the first authenticated web control-plane shell for the Sprint 1 runtime proof path
+
+- Later Extension Points:
+  --> widen the stylesheet only when richer workspace routes and shared token consumption become durable
+
+- Role:
+  --> gives the static web shell one clean readable and contrast-safe presentation layer
+  --> keeps the first proof page usable for demos baseline checks and early live debugging
+
+- Exports:
+  --> web-shell class and element rules only
+
+- Consumed By:
+  --> `apps/web/index.html`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  */
+
+/* ---------- theme ---------- */
+:root {
+	--bg: #08111f;
+	--surface: #10213b;
+	--text: #f4f8ff;
+	--muted: #8ea3c4;
+	--accent: #61d0ff;
+	--border: #24456f;
+}
+
+/* ---------- box model ---------- */
+* {
+	box-sizing: border-box;
+}
+
+/* ---------- page ---------- */
+body {
+	margin: 0;
+	min-height: 100vh;
+	background: linear-gradient(180deg, var(--bg), #0d1830 60%, #08111f);
+	color: var(--text);
+	font: 16px / 1.5 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+		sans-serif;
+}
+
+/* ---------- layout ---------- */
+.shell {
+	width: min(920px, calc(100% - 2rem));
+	margin: 0 auto;
+	padding: 2rem 0 3rem;
+}
+
+.hero {
+	margin-bottom: 1rem;
+}
+
+.card {
+	padding: 1rem;
+	margin-bottom: 1rem;
+	border: 1px solid var(--border);
+	border-radius: 1rem;
+	background: color-mix(in srgb, var(--surface) 92%, black 8%);
+	box-shadow: 0 14px 40px rgba(0, 0, 0, 0.24);
+}
+
+.hidden {
+	display: none;
+}
+
+/* ---------- copy ---------- */
+.eyebrow {
+	margin: 0 0 0.5rem;
+	color: var(--accent);
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+	font-size: 0.8rem;
+}
+
+.lede,
+.hint {
+	color: var(--muted);
+}
+
+/* ---------- controls ---------- */
+label,
+input,
+textarea,
+button {
+	display: block;
+	width: 100%;
+}
+
+input,
+textarea,
+button {
+	margin-top: 0.5rem;
+	border-radius: 0.75rem;
+	border: 1px solid var(--border);
+}
+
+input,
+textarea {
+	padding: 0.8rem 0.9rem;
+	background: rgba(4, 11, 24, 0.55);
+	color: var(--text);
+}
+
+button {
+	padding: 0.85rem 1rem;
+	background: linear-gradient(180deg, var(--accent), #3dbaf0);
+	color: #03101f;
+	font-weight: 700;
+	cursor: pointer;
+}
+
+/* ---------- rows ---------- */
+.row {
+	display: flex;
+	gap: 0.75rem;
+	align-items: center;
+}
+
+.between {
+	justify-content: space-between;
+}
+
+.row > * {
+	flex: 1 1 0;
+}
+
+/* ---------- list ---------- */
+.list {
+	padding-left: 1.25rem;
+	margin: 1rem 0 0;
+}
+
+.list li {
+	margin-bottom: 0.35rem;
+	color: var(--muted);
+}
