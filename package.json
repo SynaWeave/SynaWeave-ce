@@ -21,12 +21,16 @@
 		"verify:protected-pr": "python3 -m tools.verify.main --checks shape,docs,commentary,governance,headers,security,adr,workflows,suppressions",
 		"lint": "bun run lint:ts && bun run lint:py",
 		"lint:ts": "biome check package.json tsconfig.json apps packages tools/ts .github",
-		"lint:py": "python3 -m ruff check tools testing",
+		"deps:app": "python3 -m pip install --user --break-system-packages -r requirements-app.txt",
+		"lint:py": "bun run deps:app && python3 -m ruff check apps/api apps/ingest python/common python/evaluation tools testing",
 		"typecheck": "bun run typecheck:ts && bun run typecheck:py",
 		"typecheck:ts": "tsc --noEmit --project tsconfig.json",
-		"typecheck:py": "python3 -m pyright",
-		"test": "python3 -m unittest discover -s testing/unit -p 'test_*.py' -t .",
-		"hooks:install": "python3 tools/install_hooks.py"
+		"typecheck:py": "bun run deps:app && python3 -m pyright apps/api apps/ingest python/common python/evaluation tools testing",
+		"test": "bun run deps:app && python3 -m unittest discover -s testing/unit -p 'test_*.py' -t .",
+		"hooks:install": "python3 tools/install_hooks.py",
+		"dev:api": "python3 -m uvicorn apps.api.main:app --reload --host 127.0.0.1 --port 8000",
+		"dev:web": "python3 -m http.server 3000 --directory apps/web",
+		"dev:ingest": "python3 -m apps.ingest.main --job-id REPLACE_ME"
 	},
 	"workspaces": [
 		"apps/*",
