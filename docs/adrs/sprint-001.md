@@ -35,11 +35,11 @@ This file is the durable reasoning spine for Sprint 001 of the governed rebuild.
 
 ## Current Status
 
-- Sprint 001 Deliverable 1 now has seven approved decisions, including closeout hardening for pull request verification, secret-scan cleanup, and verifier test isolation.
-- Pull request commit verification now checks authored pull request commits while hosted workflows still evaluate merge-result repository state for final branch protection evidence.
+- Sprint 001 Deliverable 1 has seven approved decisions, including closeout hardening for pull request verification, secret-scan cleanup, and verifier test isolation.
+- Pull request commit verification checks authored pull request commits while hosted workflows still evaluate merge-result repository state for final branch protection evidence.
 - Secret-scan-safe placeholder cleanup removes realistic database examples that created false positives without improving repository guidance or safety posture.
-- Verifier tests now isolate temporary repositories from CI-exported commit metadata so local and hosted runs prove the same intended repo-control behavior.
-- All repo-contained verification checks for the branch are now passing under the tightened Sprint 001 Deliverable 1 closeout controls.
+- Verifier tests isolate temporary repositories from CI-exported commit metadata so local and hosted runs prove the same intended repo-control behavior.
+- All repo-contained verification checks for the branch are passing under the tightened Sprint 001 Deliverable 1 closeout controls.
 - Shared contract and configuration surfaces remain reserved in governed package boundaries instead of app-local placeholders.
 - Sprint reasoning lives in one ADR ledger so approved choices remain durable beyond pull request summaries.
 
@@ -66,7 +66,7 @@ This file is the durable reasoning spine for Sprint 001 of the governed rebuild.
 - ***What was built?***
   - Sprint 001 Deliverable 1 closeout hardened pull request verification so authored pull request commits are validated separately from hosted merge-result repository evaluation.
   - Repo verification workflow and environment semantics were tightened so authored-commit checks and merge-result checks no longer blur into one misleading signal.
-  - Secret-scan cleanup replaced Postgres-shaped sample database placeholders with clearly synthetic placeholders, while verifier tests now isolate temporary repositories from leaked CI commit metadata.
+  - Secret-scan cleanup replaced Postgres-shaped sample database placeholders with synthetic placeholders, while verifier tests isolate temporary repositories from leaked CI commit metadata.
 - ***Why was it chosen?***
   - Sprint 001 needed documented rules, local verification, and hosted checks to agree on what evidence belongs to authored changes versus merge results.
   - False-positive secret scanning around realistic sample placeholders was creating review noise without adding meaningful security coverage for repository-contained examples.
@@ -86,9 +86,9 @@ This file is the durable reasoning spine for Sprint 001 of the governed rebuild.
 - ***Why does this work matter?***
   - Sprint 001 Deliverable 1 was meant to leave repo-contained controls trustworthy, and closeout hardening removes the last mismatches between policy and enforcement semantics.
   - It keeps security tooling useful by reducing false-positive churn instead of accepting noisy scans as an unavoidable cost of repository examples.
-  - It gives maintainers credible passing verification evidence for the branch because local checks and hosted checks now fail for understandable reasons.
+  - It gives maintainers credible passing verification evidence for the branch because local checks and hosted checks fail for understandable reasons.
 - ***What capability does it unlock?***
-  - Pull request review can now distinguish authored-commit correctness from merge-result correctness without collapsing those two repository states into one claim.
+  - Pull request review can distinguish authored-commit correctness from merge-result correctness without collapsing those two repository states into one claim.
   - Future verifier and workflow changes can extend the same semantics instead of rediscovering how commit-scoped and merge-scoped checks should differ.
   - Repository examples can remain instructional without repeatedly tripping security scanners on placeholder values that were never meant to resemble live secrets.
 - ***Why is the chosen design safer or more scalable?***
