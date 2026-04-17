@@ -1,19 +1,18 @@
 # SynaWeave
 
-SynaWeave is a governed, multi-surface repository for a knowledge-weaving learning platform. The platform combines the following under a shared architecture and contract model: 
-- browser extension capture
-- a web control plane
-- API services
-- background jobs
-- graph-aware retrieval 
-- AI/ML workflows 
-
+SynaWeave is a governed, multi-surface repository for a knowledge-weaving learning platform. The current repo now includes a bounded Sprint 1 runtime slice across:
+- browser extension capture and workspace bridge
+- a web control plane shell
+- a FastAPI request boundary
+- a separate ingest job path
+- shared Python runtime helpers
+- locally generated baseline metrics, traces, and proof artifacts
 
 ## What this repo contains
 
-- `apps/` — runtime homes reserved for `extension`, `web`, `api`, `ingest`, `ml`, `mcp`, and `eval`
+- `apps/` — runtime homes for `extension`, `web`, `api`, `ingest`, `ml`, `mcp`, and `eval`
 - `packages/` — shared TypeScript primitives and contracts
-- `python/` — shared intelligence modules and data-processing foundations
+- `python/` — shared runtime helpers and future intelligence modules
 - `infra/` — deployment, policy, and observability envelopes
 - `testing/` — quality taxonomy and verification layers
 - `tools/` — local checks and governance automation
@@ -25,12 +24,22 @@ SynaWeave is a governed, multi-surface repository for a knowledge-weaving learni
 - root docs contract: enabled
 - governance artifacts: enabled
 - repo-control baseline: locally verifiable
-- hosted merge enforcement: requires GitHub-side confirmation
-- reserved runtime homes: scaffold placeholders present
-- runtime proof paths: planned for later Sprint 1 deliverables and later sprints
+- first runtime proof path: integrated
+- first background job proof path: integrated
+- local metrics and trace artifacts: reproducible locally after runtime exercise
+- D3 closeout: not yet proven
+- hosted merge enforcement: still requires GitHub-side confirmation
 
-The reserved homes for web, API, ingest, MCP, ML, and evaluation exist as empty scaffold placeholders in Deliverable 1.
-Their presence preserves governed runtime boundaries without claiming bootable application maturity.
+The current local Sprint 1 proof path is:
+1. sign in from `apps/web` or `apps/extension`
+2. resolve the same user email and bridge code across both surfaces
+3. bootstrap one server-owned workspace through the API
+4. write one durable workspace action through the API
+5. run one separate ingest job to create a digest and evaluation record
+6. read the updated workspace state back through the browser surface
+7. inspect metrics at `/metrics` and the generated JSON artifacts under `build/runtime/` after exercising the runtime path
+
+This is a D2 runtime proof with partial D3 evidence. It is not a claim that automated accessibility, full observability routing, Cloud Run deployment, or broader D3 enforcement is complete.
 
 ## Repository-first entry points
 
@@ -50,25 +59,25 @@ Their presence preserves governed runtime boundaries without claiming bootable a
 cp .env.example .env
 bun run hooks:install
 python3 -m tools.dev.sync_environment sync
+bun run deps:app
 python3 -m tools.verify.main
 bun run verify
 ```
 
-`bun run hooks:install` installs the repo-owned local git hooks into `.git/hooks` for this clone. The install is manual, so run it after cloning or when hook files change.
-`python3 -m tools.dev.sync_environment sync` refreshes the local Bun toolchain plus Python dependencies from `package.json`, `bun.lock`, and `requirements-dev.txt`, then records a git-local sync stamp under `.git/`. When the repo owns `.venv/bin/python3`, the sync command installs Python dependencies there before falling back to the invoking `python3`.
-`python3 -m tools.verify.main` is the baseline repository-control gate.
-`bun run verify` is the full local gate for linting, typechecking, tests, and repo-control verification.
+## Local runtime commands
 
-The local hook set keeps contributor feedback close to the workstation:
+```bash
+bun run dev:api
+bun run dev:web
+bun run build:extension
+```
 
-- `commit-msg` enforces the governed commit-message contract before a commit lands
-- `post-checkout`, `post-merge`, and `post-rewrite` auto-sync Bun tooling and only auto-install Python dependencies when the repo owns `.venv/bin/python3`; otherwise they warn to run the canonical sync command manually
-- `pre-commit` warns on stale local environment state, then runs staged Betterleaks scanning plus the protected-surface verification lane
-- `pre-push` blocks stale local environment state before tracked-file Betterleaks scanning and the full verification gate
+Open:
+- API: `http://127.0.0.1:8000`
+- Web shell: `http://127.0.0.1:3000`
+- Metrics: `http://127.0.0.1:8000/metrics`
 
-Installing the hooks reduces PR churn by catching commit, security, and repo-control issues before review.
-
-Create any app-level dependencies only after checks pass and the owner docs are aligned.
+The extension source remains under `apps/extension/` and can be loaded unpacked in Chromium-based browsers for the local proof flow.
 
 ## Development expectations
 
