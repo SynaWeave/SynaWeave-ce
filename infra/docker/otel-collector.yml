@@ -1,0 +1,29 @@
+#  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# TL;DR  -->  reserve the local collector routing shape for later OpenTelemetry wiring without reopening D3 topology decisions
+#
+# - Later Extension Points:
+#   --> attach real OTLP receivers and exporters once instrumented runtimes emit native OpenTelemetry data
+#
+# - Role:
+#   --> captures the intended collector shape for the governed proof stack
+#   --> prevents later observability work from inventing an alternate local collector topology
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+receivers:
+  otlp:
+    protocols:
+      http:
+      grpc:
+
+processors:
+  batch:
+
+exporters:
+  debug:
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [debug]
