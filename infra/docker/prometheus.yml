@@ -1,0 +1,18 @@
+#  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# TL;DR  -->  scrape the Sprint 1 API metrics endpoint for the first local runtime baseline
+#
+# - Later Extension Points:
+#   --> add more scrape jobs only when new local runtimes become standard parts of the proof stack
+#
+# - Role:
+#   --> keeps Prometheus focused on the API metrics surface for the first deliverable closeout
+#   --> provides one versioned scrape config that the team can extend instead of recreating
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+global:
+  scrape_interval: 5s
+
+scrape_configs:
+  - job_name: synaweave-api
+    static_configs:
+      - targets: ["api:8000"]
