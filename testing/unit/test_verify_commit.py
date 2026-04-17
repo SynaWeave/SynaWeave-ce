@@ -293,15 +293,14 @@ class TestVerifyCommit(unittest.TestCase):
                 check=True,
                 capture_output=True,
             )
-            os.environ["VERIFY_COMMIT_BASE"] = subprocess.check_output(
+            base_sha = subprocess.check_output(
                 ["git", "rev-list", "--max-parents=0", "HEAD"],
                 cwd=repo_root,
                 text=True,
             ).strip()
-            try:
+
+            with _patched_env(VERIFY_COMMIT_BASE=base_sha, VERIFY_COMMIT_HEAD=None):
                 issues = check_commit_range(repo_root)
-            finally:
-                os.environ.pop("VERIFY_COMMIT_BASE", None)
             self.assertTrue(any("duplicate subject intent" in issue for issue in issues))
 
     def test_commit_checks_use_explicit_head_when_merge_ref_is_checked_out(self):
@@ -415,7 +414,7 @@ class TestVerifyCommit(unittest.TestCase):
                 capture_output=True,
             )
 
-            with _patched_env(VERIFY_COMMIT_BASE=None):
+            with _patched_env(VERIFY_COMMIT_BASE=None, VERIFY_COMMIT_HEAD=None):
                 issues = check_commit_head(repo_root)
             self.assertEqual(issues, [])
 
@@ -452,6 +451,7 @@ class TestVerifyCommit(unittest.TestCase):
                 GITHUB_ACTIONS="true",
                 GITHUB_BASE_REF="main",
                 VERIFY_COMMIT_BASE=None,
+                VERIFY_COMMIT_HEAD=None,
             ):
                 issues = check_commit_head(repo_root)
 
@@ -486,7 +486,7 @@ class TestVerifyCommit(unittest.TestCase):
                 capture_output=True,
             )
 
-            with _patched_env(VERIFY_COMMIT_BASE="deadbeef"):
+            with _patched_env(VERIFY_COMMIT_BASE="deadbeef", VERIFY_COMMIT_HEAD=None):
                 issues = check_commit_range(repo_root)
 
             self.assertEqual(issues, [])
