@@ -93,7 +93,7 @@ This file is the durable reasoning spine for Sprint 001 of the governed rebuild.
   - Repository examples can remain instructional without repeatedly tripping security scanners on placeholder values that were never meant to resemble live secrets.
 - ***Why is the chosen design safer or more scalable?***
   - Separating authored-commit validation from merge-result evaluation is safer than one blended status because branch protection decisions depend on both contexts.
-  - Clearly synthetic placeholders scale better than realistic-looking examples because security tooling stays high-signal as more example configuration surfaces are added.
+  - Synthetic placeholders scale better than realistic-looking examples because security tooling stays high-signal as more example configuration surfaces are added.
   - Test isolation is more scalable than environment-dependent expectations because CI providers and local shells export different commit metadata by default.
 - ***What trade-off did the team accept?***
   - The team took slightly more explicit verifier and workflow semantics so contributors must understand why two repository states can both matter.
