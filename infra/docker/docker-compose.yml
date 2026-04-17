@@ -1,0 +1,41 @@
+#  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# TL;DR  -->  boot the first local production-like proof stack for API metrics dashboards and runtime evidence
+#
+# - Later Extension Points:
+#   --> add collector or Langfuse containers only when those services become required local defaults for the team
+#
+# - Role:
+#   --> starts the API service plus Prometheus and Grafana around the Sprint 1 runtime path
+#   --> gives the team one simple local stack for demo preparation and baseline capture
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+services:
+  api:
+    image: python:3.13-slim
+    working_dir: /repo
+    command: bash -lc "python3 -m pip install -r requirements-app.txt && python3 -m uvicorn apps.api.main:app --host 0.0.0.0 --port 8000"
+    volumes:
+      - ../../:/repo
+    ports:
+      - "8000:8000"
+
+  prometheus:
+    image: prom/prometheus:latest
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+    depends_on:
+      - api
+
+  grafana:
+    image: grafana/grafana:latest
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    ports:
+      - "3001:3000"
+    depends_on:
+      - prometheus
