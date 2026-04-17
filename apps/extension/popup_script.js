@@ -1,65 +1,265 @@
 /*  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-TL;DR  -->  drive the legacy extension popup interactions for local card actions and panel closing
+TL;DR  -->  drive the first authenticated extension side-panel shell for shared identity capture durable actions and digest visibility
 
 - Later Extension Points:
-  --> replace local popup behavior with the governed authenticated extension shell during D2
+  --> widen the panel only when later capture queues retry logic or richer study widgets become durable extension concerns
 
 - Role:
-  --> wires the current popup controls to local legacy behaviors and panel closing
-  --> keeps the popup interaction path explicit while the extension runtime is still being rebuilt
+  --> handles browser-safe auth workspace refresh selection capture durable action writes and digest execution
+  --> emits extension-surface telemetry so the D3 proof baseline includes the browser-native client runtime
 
 - Exports:
   --> popup runtime side effects only
 
 - Consumed By:
-  --> the popup and side-panel UI through `apps/extension/popup.html`
+  --> `apps/extension/popup.html` inside the Manifest V3 side-panel surface
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  */
 
-// ---------- popup handles ----------
+// ---------- runtime config ----------
+// Keep local API targeting explicit so the side-panel proof works without a bundler.
+const API_BASE_URL = "http://127.0.0.1:8000";
+const TOKEN_KEY = "synaweave.extensionToken";
+const TRACE_PREFIX = "ext";
 
-// Keep DOM ids centralized so popup markup and script assumptions stay readable together
+// ---------- dom handles ----------
+// Keep selectors centralized so state transitions stay easy to review.
 const els = {
-	btnRefresh: document.getElementById("btn-refresh"),
-	btnExportAnki: document.getElementById("btn-export_anki"),
-	btnCopyQuizlet: document.getElementById("btn-copy_quizlet"),
-	qaFront: document.getElementById("qa_front"),
-	qaBack: document.getElementById("qa_back"),
-	qaTags: document.getElementById("qa_tags"),
-	qaCreateBtn: document.getElementById("qa_createBtn"),
-	dueList: document.getElementById("due_list"),
-	btnClosePanel: document.getElementById("btn-close_panel"),
+	authSection: document.getElementById("auth-section"),
+	workspaceSection: document.getElementById("workspace-section"),
+	emailInput: document.getElementById("ext-email-input"),
+	signInButton: document.getElementById("ext-sign-in-button"),
+	signOutButton: document.getElementById("ext-sign-out-button"),
+	identityEmail: document.getElementById("ext-identity-email"),
+	bridgeCode: document.getElementById("ext-bridge-code"),
+	workspaceId: document.getElementById("ext-workspace-id"),
+	actionInput: document.getElementById("ext-action-input"),
+	pullSelectionButton: document.getElementById("pull-selection-button"),
+	saveActionButton: document.getElementById("save-extension-action-button"),
+	runJobButton: document.getElementById("run-extension-job-button"),
+	lastDigest: document.getElementById("ext-last-digest"),
+	latestEval: document.getElementById("ext-latest-eval"),
+	recentActions: document.getElementById("ext-recent-actions"),
+	statusLine: document.getElementById("panel-status-line"),
 };
 
-// ---------- panel close flow ----------
+// ---------- boot ----------
+// Rehydrate any stored token first so panel reopen continuity is part of the runtime proof.
+void refreshRuntime();
 
-// Reuse the cached button so close behavior never depends on a second DOM lookup
-const closePanelButton = els.btnClosePanel;
+// ---------- auth flow ----------
+// Keep sign-in email-driven so the extension mirrors the web identity path.
+els.signInButton.addEventListener("click", async () => {
+	const email = String(els.emailInput.value || "").trim();
+	if (!email) {
+		setStatus("Enter the same email used in the web shell.");
+		return;
+	}
+	const startedAt = performance.now();
+	const response = await fetchJson("/v1/auth/link", {
+		method: "POST",
+		headers: { "Content-Type": "application/json" },
+		body: JSON.stringify({ email, surface: "extension" }),
+	});
+	await chrome.storage.local.set({ [TOKEN_KEY]: response.payload.token });
+	await emitTelemetry("extension_sign_in", startedAt, "ok", email);
+	await refreshRuntime();
+});
 
-if (closePanelButton) {
-	closePanelButton.addEventListener("click", function handleCloseClick(event) {
-		// Ask background to hide the panel before this popup context tears itself down
-		chrome.runtime.sendMessage({ type: "panel:close_request" }, () => {
-			// Read runtime.lastError so Chrome does not treat the callback as unhandled
-			void chrome.runtime.lastError;
+els.signOutButton.addEventListener("click", async () => {
+	await chrome.storage.local.remove(TOKEN_KEY);
+	showSignedOut();
+	setStatus("Signed out of the extension panel.");
+});
 
-			// Close on the next tick so the background request gets one chance to land first
-			setTimeout(() => {
-				try {
-					window.close();
-				} catch (_error) {
-					// Keep close failures quiet because popup and side-panel teardown differ by surface
-				}
-			}, 0);
+// ---------- selection and write flow ----------
+// Keep capture and durable write actions explicit so the panel proves each runtime step.
+els.pullSelectionButton.addEventListener("click", async () => {
+	const startedAt = performance.now();
+	const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+	if (!tab || typeof tab.id !== "number") {
+		setStatus("No active tab was available for selection capture.");
+		return;
+	}
+	const response = await chrome.tabs
+		.sendMessage(tab.id, { type: "selection:get" })
+		.catch(() => null);
+	const text = String(response?.text || "").trim();
+	if (!text) {
+		setStatus("The active page did not return a selection.");
+		return;
+	}
+	els.actionInput.value = text;
+	await emitTelemetry(
+		"extension_selection_pull",
+		startedAt,
+		"ok",
+		text.slice(0, 24),
+	);
+	setStatus("Selection pulled into the side panel.");
+});
+
+els.saveActionButton.addEventListener("click", async () => {
+	const value = String(els.actionInput.value || "").trim();
+	if (!value) {
+		setStatus("Capture or type a note before writing the durable action.");
+		return;
+	}
+	const startedAt = performance.now();
+	await authedFetchJson("/v1/workspace/action", {
+		method: "POST",
+		headers: { "Content-Type": "application/json" },
+		body: JSON.stringify({ kind: "capture", value, source: "extension" }),
+	});
+	await emitTelemetry(
+		"extension_action_write",
+		startedAt,
+		"ok",
+		value.slice(0, 24),
+	);
+	els.actionInput.value = "";
+	await refreshRuntime();
+	setStatus("Durable action written from the extension panel.");
+});
+
+// ---------- digest flow ----------
+// Keep background job triggering separate so the request path and job path remain visible.
+els.runJobButton.addEventListener("click", async () => {
+	const workspaceId = els.workspaceId.textContent || "";
+	if (!workspaceId || workspaceId === "—") {
+		setStatus("No workspace is ready yet.");
+		return;
+	}
+	const startedAt = performance.now();
+	await authedFetchJson("/v1/jobs/workspace", {
+		method: "POST",
+		headers: {
+			"Content-Type": "application/json",
+			"Idempotency-Key": `ext-${Date.now()}`,
+		},
+		body: JSON.stringify({ workspaceId, waitForFinish: true }),
+	});
+	await emitTelemetry("extension_digest_run", startedAt, "ok", workspaceId);
+	await refreshRuntime();
+	setStatus("Digest job completed from the extension path.");
+});
+
+// ---------- runtime refresh ----------
+// Reuse one refresh path so auth continuity and workspace reads stay aligned.
+async function refreshRuntime() {
+	const token = await readToken();
+	if (!token) {
+		showSignedOut();
+		setStatus("No active extension session yet.");
+		return;
+	}
+
+	try {
+		const startedAt = performance.now();
+		const identity = await authedFetchJson("/v1/identity", { method: "GET" });
+		const workspace = await authedFetchJson("/v1/workspace/bootstrap", {
+			method: "GET",
 		});
+		await emitTelemetry(
+			"extension_workspace_bootstrap",
+			startedAt,
+			"ok",
+			identity.payload.email,
+		);
+		showSignedIn(identity.payload, workspace.payload);
+		setStatus(`Extension workspace ready for ${identity.payload.email}.`);
+	} catch (_error) {
+		await chrome.storage.local.remove(TOKEN_KEY);
+		showSignedOut();
+		setStatus(
+			"Stored extension session was invalid, so the panel returned to signed-out state.",
+		);
+	}
+}
 
-		// Block default button behavior so the close path stays single-route
-		if (event && typeof event.preventDefault === "function") {
-			event.preventDefault();
-		}
+// ---------- storage ----------
+// Keep token access behind one helper so future auth changes touch one seam.
+async function readToken() {
+	const data = await chrome.storage.local.get(TOKEN_KEY);
+	return data[TOKEN_KEY] || "";
+}
+
+// ---------- view rendering ----------
+// Keep the signed-in and signed-out render paths small so panel state stays obvious.
+function showSignedIn(identity, workspacePayload) {
+	els.authSection.classList.add("hidden");
+	els.workspaceSection.classList.remove("hidden");
+	els.identityEmail.textContent = identity.email;
+	els.bridgeCode.textContent = identity.bridgeCode;
+	els.workspaceId.textContent = workspacePayload.workspace.workspaceId;
+	els.lastDigest.textContent =
+		workspacePayload.workspace.lastDigest || "No digest yet.";
+	els.latestEval.textContent = workspacePayload.latestEval
+		? `${workspacePayload.latestEval.label}: ${workspacePayload.latestEval.score}`
+		: "No eval yet.";
+	renderActions(workspacePayload.recentActions || []);
+}
+
+function showSignedOut() {
+	els.authSection.classList.remove("hidden");
+	els.workspaceSection.classList.add("hidden");
+	els.identityEmail.textContent = "—";
+	els.bridgeCode.textContent = "—";
+	els.workspaceId.textContent = "—";
+	els.lastDigest.textContent = "—";
+	els.latestEval.textContent = "—";
+	els.recentActions.innerHTML = "";
+}
+
+function renderActions(actions) {
+	els.recentActions.innerHTML = "";
+	for (const action of actions) {
+		const item = document.createElement("li");
+		item.textContent = `${action.kind} • ${action.source} • ${action.value}`;
+		els.recentActions.appendChild(item);
+	}
+}
+
+// ---------- fetch helpers ----------
+// Keep public and authed fetch paths aligned with the web shell contract.
+async function fetchJson(path, init) {
+	const response = await fetch(`${API_BASE_URL}${path}`, init);
+	if (!response.ok) {
+		throw new Error(`Request failed: ${response.status}`);
+	}
+	return response.json();
+}
+
+async function authedFetchJson(path, init) {
+	const token = await readToken();
+	return fetchJson(path, {
+		...init,
+		headers: {
+			...(init.headers || {}),
+			Authorization: `Bearer ${token}`,
+		},
 	});
 }
 
-// ---------- reserved popup surface ----------
+// ---------- telemetry ----------
+// Emit lightweight proof telemetry without blocking the panel interaction path.
+async function emitTelemetry(name, startedAt, status, detail) {
+	const durationMs = Number((performance.now() - startedAt).toFixed(2));
+	await fetch(`${API_BASE_URL}/v1/telemetry/emit`, {
+		method: "POST",
+		headers: { "Content-Type": "application/json" },
+		body: JSON.stringify({
+			surface: "extension",
+			name,
+			status,
+			durationMs,
+			traceId: `${TRACE_PREFIX}_${Date.now()}`,
+			detail,
+		}),
+	}).catch(() => null);
+}
 
-// Keep current popup handles referenced so the reserved MVP controls stay visible to reviewers
-void els;
+// ---------- status ----------
+// Keep operator-visible status text in one place for easier debugging.
+function setStatus(message) {
+	els.statusLine.textContent = message;
+}
