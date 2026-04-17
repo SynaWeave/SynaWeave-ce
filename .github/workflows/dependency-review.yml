@@ -1,0 +1,83 @@
+#  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# TL;DR  -->  publish a dependency-review PR status, run hosted review when supported, and state when support is unavailable
+#
+# - Later Extension Points:
+#   --> add stricter hosted dependency policy only when repository dependency graph support is fully enabled
+#
+# - Role:
+#   --> checks whether GitHub dependency graph support is available for the repository
+#   --> runs hosted dependency review only when the repository support exists
+#   --> leaves an explicit PR-visible note when hosted dependency review cannot run yet
+#
+# - Exports:
+#   --> `dependency-review / dependency-review` hosted check run
+#
+# - Consumed By:
+#   --> branch protection and pull-request review flows for dependency-review status checks
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+name: dependency-review
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  dependency-review:
+    name: dependency-review
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Detect dependency graph support
+        id: dependency-graph
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          python3 - <<'PY'
+          # ask the GitHub repo API whether hosted dependency graph support is enabled
+          import json
+          import os
+          import urllib.request
+
+          # reuse the workflow token so the probe stays inside GitHub's bounded auth path
+          request = urllib.request.Request(
+              f"https://api.github.com/repos/{os.environ['REPO']}",
+              headers={
+                  "Accept": "application/vnd.github+json",
+                  "Authorization": f"Bearer {os.environ['GH_TOKEN']}",
+              },
+          )
+          with urllib.request.urlopen(request) as response:
+              payload = json.load(response)
+
+          status = (
+              payload.get("security_and_analysis", {})
+              .get("dependency_graph", {})
+              .get("status", "disabled")
+          )
+          enabled = status == "enabled"
+          github_output = os.environ["GITHUB_OUTPUT"]
+          # emit one boolean flag so later workflow steps can branch without shell parsing
+          with open(github_output, "a", encoding="utf-8") as handle:
+              handle.write(f"enabled={'true' if enabled else 'false'}\n")
+
+          print(f"Dependency graph status: {status}")
+          PY
+
+      - name: Dependency review
+        if: steps.dependency-graph.outputs.enabled == 'true'
+        uses: actions/dependency-review-action@v4
+
+      - name: Skip unsupported dependency review cleanly
+        if: steps.dependency-graph.outputs.enabled != 'true'
+        run: |
+          echo "Dependency graph is not enabled for this repository yet; skipping dependency review."

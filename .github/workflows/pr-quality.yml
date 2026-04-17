@@ -1,0 +1,53 @@
+#  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# TL;DR  -->  enforce governed pull-request title and description quality on GitHub review flows
+#
+# - Later Extension Points:
+#   --> add more pull-request body checks only when review policy grows beyond the current bounded sections
+#
+# - Role:
+#   --> validates pull-request titles against the governed conventional format rules
+#   --> checks pull-request descriptions for the required review quality and CLA sections
+#
+# - Exports:
+#   --> `pr-quality` workflow status
+#
+# - Consumed By:
+#   --> branch protection and pull-request review flows on GitHub
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+name: pr-quality
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+on:
+  pull_request:
+    types:
+      - opened
+      - edited
+      - synchronize
+      - reopened
+      - ready_for_review
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  pr-quality:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Check PR title and description quality
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          python3 -m tools.verify.pr_quality

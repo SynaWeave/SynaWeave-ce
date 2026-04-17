@@ -1,0 +1,41 @@
+#  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# TL;DR  -->  declare the repo Python build and lint tooling surfaces in one governed config file
+#
+# - Later Extension Points:
+#   --> add more repo-owned Python tooling sections when the shared verification stack grows
+#
+# - Role:
+#   --> define root Python packaging metadata and tool configuration for repository checks
+#   --> keep Python repo controls centralized instead of scattering them across ad hoc config files
+#
+# - Exports:
+#   --> `build-system`
+#   --> `project`
+#   --> `tool.pytest.ini_options`
+#   --> `tool.ruff`
+#
+# - Consumed By:
+#   --> Python package tooling pytest and ruff during local and CI verification
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "synaweave-ce"
+version = "0.1.0"
+description = "Governed multi-surface repository scaffold for SynaWeave"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "GPL-3.0-or-later" }
+
+[tool.pytest.ini_options]
+testpaths = ["testing"]
+addopts = ["-q"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]

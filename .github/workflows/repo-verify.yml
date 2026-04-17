@@ -1,0 +1,61 @@
+#  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# TL;DR  -->  run the full governed repository verification stack on pushes and pull requests
+#
+# - Later Extension Points:
+#   --> add more hosted verification steps only when new default repo-control gates become durable
+#
+# - Role:
+#   --> installs the root verification toolchain for CI runs
+#   --> executes the full repository verification path used to guard the governed branch baseline
+#
+# - Exports:
+#   --> `repo-verify / repo-verify` hosted check run
+#
+# - Consumed By:
+#   --> branch protection and pull-request review flows on GitHub
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+name: repo-verify
+
+on:
+  push:
+    branches:
+      - "**"
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: repo-verify
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Python tooling
+        run: |
+          python3 -m pip install -r requirements-dev.txt
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install Bun dependencies
+        run: |
+          bun install --frozen-lockfile
+
+      - name: Run repository verification
+        env:
+          VERIFY_COMMIT_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+          VERIFY_COMMIT_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          bun run verify

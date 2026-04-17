@@ -1,0 +1,31 @@
+#  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# TL;DR  -->  keep Betterleaks scoped to meaningful repo files while preserving strict leak blocking in source and built artifacts
+#
+# - Later Extension Points:
+#   --> add narrower allowlists only when reviewed false positives become durable repo noise
+#
+# - Role:
+#   --> extends Betterleaks defaults with repo-owned path filtering for generated or tool cache directories
+#   --> keeps source code docs hooks workflows and built extension artifacts in the scan surface
+#
+# - Exports:
+#   --> Betterleaks repo config only
+#
+# - Consumed By:
+#   --> local Betterleaks hook wrappers and fast CI secret-scanning workflow
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "ignore local cache and dependency directories that are not repo-owned source"
+paths = [
+  '''^\.git/''',
+  '''^node_modules/''',
+  '''^\.venv/''',
+  '''^venv/''',
+  '''^coverage/''',
+  '''^test-results/''',
+  '''^playwright-report/''',
+]

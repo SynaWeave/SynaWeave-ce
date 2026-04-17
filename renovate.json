@@ -1,0 +1,80 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended"
+  ],
+  "enabledManagers": [
+    "bun",
+    "github-actions",
+    "npm",
+    "pip_requirements"
+  ],
+  "dependencyDashboard": true,
+  "separateMajorMinor": true,
+  "dependencyDashboardApproval": false,
+  "minimumReleaseAge": "3 days",
+  "prHourlyLimit": 2,
+  "prConcurrentLimit": 4,
+  "lockFileMaintenance": {
+    "enabled": false
+  },
+  "packageRules": [
+    {
+      "description": "Keep patch and minor JS workspace updates together.",
+      "matchManagers": [
+        "bun",
+        "npm"
+      ],
+      "matchFileNames": [
+        "package.json",
+        "bun.lock"
+      ],
+      "matchUpdateTypes": [
+        "digest",
+        "minor",
+        "patch",
+        "pin"
+      ],
+      "groupName": "javascript workspace dependencies",
+      "groupSlug": "javascript-workspace-dependencies"
+    },
+    {
+      "description": "Keep dev-only Python requirements low noise.",
+      "matchManagers": [
+        "pip_requirements"
+      ],
+      "matchFileNames": [
+        "requirements-dev.txt"
+      ],
+      "matchUpdateTypes": [
+        "digest",
+        "minor",
+        "patch",
+        "pin"
+      ],
+      "groupName": "python dev requirements",
+      "groupSlug": "python-dev-requirements"
+    },
+    {
+      "description": "Review hosted automation updates in one lane.",
+      "matchManagers": [
+        "github-actions"
+      ],
+      "matchUpdateTypes": [
+        "digest",
+        "minor",
+        "patch",
+        "pin"
+      ],
+      "groupName": "github actions",
+      "groupSlug": "github-actions"
+    },
+    {
+      "description": "Keep breaking dependency changes isolated for governed review.",
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "dependencyDashboardApproval": true
+    }
+  ]
+}

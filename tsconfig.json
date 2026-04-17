@@ -1,0 +1,21 @@
+{
+	"compilerOptions": {
+		"target": "ES2022",
+		"module": "NodeNext",
+		"moduleResolution": "NodeNext",
+		"strict": true,
+		"resolveJsonModule": true,
+		"allowJs": false,
+		"esModuleInterop": true,
+		"forceConsistentCasingInFileNames": true,
+		"baseUrl": "."
+	},
+	"include": [
+		"apps/**/*",
+		"packages/**/*",
+		"infra/**/*",
+		"tools/**/*",
+		"testing/**/*"
+	],
+	"exclude": ["**/node_modules", "**/dist", "**/build", "**/.*/**"]
+}

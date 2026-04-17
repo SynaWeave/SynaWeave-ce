@@ -1,0 +1,39 @@
+#!/usr/bin/env perl
+#  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# TL;DR  -->  auto-sync Bun and hook-safe environment updates after merges that change dependency files
+#
+# - Later Extension Points:
+#   --> add narrower watched file groups only when hook-triggered local toolchains expand
+#
+# - Role:
+#   --> compare `ORIG_HEAD` and `HEAD` for canonical dependency file changes after merge completion
+#   --> run the shared hook-safe environment sync command without blocking merge completion on sync failure
+#
+# - Exports:
+#   --> `post-merge` hook entrypoint
+#
+# - Consumed By:
+#   --> local git hook execution after `python3 tools/install_hooks.py`
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+use strict;
+use warnings;
+
+my $old_ref = qx{git rev-parse -q --verify ORIG_HEAD 2>/dev/null};
+my $new_ref = qx{git rev-parse -q --verify HEAD 2>/dev/null};
+
+chomp $old_ref;
+chomp $new_ref;
+
+exit 0 if $old_ref eq q{} || $new_ref eq q{};
+
+my $changed = qx{git diff --name-only $old_ref $new_ref -- package.json bun.lock requirements-dev.txt 2>/dev/null};
+exit 0 if $changed eq q{};
+
+print "post-merge: syncing local environment\n";
+my $sync_exit = system('python3', '-m', 'tools.dev.sync_environment', 'sync', '--mode', 'hook') >> 8;
+
+if ($sync_exit != 0) {
+    print "post-merge: environment sync failed; run python3 -m tools.dev.sync_environment sync\n";
+}
+
+exit 0;

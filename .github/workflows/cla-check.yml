@@ -1,0 +1,47 @@
+#  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# TL;DR  -->  keep contributor agreement review visible on pull requests through a hosted workflow gate
+#
+# - Later Extension Points:
+#   --> add stronger hosted CLA validation only when repository-side contributor agreement automation deepens
+#
+# - Role:
+#   --> exposes the CLA workflow as a required GitHub review signal
+#   --> keeps contribution agreement policy visible in the hosted pull-request path
+#
+# - Exports:
+#   --> `cla-check` workflow status
+#
+# - Consumed By:
+#   --> branch protection and pull-request review flows on GitHub
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+name: cla-check
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  cla-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Verify CLA policy exists
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          cla = Path("CLA.md")
+          if not cla.exists():
+              raise SystemExit("CLA.md missing")
+
+          text = cla.read_text(errors="ignore")
+          if "contributor" not in text.lower():
+              raise SystemExit("CLA.md missing contributor agreement section")
+
+          print("CLA policy file exists and contains contributor agreement language")
+          PY
