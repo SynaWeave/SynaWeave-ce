@@ -1,287 +1,131 @@
 /*  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-TL;DR  -->  style the legacy extension popup and side-panel surfaces through one active stylesheet
+TL;DR  -->  style the Sprint 1 extension side-panel and options shells for shared identity and runtime proof work
 
 - Later Extension Points:
-  --> widen style hooks only when the governed extension shell replaces the current MVP layout
+  --> widen the stylesheet only when richer extension widgets and token compilation become durable concerns
 
 - Role:
-  --> keeps the live extension layout tokens and component styling in one maintained stylesheet
-  --> avoids splitting active popup styling across stale legacy style files
+  --> gives the side-panel and options routes one coherent readable and contrast-safe visual language
+  --> keeps the extension proof shell usable for demos live debugging and early accessibility checks
 
 - Exports:
-  --> popup and side-panel class and id rules only
+  --> extension-shell class and element rules only
 
 - Consumed By:
   --> `apps/extension/popup.html`
   --> `apps/extension/options.html`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  */
 
-/* ---------- theme tokens ---------- */
+/* ---------- theme ---------- */
 :root {
-	--gap: min(1vh, 1vw);
-	--border: calc(var(--gap) * 0.75) solid rgb(41, 114, 126);
-	--bRad: calc(1.5 * max(1vh, 1vw));
-	--bg: rgb(49, 171, 193);
-	--fg: white;
-	--muted: lightgrey;
-	--primary: black;
-	--secondary: rgb(41, 114, 126);
+	--bg: #08111f;
+	--surface: #10213b;
+	--text: #f4f8ff;
+	--muted: #8ea3c4;
+	--accent: #61d0ff;
+	--border: #24456f;
 }
 
-/* ---------- base box model ---------- */
+/* ---------- box model ---------- */
 * {
 	box-sizing: border-box;
 }
 
 html,
 body {
-	width: 100%;
-	height: 100%;
-	max-width: 100vw;
-	/* keep the document inside the side-panel bounds */
-	max-height: 100vh;
 	margin: 0;
-	padding: 0;
-	overflow: auto;
-	/* show scrollbars only when content truly overflows */
+	min-height: 100%;
+	background: linear-gradient(180deg, var(--bg), #0d1830 60%, #08111f);
+	color: var(--text);
+	font: 15px / 1.45 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+		sans-serif;
 }
 
-body {
-	padding: 2vh 2vw;
-	/* keep the outer gutter fluid across popup and panel widths */
-	background: var(--bg);
-	color: var(--fg);
-	font: 14px / 1.4 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-	/* keep text metrics stable while layout spacing stays fluid */
-}
-
-h1,
-h2,
-h3,
-.summary-h2 {
-	margin: 5vh 0 2vh 0;
-	align-self: center;
-	font-weight: 1000;
-	word-spacing: calc(1.2 * var(--gap));
-}
-
-h1 {
-	font-size: 22px;
-}
-
-h2,
-.summary-h2 {
-	font-size: 18px;
-}
-
-h3 {
-	font-size: 16px;
-}
-
-body,
-.card_list,
-.quick_add,
-.toolbar {
-	overflow-wrap: anywhere;
-}
-
-/* ---------- navbar shell ---------- */
-/* stack the title row above the toolbar row for cleaner scan order */
-.navbar {
-	position: sticky;
-	top: -2vh;
-	z-index: 100;
-	background: var(--bg);
-	display: flex;
-	flex-direction: column; /* keep the title row above the action row */
-	align-items: stretch;
-	gap: var(--gap);
-	padding: 1.2vh 0;
-	border-bottom: var(--border);
-	margin-bottom: 2vh;
-}
-
-/* keep the title row centered while the close button stays on the far edge */
-.navbar_top h1 {
-	margin: 0;
-	text-align: center;
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
-}
-
-.navbar nav.toolbar {
-	display: flex;
-	gap: var(--gap);
-	flex-wrap: nowrap;
-	/* keep action buttons in one reviewable row */
-}
-
-.navbar nav.toolbar > button {
-	flex: 1 1 0;
-	min-width: 0;
-	/* allow equal-width buttons to shrink before they wrap */
-}
-
-/* ---------- form inputs ---------- */
-.quick_add textarea,
-.quick_add input,
-.notes textarea,
-.notes input {
-	width: 100%;
-	max-width: 100%;
-	margin-bottom: var(--gap);
-	padding: var(--gap);
-	border: var(--border);
-	border-radius: var(--bRad);
-	background: var(--fg);
-	color: var(--secondary);
-	resize: vertical;
-}
-
-.quick_add h3,
-.summary-h2 {
-	margin: var(--bRad) 0 calc(2 * var(--gap)) 0;
-}
-
-textarea {
-	min-height: 50px;
-}
-
-input::placeholder,
-textarea::placeholder {
-	text-align: center;
-	line-height: calc(2.25 * var(--bRad));
-}
-
-/* ---------- generic buttons ---------- */
-button {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	justify-self: center;
-	padding: var(--gap) 1vw;
-	/* keep button padding fluid with the shared spacing token */
-	border: var(--border);
-	border-radius: var(--bRad);
-	background: var(--fg);
-	color: var(--secondary);
-	font-weight: bold;
-	cursor: pointer;
-	white-space: nowrap;
-	/* preserve single-line labels inside narrow panel widths */
-	overflow: hidden;
-	text-overflow: ellipsis;
-}
-
-button:hover {
-	background: var(--muted);
-}
-
-#qa_createBtn {
-	width: 40%;
-}
-
-.close_button {
-	justify-self: end;
-	margin: calc(-1 * var(--bRad)) 0;
-	top: calc(-100 * var(--bRad));
-	bottom: calc(-10 * var(--bRad));
-	min-width: calc(6 * var(--gap));
-	min-height: calc(6 * var(--gap));
-	padding: calc(var(--gap) * 0.75) 1vw;
-	/* keep the tap target generous without fixed pixel padding */
-	border: var(--border);
-	border-radius: calc(2 * var(--gap));
-	background: var(--fg);
-	color: var(--secondary);
-	font-weight: bold;
-	line-height: 1;
-	cursor: pointer;
-}
-
-.close_button:hover {
-	background: var(--muted);
-}
-
-/* ---------- toolbar row ---------- */
-.toolbar {
-	display: flex;
-	gap: var(--gap);
-	flex-wrap: nowrap;
-}
-
-.toolbar > * {
-	flex: 1 1 0;
-	min-width: 0;
-}
-
-/* ---------- rate row ---------- */
-/* keep the four rating actions on one balanced row */
-.rate {
-	display: flex;
-	gap: var(--gap);
-	margin-top: var(--gap);
-	flex-wrap: nowrap;
-}
-
-.rate > button {
-	flex: 1 1 0;
-	min-width: 0;
-}
-
-/* ---------- notes layout ---------- */
-/* keep textarea width full while the two note actions share one row */
-#note-written {
-	display: grid;
-	grid-template-columns: 1fr 1fr;
-	/* reserve two equal action columns below the textarea */
-	gap: var(--gap);
-}
-
-#noteText,
-#notesContainer {
-	grid-column: 1 / -1;
-	/* let text entry and note history span the full card width */
-}
-
-/* make the two note buttons share the row equally */
-#saveNoteBtn,
-#savePageBtn {
-	width: 100%;
-	/* fill cell */
-}
-
-#saveNoteBtn {
-	grid-column: 1 / 2;
-}
-
-#savePageBtn {
-	grid-column: 2 / 3;
-}
-
-/* ---------- review card list ---------- */
-.card_list {
-	list-style: none;
-	margin: 0;
-	padding: 0;
-	display: grid;
-	grid-template-columns: 1fr;
-	gap: 1.2vh;
+/* ---------- layout ---------- */
+.panel-shell {
+	padding: 1rem;
 }
 
 .card {
-	background: rgba(255, 255, 255, 0.08);
-	border: var(--border);
-	border-radius: var(--bRad);
-	padding: 1.2vh 1vw;
+	padding: 0.9rem;
+	margin-bottom: 0.9rem;
+	border: 1px solid var(--border);
+	border-radius: 1rem;
+	background: color-mix(in srgb, var(--surface) 92%, black 8%);
+	box-shadow: 0 12px 32px rgba(0, 0, 0, 0.24);
 }
 
-.front {
-	font-weight: 600;
-	margin-bottom: var(--gap);
+.hidden {
+	display: none;
 }
 
-.answer {
-	margin: var(--gap) 0;
+/* ---------- copy ---------- */
+.eyebrow {
+	margin: 0 0 0.4rem;
+	color: var(--accent);
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+	font-size: 0.75rem;
+}
+
+.lede {
+	color: var(--muted);
+}
+
+/* ---------- controls ---------- */
+label,
+input,
+textarea,
+button {
+	display: block;
+	width: 100%;
+}
+
+input,
+textarea,
+button {
+	margin-top: 0.5rem;
+	border-radius: 0.75rem;
+	border: 1px solid var(--border);
+}
+
+input,
+textarea {
+	padding: 0.8rem;
+	background: rgba(4, 11, 24, 0.55);
+	color: var(--text);
+}
+
+button {
+	padding: 0.8rem 0.9rem;
+	background: linear-gradient(180deg, var(--accent), #3dbaf0);
+	color: #03101f;
+	font-weight: 700;
+	cursor: pointer;
+}
+
+/* ---------- rows ---------- */
+.row {
+	display: flex;
+	gap: 0.6rem;
+	align-items: center;
+}
+
+.between {
+	justify-content: space-between;
+}
+
+.row > * {
+	flex: 1 1 0;
+}
+
+/* ---------- list ---------- */
+.list {
+	padding-left: 1.2rem;
+	margin: 0.9rem 0 0;
+}
+
+.list li {
+	margin-bottom: 0.35rem;
+	color: var(--muted);
 }
