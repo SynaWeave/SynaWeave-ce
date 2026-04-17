@@ -35,8 +35,11 @@ This file is the durable reasoning spine for Sprint 001 of the governed rebuild.
 
 ## Current Status
 
-- Sprint 001 Deliverable 1 has six approved initial decisions covering topology, docs authority, controls, templates, verifier tracks, and auth boundaries.
-- Root governance files, hooks, workflows, and verifier tracks make repo-contained quality and security expectations executable instead of advisory, while GitHub-hosted enforcement still requires platform-side confirmation.
+- Sprint 001 Deliverable 1 now has seven approved decisions, including closeout hardening for pull request verification, secret-scan cleanup, and verifier test isolation.
+- Pull request commit verification now checks authored pull request commits while hosted workflows still evaluate merge-result repository state for final branch protection evidence.
+- Secret-scan-safe placeholder cleanup removes realistic database examples that created false positives without improving repository guidance or safety posture.
+- Verifier tests now isolate temporary repositories from CI-exported commit metadata so local and hosted runs prove the same intended repo-control behavior.
+- All repo-contained verification checks for the branch are now passing under the tightened Sprint 001 Deliverable 1 closeout controls.
 - Shared contract and configuration surfaces remain reserved in governed package boundaries instead of app-local placeholders.
 - Sprint reasoning lives in one ADR ledger so approved choices remain durable beyond pull request summaries.
 
@@ -48,12 +51,54 @@ This file is the durable reasoning spine for Sprint 001 of the governed rebuild.
 
 | Decision | Status |
 | --- | --- |
+| D1-T8 - closeout hardening for PR verification, secret-scan placeholders, and verifier isolation | approved |
 | D1-T7 - Reserve provider-neutral auth contracts and config boundaries | approved |
 | D1-T6 - verifier tracks and repo-control test hardening | approved |
 | D1-T5 - reusable template system hardening and owner-doc linkage | approved |
 | D1-T4 - protected-path control-surface alignment | approved |
 | D1-T2 - Make root docs and MASTER the only planning authority | approved |
 | D1 - Lock the shallow monorepo topology and reserved runtime homes | approved |
+
+---
+
+### D1-T8 - closeout hardening for PR verification, secret-scan placeholders, and verifier isolation
+
+- ***What was built?***
+  - Sprint 001 Deliverable 1 closeout hardened pull request verification so authored pull request commits are validated separately from hosted merge-result repository evaluation.
+  - Repo verification workflow and environment semantics were tightened so authored-commit checks and merge-result checks no longer blur into one misleading signal.
+  - Secret-scan cleanup replaced Postgres-shaped sample database placeholders with clearly synthetic placeholders, while verifier tests now isolate temporary repositories from leaked CI commit metadata.
+- ***Why was it chosen?***
+  - Sprint 001 needed documented rules, local verification, and hosted checks to agree on what evidence belongs to authored changes versus merge results.
+  - False-positive secret scanning around realistic sample placeholders was creating review noise without adding meaningful security coverage for repository-contained examples.
+  - Temporary-repository verifier tests had to remain deterministic even when CI exports commit environment variables that do not belong to unit-test fixtures.
+- ***What boundaries does it own?***
+  - This decision owns Sprint 001 Deliverable 1 closeout semantics for pull request commit validation, hosted merge-result evaluation, and verifier environment separation.
+  - It owns repository example placeholder hygiene where sample credential-like values can accidentally trigger security tooling without representing actual supported configuration guidance.
+  - It does not replace D1-T6 verifier-lane structure or D1-T4 protected-path alignment, but narrows how those approved controls behave at closeout.
+- ***What breaks if it changes?***
+  - Reviewers could mistake merge-ref workflow results for authored-commit evidence, making pull request verification conclusions less trustworthy during protected-path review.
+  - Secret-scan tooling would keep generating avoidable false positives, which trains contributors to ignore warnings that should remain high-signal.
+  - Verifier unit tests could fail only in CI because exported commit metadata leaks into temporary repositories that should behave like isolated fixtures.
+- ***What known edge cases or failure modes matter here?***
+  - Hosted workflows legitimately run against merge references, so documentation and verifier output must still explain why that differs from authored-commit validation.
+  - Placeholder strings can look obviously fake to humans while still matching database or credential patterns strongly enough to trigger automated secret scanners.
+  - Temporary git repositories created during tests may inherit CI commit identity variables unless harness setup explicitly resets or ignores those ambient values.
+- ***Why does this work matter?***
+  - Sprint 001 Deliverable 1 was meant to leave repo-contained controls trustworthy, and closeout hardening removes the last mismatches between policy and enforcement semantics.
+  - It keeps security tooling useful by reducing false-positive churn instead of accepting noisy scans as an unavoidable cost of repository examples.
+  - It gives maintainers credible passing verification evidence for the branch because local checks and hosted checks now fail for understandable reasons.
+- ***What capability does it unlock?***
+  - Pull request review can now distinguish authored-commit correctness from merge-result correctness without collapsing those two repository states into one claim.
+  - Future verifier and workflow changes can extend the same semantics instead of rediscovering how commit-scoped and merge-scoped checks should differ.
+  - Repository examples can remain instructional without repeatedly tripping security scanners on placeholder values that were never meant to resemble live secrets.
+- ***Why is the chosen design safer or more scalable?***
+  - Separating authored-commit validation from merge-result evaluation is safer than one blended status because branch protection decisions depend on both contexts.
+  - Clearly synthetic placeholders scale better than realistic-looking examples because security tooling stays high-signal as more example configuration surfaces are added.
+  - Test isolation is more scalable than environment-dependent expectations because CI providers and local shells export different commit metadata by default.
+- ***What trade-off did the team accept?***
+  - The team accepted slightly more explicit verifier and workflow semantics so contributors must understand why two repository states can both matter.
+  - Example placeholders became less lifelike, which sacrifices some immediacy in favor of clearer safety signaling and quieter automated security tooling.
+  - Closeout work added more fixture hygiene and reasoning overhead, but that cost was preferable to leaving Sprint 001 controls ambiguously correct.
 
 ---
 
