@@ -385,6 +385,139 @@ class TestVerifyCommit(unittest.TestCase):
             self.assertTrue(any("must use format" in issue for issue in issues))
             self.assertFalse(any("duplicate subject intent" in issue for issue in issues))
 
+    def test_commit_head_skips_github_style_merge_commit_subject(self):
+        with tempfile.TemporaryDirectory() as raw_tmp:
+            repo_root = Path(raw_tmp)
+            _init_commit_repo(repo_root)
+            _git(
+                repo_root,
+                "commit",
+                "--allow-empty",
+                "-m",
+                "chore(tools): establish the governed baseline for merge commit validation "
+                "before branch history diverges in fixture coverage",
+            )
+            base_sha = _git_output(repo_root, "rev-parse", "HEAD")
+            _git(repo_root, "checkout", "-b", "feature-line")
+            _commit_file(
+                repo_root,
+                "feature.txt",
+                "feature\n",
+                "fix(tools): align authored commit validation with merge-aware history checks "
+                "so hosted review ranges stay strict for contributors",
+            )
+            _git(repo_root, "checkout", "-b", "base-line", base_sha)
+            _commit_file(
+                repo_root,
+                "base.txt",
+                "base\n",
+                "docs(governance): preserve the governed base branch note for merge fixtures "
+                "used by hosted verification coverage and review clarity",
+            )
+            _git(repo_root, "checkout", "feature-line")
+            _git(
+                repo_root,
+                "merge",
+                "--no-ff",
+                "base-line",
+                "-m",
+                "Merge pull request #42 from synaweave/base-line",
+            )
+
+            with _patched_env(VERIFY_COMMIT_BASE=base_sha, VERIFY_COMMIT_HEAD=None):
+                issues = check_commit_head(repo_root)
+
+            self.assertEqual(issues, [])
+
+    def test_commit_range_still_validates_authored_commits_while_skipping_merge_commits(self):
+        with tempfile.TemporaryDirectory() as raw_tmp:
+            repo_root = Path(raw_tmp)
+            _init_commit_repo(repo_root)
+            _git(
+                repo_root,
+                "commit",
+                "--allow-empty",
+                "-m",
+                "chore(tools): establish the governed baseline for merge commit validation "
+                "before branch history diverges in fixture coverage",
+            )
+            base_sha = _git_output(repo_root, "rev-parse", "HEAD")
+            _git(repo_root, "checkout", "-b", "feature-line")
+            _commit_file(
+                repo_root,
+                "feature.txt",
+                "feature\n",
+                "bad merge subject",
+            )
+            _git(repo_root, "checkout", "-b", "base-line", base_sha)
+            _commit_file(
+                repo_root,
+                "base.txt",
+                "base\n",
+                "docs(governance): preserve the governed base branch note for merge fixtures "
+                "used by hosted verification coverage and review clarity",
+            )
+            _git(repo_root, "checkout", "feature-line")
+            _git(
+                repo_root,
+                "merge",
+                "--no-ff",
+                "base-line",
+                "-m",
+                "Merge pull request #42 from synaweave/base-line",
+            )
+
+            with _patched_env(VERIFY_COMMIT_BASE=base_sha, VERIFY_COMMIT_HEAD=None):
+                issues = check_commit_range(repo_root)
+
+            self.assertTrue(any("must use format" in issue for issue in issues))
+            self.assertEqual(sum("must use format" in issue for issue in issues), 1)
+            self.assertFalse(
+                any("Merge pull request #42 from synaweave/base-line" in issue for issue in issues)
+            )
+
+    def test_commit_range_skips_merge_commits_in_duplicate_subject_checks(self):
+        with tempfile.TemporaryDirectory() as raw_tmp:
+            repo_root = Path(raw_tmp)
+            _init_commit_repo(repo_root)
+            _git(
+                repo_root,
+                "commit",
+                "--allow-empty",
+                "-m",
+                "chore(tools): establish the governed baseline for merge commit validation "
+                "before branch history diverges in fixture coverage",
+            )
+            base_sha = _git_output(repo_root, "rev-parse", "HEAD")
+            _git(repo_root, "checkout", "-b", "feature-line")
+            feature_subject = (
+                "fix(tools): align authored commit validation with merge-aware history checks "
+                "so hosted review ranges stay strict for contributors"
+            )
+            _commit_file(repo_root, "feature.txt", "feature\n", feature_subject)
+            _git(repo_root, "checkout", "-b", "base-line", base_sha)
+            _commit_file(
+                repo_root,
+                "base.txt",
+                "base\n",
+                "docs(governance): preserve the governed base branch note for merge fixtures "
+                "used by hosted verification coverage and review clarity",
+            )
+            _git(repo_root, "checkout", "feature-line")
+            _git(
+                repo_root,
+                "merge",
+                "--no-ff",
+                "base-line",
+                "-m",
+                feature_subject,
+            )
+
+            with _patched_env(VERIFY_COMMIT_BASE=base_sha, VERIFY_COMMIT_HEAD=None):
+                issues = check_commit_range(repo_root)
+
+            self.assertEqual(issues, [])
+
     def test_local_commit_head_check_skips_history_without_explicit_range_context(self):
         with tempfile.TemporaryDirectory() as raw_tmp:
             repo_root = Path(raw_tmp)
