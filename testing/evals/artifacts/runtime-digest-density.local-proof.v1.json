@@ -6,7 +6,7 @@
       "costMicros": 990,
       "digest": "capture: collector-routed traces require the compose stac | note: graph retrieval needs durable local evidence",
       "flow": "workspace_digest_v1",
-      "jobId": "job_69fae89bed87",
+      "jobId": "job_ef3534bced47",
       "jobState": "succeeded",
       "label": "digest_density",
       "recentActionCount": 2,
@@ -17,7 +17,7 @@
       "costMicros": 486,
       "digest": "note: langfuse and hosted mlflow still need confirmati",
       "flow": "workspace_digest_v1",
-      "jobId": "job_4dd1ad032e40",
+      "jobId": "job_746c03859b60",
       "jobState": "succeeded",
       "label": "digest_density",
       "recentActionCount": 1,
@@ -26,7 +26,7 @@
   ],
   "datasetName": "runtime-digest-density",
   "datasetVersion": "v1",
-  "generatedAt": "2026-04-18T13:03:06Z",
+  "generatedAt": "2026-04-18T16:11:01Z",
   "localProof": {
     "confirmed": [
       "synthetic eval dataset is versioned under testing/evals/fixtures",
@@ -47,7 +47,7 @@
     "ai_ready_trace_coverage": 1.0,
     "api_latency_p95_ms": 94.9,
     "auth_success_total": 2,
-    "captured_at": "2026-04-18T13:03:06Z",
+    "captured_at": "2026-04-18T16:11:01Z",
     "job_duration_p95_ms": 132.2,
     "job_success_total": 2,
     "trace_event_total": 6,
@@ -60,10 +60,10 @@
       "runtime-eval/performance.json",
       "runtime-eval/report.json"
     ],
-    "artifactUri": "file:///Users/elijah/computing-local/SynaWeave-ce/build/mlflow/artifacts/d95087dad1c74180b7ad3b84d16c8366/artifacts",
+    "artifactUri": "file:///Users/elijah/computing-local/SynaWeave-ce/build/mlflow/artifacts/9e867d0fa40341deafed8d0b5e03bf73/artifacts",
     "experimentId": "1",
     "experimentName": "synaweave-sprint1-runtime-eval-local",
-    "runId": "d95087dad1c74180b7ad3b84d16c8366",
+    "runId": "9e867d0fa40341deafed8d0b5e03bf73",
     "runName": "runtime-digest-density-v1",
     "runStatus": "FINISHED",
     "trackingUri": "http://127.0.0.1:5001"
