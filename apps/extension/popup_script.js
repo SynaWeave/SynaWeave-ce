@@ -22,12 +22,17 @@ const TOKEN_KEY = "synaweave.extensionToken";
 const PANEL_OPEN_REQUEST_KEY = "synaweave.sidePanelOpenRequestedAt";
 const PANEL_RUNTIME_EVIDENCE_KEY = "synaweave.sidePanelRuntimeEvidence";
 const TRACE_PREFIX = "ext";
+const TRANSIENT_ERROR_MESSAGE =
+	"Temporary API or provider failure. Session kept so you can retry.";
 
 // ---------- dom handles ----------
 // Keep selectors centralized so state transitions stay easy to review.
 const els = {
 	authSection: document.getElementById("auth-section"),
 	workspaceSection: document.getElementById("workspace-section"),
+	degradedCard: document.getElementById("ext-degraded-card"),
+	degradedMessage: document.getElementById("ext-degraded-message"),
+	retryButton: document.getElementById("ext-retry-button"),
 	emailInput: document.getElementById("ext-email-input"),
 	signInButton: document.getElementById("ext-sign-in-button"),
 	signOutButton: document.getElementById("ext-sign-out-button"),
@@ -44,10 +49,24 @@ const els = {
 	statusLine: document.getElementById("panel-status-line"),
 };
 
+const runtimeState = {
+	retryAction: null,
+	retryLabel: "",
+};
+
 // ---------- boot ----------
 // Rehydrate any stored token first so panel reopen continuity is part of the runtime proof.
 void recordPanelRuntimeEvidence();
 void refreshRuntime();
+
+els.retryButton.addEventListener("click", async () => {
+	if (!runtimeState.retryAction) {
+		setStatus("No retryable extension request is waiting right now.");
+		return;
+	}
+	setStatus(`Retrying ${runtimeState.retryLabel}.`);
+	await runtimeState.retryAction();
+});
 
 // ---------- auth flow ----------
 // Keep sign-in email-driven so the extension mirrors the web identity path.
@@ -64,12 +83,14 @@ els.signInButton.addEventListener("click", async () => {
 		body: JSON.stringify({ email, surface: "extension" }),
 	});
 	await chrome.storage.local.set({ [TOKEN_KEY]: response.payload.token });
+	clearDegradedState();
 	await emitTelemetry("extension_sign_in", startedAt, "ok", email);
 	await refreshRuntime();
 });
 
 els.signOutButton.addEventListener("click", async () => {
 	await chrome.storage.local.remove(TOKEN_KEY);
+	clearDegradedState();
 	showSignedOut();
 	setStatus("Signed out of the extension panel.");
 });
@@ -108,17 +129,34 @@ els.saveActionButton.addEventListener("click", async () => {
 		return;
 	}
 	const startedAt = performance.now();
-	await authedFetchJson("/v1/workspace/action", {
-		method: "POST",
-		headers: { "Content-Type": "application/json" },
-		body: JSON.stringify({ kind: "capture", value, source: "extension" }),
-	});
+	try {
+		await authedFetchJson("/v1/workspace/action", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ kind: "capture", value, source: "extension" }),
+		});
+	} catch (error) {
+		const outcome = await handleRuntimeFailure(
+			"extension_action_write",
+			startedAt,
+			error,
+			"the durable action write",
+			async () => {
+				await els.saveActionButton.click();
+			},
+		);
+		if (outcome.handled) {
+			return;
+		}
+		throw error;
+	}
 	await emitTelemetry(
 		"extension_action_write",
 		startedAt,
 		"ok",
 		value.slice(0, 24),
 	);
+	clearDegradedState();
 	els.actionInput.value = "";
 	await refreshRuntime();
 	setStatus("Durable action written from the extension panel.");
@@ -133,15 +171,32 @@ els.runJobButton.addEventListener("click", async () => {
 		return;
 	}
 	const startedAt = performance.now();
-	await authedFetchJson("/v1/jobs/workspace", {
-		method: "POST",
-		headers: {
-			"Content-Type": "application/json",
-			"Idempotency-Key": `ext-${Date.now()}`,
-		},
-		body: JSON.stringify({ workspaceId, waitForFinish: true }),
-	});
+	try {
+		await authedFetchJson("/v1/jobs/workspace", {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+				"Idempotency-Key": `ext-${Date.now()}`,
+			},
+			body: JSON.stringify({ workspaceId, waitForFinish: true }),
+		});
+	} catch (error) {
+		const outcome = await handleRuntimeFailure(
+			"extension_digest_run",
+			startedAt,
+			error,
+			"the digest job",
+			async () => {
+				await els.runJobButton.click();
+			},
+		);
+		if (outcome.handled) {
+			return;
+		}
+		throw error;
+	}
 	await emitTelemetry("extension_digest_run", startedAt, "ok", workspaceId);
+	clearDegradedState();
 	await refreshRuntime();
 	setStatus("Digest job completed from the extension path.");
 });
@@ -151,13 +206,14 @@ els.runJobButton.addEventListener("click", async () => {
 async function refreshRuntime() {
 	const token = await readToken();
 	if (!token) {
+		clearDegradedState();
 		showSignedOut();
 		setStatus("No active extension session yet.");
 		return;
 	}
 
+	const startedAt = performance.now();
 	try {
-		const startedAt = performance.now();
 		const identity = await authedFetchJson("/v1/identity", { method: "GET" });
 		const workspace = await authedFetchJson("/v1/workspace/bootstrap", {
 			method: "GET",
@@ -168,14 +224,18 @@ async function refreshRuntime() {
 			"ok",
 			identity.payload.email,
 		);
+		clearDegradedState();
 		showSignedIn(identity.payload, workspace.payload);
 		setStatus(`Extension workspace ready for ${identity.payload.email}.`);
-	} catch (_error) {
-		await chrome.storage.local.remove(TOKEN_KEY);
-		showSignedOut();
-		setStatus(
-			"Stored extension session was invalid, so the panel returned to signed-out state.",
+	} catch (error) {
+		await handleRuntimeFailure(
+			"extension_workspace_bootstrap",
+			startedAt,
+			error,
+			"the workspace refresh",
+			refreshRuntime,
 		);
+		return;
 	}
 }
 
@@ -213,6 +273,11 @@ function showSignedOut() {
 	els.recentActions.innerHTML = "";
 }
 
+function showSessionHeld() {
+	els.authSection.classList.add("hidden");
+	els.workspaceSection.classList.remove("hidden");
+}
+
 function renderActions(actions) {
 	els.recentActions.innerHTML = "";
 	for (const action of actions) {
@@ -225,15 +290,31 @@ function renderActions(actions) {
 // ---------- fetch helpers ----------
 // Keep public and authed fetch paths aligned with the web shell contract.
 async function fetchJson(path, init) {
-	const response = await fetch(`${API_BASE_URL}${path}`, {
-		...init,
-		headers: {
-			...(init?.headers || {}),
-			...makeTraceHeaders(),
-		},
-	});
+	let response;
+	try {
+		response = await fetch(`${API_BASE_URL}${path}`, {
+			...init,
+			headers: {
+				...(init?.headers || {}),
+				...makeTraceHeaders(),
+			},
+		});
+	} catch (error) {
+		throw makeRuntimeError({
+			kind: "transient",
+			retryable: true,
+			status: 0,
+			message: error instanceof Error ? error.message : String(error),
+		});
+	}
 	if (!response.ok) {
-		throw new Error(`Request failed: ${response.status}`);
+		const detail = await readFailureDetail(response);
+		throw makeRuntimeError({
+			kind: isAuthFailureStatus(response.status) ? "auth" : "transient",
+			retryable: !isAuthFailureStatus(response.status),
+			status: response.status,
+			message: detail,
+		});
 	}
 	return response.json();
 }
@@ -265,6 +346,96 @@ async function emitTelemetry(name, startedAt, status, detail) {
 			detail,
 		}),
 	}).catch(() => null);
+}
+
+async function handleRuntimeFailure(
+	telemetryName,
+	startedAt,
+	error,
+	retryLabel,
+	retryAction,
+) {
+	const failure = normalizeRuntimeError(error);
+	await emitTelemetry(
+		telemetryName,
+		startedAt,
+		failure.kind === "auth" ? "error" : "degraded",
+		buildFailureTelemetryDetail(failure),
+	);
+	if (failure.kind === "auth") {
+		await chrome.storage.local.remove(TOKEN_KEY);
+		clearDegradedState();
+		showSignedOut();
+		setStatus(
+			"Stored extension session expired or was invalid, so the panel returned to signed-out state.",
+		);
+		return { handled: true, kind: "auth" };
+	}
+	showSessionHeld();
+	setDegradedState(TRANSIENT_ERROR_MESSAGE, retryLabel, retryAction);
+	setStatus(TRANSIENT_ERROR_MESSAGE);
+	return { handled: true, kind: "transient" };
+}
+
+function setDegradedState(message, retryLabel, retryAction) {
+	runtimeState.retryAction = retryAction;
+	runtimeState.retryLabel = retryLabel;
+	els.degradedMessage.textContent = message;
+	els.retryButton.textContent = `Retry ${retryLabel}`;
+	els.degradedCard.classList.remove("hidden");
+}
+
+function clearDegradedState() {
+	runtimeState.retryAction = null;
+	runtimeState.retryLabel = "";
+	els.degradedCard.classList.add("hidden");
+	els.degradedMessage.textContent =
+		"A retryable runtime issue is holding the current session.";
+	els.retryButton.textContent = "Retry last request";
+}
+
+function normalizeRuntimeError(error) {
+	if (error && typeof error === "object" && "kind" in error) {
+		return error;
+	}
+	return makeRuntimeError({
+		kind: "transient",
+		retryable: true,
+		status: 0,
+		message: error instanceof Error ? error.message : String(error),
+	});
+}
+
+function makeRuntimeError({ kind, retryable, status, message }) {
+	return { kind, retryable, status, message };
+}
+
+function buildFailureTelemetryDetail(failure) {
+	return [
+		`kind=${failure.kind}`,
+		`retryable=${String(failure.retryable)}`,
+		`status=${failure.status || "network"}`,
+		`message=${failure.message}`,
+	]
+		.join(" ")
+		.slice(0, 180);
+}
+
+async function readFailureDetail(response) {
+	const contentType = response.headers.get("content-type") || "";
+	if (contentType.includes("application/json")) {
+		const body = await response.json().catch(() => null);
+		const detail = body?.detail;
+		if (typeof detail === "string" && detail.trim()) {
+			return detail.trim();
+		}
+	}
+	const text = await response.text().catch(() => "");
+	return text.trim() || `Request failed: ${response.status}`;
+}
+
+function isAuthFailureStatus(status) {
+	return status === 401 || status === 403;
 }
 
 // ---------- status ----------
