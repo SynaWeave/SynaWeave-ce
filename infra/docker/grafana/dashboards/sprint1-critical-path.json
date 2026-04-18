@@ -51,6 +51,31 @@
       ],
       "title": "Critical-path volume snapshot",
       "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "synaweave-prometheus"},
+      "fieldConfig": {"defaults": {"unit": "short"}, "overrides": []},
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16},
+      "id": 5,
+      "options": {"legend": {"displayMode": "table", "placement": "bottom"}, "tooltip": {"mode": "single", "sort": "none"}},
+      "targets": [
+        {"expr": "synaweave_api_error_total", "legendFormat": "API errors", "refId": "A"},
+        {"expr": "synaweave_ingest_error_total", "legendFormat": "Ingest errors", "refId": "B"},
+        {"expr": "synaweave_job_failure_total", "legendFormat": "Failed jobs", "refId": "C"},
+        {"expr": "synaweave_runtime_readiness_error_total", "legendFormat": "Readiness errors", "refId": "D"}
+      ],
+      "title": "Failure and degraded-state snapshot",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "synaweave-prometheus"},
+      "fieldConfig": {"defaults": {"mappings": [], "thresholds": {"mode": "absolute", "steps": [{"color": "red", "value": null}, {"color": "green", "value": 1}]}, "unit": "short"}, "overrides": []},
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16},
+      "id": 6,
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "showThresholdLabels": false, "showThresholdMarkers": true},
+      "targets": [{"expr": "synaweave_runtime_ready", "legendFormat": "Runtime ready", "refId": "A"}],
+      "title": "Runtime readiness state",
+      "type": "gauge"
     }
   ],
   "refresh": "10s",
@@ -63,6 +88,6 @@
   "timezone": "browser",
   "title": "Sprint 1 Critical Path",
   "uid": "synaweave-sprint1-critical-path",
-  "version": 1,
+  "version": 2,
   "weekStart": ""
 }
