@@ -17,6 +17,7 @@ TL;DR  -->  verify the FastAPI runtime path for auth writes jobs metrics and own
 
 from __future__ import annotations
 
+import subprocess
 import unittest
 from unittest.mock import patch
 
@@ -56,6 +57,7 @@ class RuntimeApiTest(unittest.TestCase):
             json={"workspaceId": workspace_id, "waitForFinish": True},
         )
         self.assertEqual(job.status_code, 200)
+        self.assertEqual(job.json()["status"], "ok")
         self.assertEqual(job.json()["payload"]["state"], "succeeded")
 
         bootstrap = client.get("/v1/workspace/bootstrap", headers=headers)
@@ -131,6 +133,90 @@ class RuntimeApiTest(unittest.TestCase):
         self.assertEqual(response.status_code, 503)
         self.assertEqual(response.json()["status"], "not_ready")
         self.assertFalse(response.json()["payload"]["dbReady"])
+
+    def test_telemetry_emit_accepts_degraded_status(self) -> None:
+        response = client.post(
+            "/v1/telemetry/emit",
+            json={
+                "surface": "web",
+                "name": "web_workspace_bootstrap",
+                "status": "degraded",
+                "durationMs": 12.5,
+                "traceId": "web_trace_degraded",
+                "detail": "transient:504:upstream timeout",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["status"], "accepted")
+        self.assertEqual(response.json()["payload"]["status"], "degraded")
+
+    def test_waited_job_returns_failed_truth_when_ingest_subprocess_fails(self) -> None:
+        auth = client.post(
+            "/v1/auth/link",
+            json={"email": "job-failure@example.com", "surface": "web"},
+        )
+        token = auth.json()["payload"]["token"]
+        workspace_id = auth.json()["payload"]["workspace"]["workspace"]["workspaceId"]
+
+        with patch(
+            "apps.api.main.subprocess.run",
+            side_effect=subprocess.CalledProcessError(1, ["python3", "-m", "apps.ingest.main"]),
+        ):
+            response = client.post(
+                "/v1/jobs/workspace",
+                headers={
+                    "Authorization": f"Bearer {token}",
+                    "Idempotency-Key": "api-runtime-failure",
+                },
+                json={"workspaceId": workspace_id, "waitForFinish": True},
+            )
+
+        self.assertEqual(response.status_code, 502)
+        self.assertEqual(response.json()["status"], "error")
+        self.assertEqual(response.json()["payload"]["state"], "failed")
+        self.assertIn("ingest execution failed", response.json()["payload"]["summary"].lower())
+        self.assertIn("CalledProcessError", response.json()["payload"]["error_detail"])
+
+        job_id = response.json()["payload"]["job_id"]
+        read_response = client.get(
+            f"/v1/jobs/{job_id}",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        self.assertEqual(read_response.status_code, 200)
+        self.assertEqual(read_response.json()["payload"]["state"], "failed")
+
+    def test_waited_job_timeout_returns_retryable_degraded_failure(self) -> None:
+        auth = client.post(
+            "/v1/auth/link",
+            json={"email": "job-timeout@example.com", "surface": "web"},
+        )
+        token = auth.json()["payload"]["token"]
+        workspace_id = auth.json()["payload"]["workspace"]["workspace"]["workspaceId"]
+
+        with patch(
+            "apps.api.main.subprocess.run",
+            side_effect=subprocess.TimeoutExpired(
+                cmd=["python3", "-m", "apps.ingest.main"],
+                timeout=15,
+            ),
+        ):
+            response = client.post(
+                "/v1/jobs/workspace",
+                headers={
+                    "Authorization": f"Bearer {token}",
+                    "Idempotency-Key": "api-runtime-timeout",
+                },
+                json={"workspaceId": workspace_id, "waitForFinish": True},
+            )
+
+        self.assertEqual(response.status_code, 504)
+        self.assertEqual(response.headers["Retry-After"], "15")
+        self.assertEqual(response.json()["status"], "degraded")
+        self.assertTrue(response.json()["retryable"])
+        self.assertEqual(response.json()["payload"]["state"], "failed")
+        self.assertIn("timed out", response.json()["detail"].lower())
+        self.assertIn("TimeoutExpired", response.json()["payload"]["error_detail"])
 
 
 if __name__ == "__main__":
