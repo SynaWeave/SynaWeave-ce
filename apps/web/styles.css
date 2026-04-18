@@ -23,6 +23,8 @@ TL;DR  -->  style the first authenticated web control-plane shell for the Sprint
 	--muted: #8ea3c4;
 	--accent: #61d0ff;
 	--border: #24456f;
+	--warn-border: #dca551;
+	--warn-surface: #39260f;
 }
 
 /* ---------- box model ---------- */
@@ -58,6 +60,11 @@ body {
 	border-radius: 1rem;
 	background: color-mix(in srgb, var(--surface) 92%, black 8%);
 	box-shadow: 0 14px 40px rgba(0, 0, 0, 0.24);
+}
+
+.degraded {
+	border-color: var(--warn-border);
+	background: color-mix(in srgb, var(--warn-surface) 80%, var(--surface) 20%);
 }
 
 .hidden {
