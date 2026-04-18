@@ -28,13 +28,23 @@ from typing import Any
 
 from python.common.runtime_auth import make_bridge_code, make_token, normalize_email
 from python.common.runtime_paths import (
+    backend_log_path,
     baseline_path,
     db_path,
+    measurements_history_path,
     metrics_path,
     runtime_dir,
     trace_path,
 )
 from python.common.runtime_time import utc_now_iso
+
+
+class JobExecutionError(RuntimeError):
+    def __init__(self, job_id: str, summary: str, error_detail: str) -> None:
+        super().__init__(summary)
+        self.job_id = job_id
+        self.summary = summary
+        self.error_detail = error_detail
 
 
 # ---------- sqlite helpers ----------
@@ -152,6 +162,20 @@ class RuntimeStore:
         )
         with self._session() as connection:
             connection.executescript(schema_text)
+            self._ensure_column(connection, "jobs", "error_detail", "text not null default ''")
+            self._ensure_column(connection, "jobs", "retry_count", "integer not null default 0")
+
+    def _ensure_column(
+        self,
+        connection: sqlite3.Connection,
+        table_name: str,
+        column_name: str,
+        column_sql: str,
+    ) -> None:
+        columns = connection.execute(f"pragma table_info({table_name})").fetchall()
+        if any(column["name"] == column_name for column in columns):
+            return
+        connection.execute(f"alter table {table_name} add column {column_name} {column_sql}")
 
     # ---------- readiness ----------
     # Keep readiness explicit so operators can distinguish startup from missing runtime state.
@@ -359,6 +383,41 @@ class RuntimeStore:
             "createdAt": created_at,
         }
 
+    # ---------- backend logs ----------
+    # Keep backend logs structured and durable so API and ingest correlation survives local replay.
+    def record_backend_event(
+        self,
+        *,
+        component: str,
+        event: str,
+        level: str = "info",
+        trace_id: str = "",
+        request_id: str = "",
+        job_id: str = "",
+        workspace_id: str = "",
+        user_id: str = "",
+        status: str = "",
+        detail: str = "",
+        fields: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        payload = {
+            "ts": utc_now_iso(),
+            "component": component,
+            "event": event,
+            "level": level,
+            "trace_id": trace_id,
+            "request_id": request_id,
+            "job_id": job_id,
+            "workspace_id": workspace_id,
+            "user_id": user_id,
+            "status": status,
+            "detail": detail,
+            "fields": fields or {},
+        }
+        with backend_log_path().open("a", encoding="utf-8") as handle:
+            handle.write(json.dumps(payload, sort_keys=True) + "\n")
+        return payload
+
     # ---------- job queue ----------
     # Keep idempotency explicit so repeated user clicks do not create unbounded duplicate job rows.
     def create_job(self, token: str, workspace_id: str, idempotency_key: str) -> dict[str, Any]:
@@ -382,8 +441,8 @@ class RuntimeStore:
                 (
                     "insert into jobs "
                     "(job_id, workspace_id, user_id, state, idempotency_key, summary, "
-                    "created_at, finished_at) "
-                    "values (?, ?, ?, ?, ?, ?, ?, ?)"
+                    "created_at, finished_at, error_detail, retry_count) "
+                    "values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
                 ),
                 (
                     job_id,
@@ -391,12 +450,40 @@ class RuntimeStore:
                     user_id,
                     "queued",
                     idempotency_key,
-                    "",
+                    "Queued for workspace digest generation.",
                     created_at,
                     None,
+                    "",
+                    0,
                 ),
             )
         return self.job_view(job_id, user_id=user_id)
+
+    def mark_job_failed(self, job_id: str, *, summary: str, error_detail: str) -> dict[str, Any]:
+        finished_at = utc_now_iso()
+        with self._session() as connection:
+            job = connection.execute(
+                "select * from jobs where job_id = ?",
+                (job_id,),
+            ).fetchone()
+            if job is None:
+                raise KeyError("unknown job")
+            connection.execute(
+                (
+                    "update jobs set state = ?, summary = ?, error_detail = ?, "
+                    "finished_at = ? where job_id = ?"
+                ),
+                ("failed", summary, error_detail, finished_at, job_id),
+            )
+        self.emit_telemetry(
+            surface="ingest",
+            name="workspace_digest_v1",
+            status="error",
+            duration_ms=0.0,
+            trace_id=f"trc_{job_id}",
+            detail=summary,
+        )
+        return self.job_view(job_id)
 
     # ---------- job read ----------
     # Keep job reads separate so browser polling stays simple and consistent.
@@ -415,6 +502,9 @@ class RuntimeStore:
     # ---------- job execution ----------
     # Keep the first job proof deterministic by summarizing recent actions into one digest.
     def run_job(self, job_id: str) -> dict[str, Any]:
+        failure: JobExecutionError | None = None
+        eval_row: dict[str, Any] | None = None
+        summary = ""
         with self._session() as connection:
             job = connection.execute(
                 "select * from jobs where job_id = ?",
@@ -424,32 +514,73 @@ class RuntimeStore:
                 raise KeyError("unknown job")
             if job["state"] == "succeeded":
                 return job
+            retry_count = job["retry_count"] + 1 if job["state"] == "failed" else job["retry_count"]
             connection.execute(
-                "update jobs set state = ? where job_id = ?",
-                ("running", job_id),
+                (
+                    "update jobs set state = ?, summary = ?, finished_at = ?, "
+                    "error_detail = ?, retry_count = ? where job_id = ?"
+                ),
+                (
+                    "running",
+                    "Running workspace digest generation.",
+                    None,
+                    "",
+                    retry_count,
+                    job_id,
+                ),
             )
-            actions = connection.execute(
-                "select * from actions where workspace_id = ? order by created_at desc limit 5",
-                (job["workspace_id"],),
-            ).fetchall()
-            summary = self._make_digest(actions)
-            finished_at = utc_now_iso()
-            connection.execute(
-                "update jobs set state = ?, summary = ?, finished_at = ? where job_id = ?",
-                ("succeeded", summary, finished_at, job_id),
+            stage = "digest generation"
+            try:
+                actions = connection.execute(
+                    "select * from actions where workspace_id = ? order by created_at desc limit 5",
+                    (job["workspace_id"],),
+                ).fetchall()
+                summary = self._make_digest(actions)
+                stage = "evaluation"
+                eval_row = self._write_eval(connection, job["workspace_id"], summary)
+                finished_at = utc_now_iso()
+                connection.execute(
+                    (
+                        "update jobs set state = ?, summary = ?, finished_at = ?, "
+                        "error_detail = ? where job_id = ?"
+                    ),
+                    ("succeeded", summary, finished_at, "", job_id),
+                )
+                connection.execute(
+                    "update workspaces set last_digest = ?, updated_at = ? where workspace_id = ?",
+                    (summary, finished_at, job["workspace_id"]),
+                )
+            except Exception as exc:
+                error_detail = f"{type(exc).__name__}: {exc}"
+                failure_summary = (
+                    f"Workspace digest {stage} failed. Check error_detail for more detail."
+                )
+                finished_at = utc_now_iso()
+                connection.execute(
+                    (
+                        "update jobs set state = ?, summary = ?, error_detail = ?, "
+                        "finished_at = ? where job_id = ?"
+                    ),
+                    ("failed", failure_summary, error_detail, finished_at, job_id),
+                )
+                failure = JobExecutionError(job_id, failure_summary, error_detail)
+        if failure is not None:
+            self.emit_telemetry(
+                surface="ingest",
+                name="workspace_digest_v1",
+                status="error",
+                duration_ms=0.0,
+                trace_id=f"trc_{job_id}",
+                detail=failure.summary,
             )
-            connection.execute(
-                "update workspaces set last_digest = ?, updated_at = ? where workspace_id = ?",
-                (summary, finished_at, job["workspace_id"]),
-            )
-            eval_row = self._write_eval(connection, job["workspace_id"], summary)
+            raise failure
         self.emit_telemetry(
             surface="ingest",
             name="workspace_digest_v1",
             status="ok",
             duration_ms=float(len(summary) + 25),
             trace_id=f"trc_{job_id}",
-            cost_micros=eval_row["cost_micros"],
+            cost_micros=0 if eval_row is None else eval_row["cost_micros"],
             detail=summary,
         )
         return self.job_view(job_id)
@@ -536,19 +667,31 @@ class RuntimeStore:
             f'synaweave_auth_success_total {snapshot["auth_success_total"]}',
             f'synaweave_workspace_action_total {snapshot["workspace_action_total"]}',
             f'synaweave_job_success_total {snapshot["job_success_total"]}',
+            f'synaweave_job_failure_total {snapshot["job_failure_total"]}',
+            f'synaweave_degraded_event_total {snapshot["degraded_event_total"]}',
             f'synaweave_trace_event_total {snapshot["trace_event_total"]}',
             f'synaweave_api_latency_p95_ms {snapshot["api_latency_p95_ms"]}',
             f'synaweave_job_duration_p95_ms {snapshot["job_duration_p95_ms"]}',
             f'synaweave_workspace_entry_timing_ms {snapshot["workspace_entry_timing_ms"]}',
             f'synaweave_ai_ready_trace_coverage {snapshot["ai_ready_trace_coverage"]}',
+            f'synaweave_api_error_total {snapshot["api_error_total"]}',
+            f'synaweave_ingest_error_total {snapshot["ingest_error_total"]}',
+            f'synaweave_runtime_ready {snapshot["runtime_ready"]}',
+            (
+                "synaweave_runtime_readiness_error_total "
+                f'{snapshot["runtime_readiness_error_total"]}'
+            ),
         ]
         metrics_path().write_text(json.dumps(snapshot, indent=2, sort_keys=True), encoding="utf-8")
         baseline_path().write_text(json.dumps(snapshot, indent=2, sort_keys=True), encoding="utf-8")
+        with measurements_history_path().open("a", encoding="utf-8") as handle:
+            handle.write(json.dumps(snapshot, sort_keys=True) + "\n")
         return "\n".join(lines) + "\n"
 
     # ---------- metrics snapshot ----------
     # Keep baseline metrics comparison-ready before a dedicated observability backend exists.
     def metrics_snapshot(self) -> dict[str, Any]:
+        readiness = self.readiness_status()
         with self._session() as connection:
             telemetry_rows = connection.execute(
                 "select * from telemetry order by created_at asc"
@@ -561,6 +704,9 @@ class RuntimeStore:
             ).fetchone()["count"]
             job_success_total = connection.execute(
                 "select count(*) as count from jobs where state = 'succeeded'"
+            ).fetchone()["count"]
+            job_failure_total = connection.execute(
+                "select count(*) as count from jobs where state = 'failed'"
             ).fetchone()["count"]
             traced_job_total = connection.execute(
                 (
@@ -580,11 +726,25 @@ class RuntimeStore:
             for row in telemetry_rows
             if row["name"] in {"web_workspace_bootstrap", "extension_workspace_bootstrap"}
         ]
+        api_error_total = len(
+            [row for row in telemetry_rows if row["surface"] == "api" and row["status"] == "error"]
+        )
+        ingest_error_total = len(
+            [
+                row
+                for row in telemetry_rows
+                if row["surface"] == "ingest" and row["status"] == "error"
+            ]
+        )
+        degraded_event_total = len(
+            [row for row in telemetry_rows if row["status"] == "degraded"]
+        )
         return {
             "captured_at": utc_now_iso(),
             "auth_success_total": auth_success_total,
             "workspace_action_total": workspace_action_total,
             "job_success_total": job_success_total,
+            "job_failure_total": job_failure_total,
             "trace_event_total": len(telemetry_rows),
             "api_latency_p95_ms": self._p95(api_latencies),
             "job_duration_p95_ms": self._p95(job_latencies),
@@ -595,7 +755,37 @@ class RuntimeStore:
             )
             if job_success_total
             else 0.0,
+            "api_error_total": api_error_total,
+            "ingest_error_total": ingest_error_total,
+            "degraded_event_total": degraded_event_total,
+            "runtime_ready": 1 if readiness["dbReady"] and readiness["telemetryReady"] else 0,
+            "runtime_readiness_error_total": len(readiness["errors"]),
+            "api_hotspots": self._operation_hotspots(telemetry_rows, surface="api"),
+            "ingest_hotspots": self._operation_hotspots(telemetry_rows, surface="ingest"),
         }
+
+    def _operation_hotspots(
+        self, telemetry_rows: list[dict[str, Any]], *, surface: str
+    ) -> list[dict[str, Any]]:
+        grouped: dict[str, list[dict[str, Any]]] = {}
+        for row in telemetry_rows:
+            if row["surface"] != surface:
+                continue
+            grouped.setdefault(row["name"], []).append(row)
+        hotspots = [
+            {
+                "name": name,
+                "call_total": len(rows),
+                "error_total": len([row for row in rows if row["status"] == "error"]),
+                "p95_ms": self._p95([float(row["duration_ms"]) for row in rows]),
+            }
+            for name, rows in grouped.items()
+        ]
+        return sorted(
+            hotspots,
+            key=lambda row: (row["error_total"], row["p95_ms"], row["call_total"]),
+            reverse=True,
+        )[:3]
 
     # ---------- p95 helper ----------
     # Keep percentile math dependency-free so the first baseline remains easy to run anywhere.
