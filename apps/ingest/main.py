@@ -24,8 +24,8 @@ import os
 
 from opentelemetry import trace
 
-from python.common.observability import extract_trace_context, init_tracing
-from python.common.runtime_store import RuntimeStore
+from python.common.observability import current_trace_id, extract_trace_context, init_tracing
+from python.common.runtime_store import JobExecutionError, RuntimeStore
 
 # ---------- worker bootstrap ----------
 # Keep one shared store instance because each CLI invocation only needs bounded local work.
@@ -45,9 +45,39 @@ def run_job(job_id: str) -> dict[str, object]:
         context=extract_trace_context(carrier),
         kind=trace.SpanKind.CONSUMER,
     ) as span:
+        trace_id = current_trace_id()
         span.set_attribute("synaweave.job_id", job_id)
         span.set_attribute("synaweave.runtime", "ingest")
-        return store.run_job(job_id)
+        store.record_backend_event(
+            component="ingest",
+            event="workspace_job.started",
+            trace_id=trace_id,
+            job_id=job_id,
+            status="running",
+        )
+        try:
+            result = store.run_job(job_id)
+        except Exception as exc:
+            store.record_backend_event(
+                component="ingest",
+                event="workspace_job.failed",
+                level="error",
+                trace_id=trace_id,
+                job_id=job_id,
+                status="error",
+                detail=str(exc),
+            )
+            raise
+        store.record_backend_event(
+            component="ingest",
+            event="workspace_job.succeeded",
+            trace_id=trace_id,
+            job_id=job_id,
+            workspace_id=str(result.get("workspace_id", "")),
+            user_id=str(result.get("user_id", "")),
+            status=str(result.get("state", "")),
+        )
+        return result
 
 
 # ---------- cli parsing ----------
@@ -62,8 +92,12 @@ def parse_args() -> argparse.Namespace:
 # Print JSON so local operators and tests can inspect worker output without extra tooling.
 def main() -> int:
     args = parse_args()
-    print(json.dumps(run_job(args.job_id), sort_keys=True))
-    return 0
+    try:
+        print(json.dumps(run_job(args.job_id), sort_keys=True))
+        return 0
+    except JobExecutionError:
+        print(json.dumps(store.job_view(args.job_id), sort_keys=True))
+        return 1
 
 
 if __name__ == "__main__":
