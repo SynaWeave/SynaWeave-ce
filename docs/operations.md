@@ -68,7 +68,7 @@ What it does **not** yet prove as operational truth:
 
 * cloud deployment proof
 * integrated graph, retrieval, or AI product flows
-* full D3 automation and enforcement across browser accessibility, broader observability, and hosted branch controls
+* managed observability backends, deployed edge routing, or GitHub-side branch controls beyond the repo-local and documented hosted evidence already established
 
 ## 📦 Current surface status
 
@@ -111,7 +111,7 @@ Operational notes:
 
 ### 🧰 MCP
 
-Current status: **integrated**
+Current status: **scaffolded**
 
 Operational notes:
 
@@ -160,7 +160,7 @@ Operational notes:
 * `python3 -m tools.verify.main` is the repo-contained proof point for the D1 control baseline, so this section should not stay at **scaffolded** once those controls are aligned and passing locally
 * the hosted `repo-verify` workflow runs `bun run verify`, and that root script now includes ADR validation alongside the other repo-level checks
 * the hosted `dependency-installability` workflow verifies clean Bun installs and direct Python dev-tool pins from the checked-in manifests without mutating the checked-out repository
-* local runtime metrics snapshots, JSONL traces, and sqlite-backed telemetry rows are generated under `build/runtime/` after exercising the runtime path or calling `/metrics`; they are local build artifacts, not tracked repo evidence
+* local runtime metrics snapshots, measurement-history JSONL, backend correlation JSONL, traces, and sqlite-backed telemetry rows are generated under `build/runtime/` after exercising the runtime path or calling `/metrics`; they are local build artifacts, not tracked repo evidence
 * `python3 -m python.evaluation.runtime_eval` now regenerates versioned repo-local proof under `testing/evals/artifacts/runtime-digest-density.local-proof.v1.json` and `testing/performance/runtime-baseline.local-proof.v1.json`
 * the tracked proof artifacts are derived from actual runtime-store telemetry and eval writes, not from manual target notes alone
 * those repo-local eval and performance artifacts do not by themselves prove collector export; collector-routed trace proof is a separate local compose-backed path
@@ -187,7 +187,7 @@ Operational notes:
 * session state persists in browser storage across refresh or panel reopen within the bounded local proof path
 * backend identity verification succeeds through bearer-token lookup at the API boundary
 * browser bundles contain no privileged credentials in the current runtime slice
-* this remains a local Sprint 1 proof path, not the final production auth provider
+* this remains an adapter-first Sprint 1 proof path, with Supabase-compatible auth as the default target rather than a permanent provider lock-in
 
 ## 🗃️ Current data-plane status
 
@@ -202,7 +202,7 @@ Operational notes:
 
 ### 🪣 Artifact storage
 
-Current status: **integrated**
+Current status: **planned**
 
 Target operational truth:
 
@@ -215,7 +215,7 @@ Target operational truth:
 
 ### 🕸️ Graph store
 
-Current status: **integrated**
+Current status: **planned**
 
 Target operational truth:
 
@@ -237,11 +237,14 @@ Operational notes:
 * API and ingest export OpenTelemetry traces through the local collector when the compose stack or matching env is enabled
 * web and extension requests send W3C `traceparent` headers for request continuity, but they do not yet run full browser OTel SDK instrumentation
 * local metrics remain queryable through `/metrics`, Prometheus, and the versioned Grafana dashboard plus alert rules under `infra/docker/`
+* API middleware and ingest now write structured backend correlation logs under `build/runtime/backend-logs.jsonl` so request ids, trace ids, and job ids can be compared across the critical path
+* `/metrics` and `/v1/baseline` now append durable measurement history under `build/runtime/measurements.jsonl`, including hotspot summaries and failure or degraded-state counts that the dashboard and alerts expose where the current architecture supports them
 * the reproducible critical-path probe lives at `python3 -m tools.observability.critical_path_probe`
-* `python3 -m python.evaluation.runtime_eval` now writes repo-local telemetry-derived eval and performance artifacts plus one real local MLflow run, but not collector export by itself
+* `python3 -m python.evaluation.runtime_eval` now writes repo-local telemetry-derived eval and performance artifacts plus one self-hosted local MLflow run, but not collector export by itself
 * `python3 -m python.evaluation.langfuse_local_proof` proves one self-hosted local Langfuse trace and score write plus query path from the Sprint 1 dataset
-* `python3 -m python.evaluation.verify_mlflow_run` verifies that the latest repo-local MLflow run exists with the expected metrics and artifacts
-* hosted Langfuse operations, hosted or team-shared MLflow proof, and fuller browser-native observability proof remain incomplete and must not be described as finished runtime truth
+* `python3 -m python.evaluation.verify_mlflow_run` verifies that the latest self-hosted local MLflow run exists with the expected metrics and artifacts
+* managed Langfuse operations, managed or team-shared MLflow durability, and fuller browser-native observability proof remain later follow-on work rather than current runtime truth
+* critical-path observability claims are only durable when the branch records them through versioned dashboards or alerts, machine-readable proof artifacts, or replayable local stores
 
 ## ✅ Current testing status
 
@@ -258,6 +261,16 @@ Operational notes:
 * `testing/evals/fixtures/runtime-digest-density.v1.json` is the versioned Sprint 1 synthetic eval dataset
 * `testing/evals/artifacts/` and `testing/performance/runtime-baseline.local-proof.v1.json` now hold tracked repo-local machine-readable proof generated from the eval harness
 * those tracked artifacts prove the runtime-eval harness path, while compose-backed collector exports remain a separate observability proof path
+
+## 🔌 Current edge and gateway posture
+
+Current status: **planned**
+
+Operational notes:
+
+* edge, CDN, and API gateway providers remain intentionally undecided in Sprint 1
+* the current branch preserves those seams behind adapters and contract-stable public boundaries
+* later activation must update this file when a concrete provider becomes bootable or integrated
 
 ## 🚦 Current CI and governance status
 
