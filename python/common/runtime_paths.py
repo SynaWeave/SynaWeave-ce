@@ -17,6 +17,8 @@ TL;DR  -->  centralize deterministic local runtime state paths for the first pro
     --> `metrics_path()`
     --> `baseline_path()`
     --> `collector_trace_export_path()`
+    --> `backend_log_path()`
+    --> `measurements_history_path()`
 
 - Consumed By:
     --> API ingest telemetry and runtime tests that need one deterministic local state home
@@ -67,6 +69,14 @@ def metrics_path() -> Path:
 
 def baseline_path() -> Path:
     return runtime_dir() / "baseline.json"
+
+
+def backend_log_path() -> Path:
+    return runtime_dir() / "backend-logs.jsonl"
+
+
+def measurements_history_path() -> Path:
+    return runtime_dir() / "measurements.jsonl"
 
 
 def collector_trace_export_path() -> Path:
