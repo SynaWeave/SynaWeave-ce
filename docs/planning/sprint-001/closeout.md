@@ -4,13 +4,13 @@
 
 Sprint 1 now proves one truthful local runtime slice across web, extension, API, ingest, and a shared sqlite-backed runtime store.
 
-This closeout records that D2 runtime proof is in place and that the repo-local D3 stack is substantively complete. The strongest honest remaining gap is **one external GitHub-hosted proof point**: showing that dependency-review executes on a real pull-request path instead of skipping. Everything else claimed here is explicitly labeled as either repo-local proof or already-proven GitHub-hosted enforcement.
+This closeout records one bounded local Sprint 1 runtime and quality baseline after the current backend and browser fixes. It describes what this branch proves locally, what has repo-hosted evidence, and what still remains outside the bounded Sprint 1 proof surface.
 
-## 2. ✅ What closed
+## 2. ✅ What this branch proves
 
 ### 2.1 ⚙️ D2 runtime proof
 
-The repo now contains a real bounded runtime path across:
+The repo now proves one real bounded runtime path across:
 
 - `apps/extension/`
 - `apps/web/`
@@ -30,11 +30,12 @@ The path proves:
 
 ### 2.2 👀 Repo-local D3 proof baseline
 
-The repo now contains D3 evidence inputs and local reproduction paths for the runtime slice:
+The repo now contains bounded D3 evidence inputs and local reproduction paths for the runtime slice:
 
 - durable telemetry rows and trace-like JSONL output generated under `build/runtime/` after running the local runtime slice
 - collector-routed OpenTelemetry trace exports for API and ingest generated under `build/observability/collector-traces.json` when the local compose stack is running
 - baseline metrics snapshots generated under `build/runtime/baseline.json` and `build/runtime/metrics.json` after exercising the runtime path and calling `/metrics` or `/v1/baseline`
+- durable backend correlation logs and measurement history generated under `build/runtime/backend-logs.jsonl` and `build/runtime/measurements.jsonl` for replay-to-replay comparison of the API and job critical path
 - automated browser accessibility proof under `testing/accessibility/` plus enforced Playwright coverage for the web shell and packaged extension panel document within the bounded local browser slice
 - versioned synthetic eval fixture under `testing/evals/fixtures/runtime-digest-density.v1.json`
 - versioned repo-local eval proof under `testing/evals/artifacts/runtime-digest-density.local-proof.v1.json`, generated from the runtime-eval harness rather than the collector path
@@ -45,15 +46,16 @@ The repo now contains D3 evidence inputs and local reproduction paths for the ru
 - versioned Prometheus alert rules plus Grafana provisioning and dashboard artifacts under `infra/docker/`
 - reproducible local trace and metrics replay through `python3 -m tools.observability.critical_path_probe`
 - runtime-focused unit proof under `testing/unit/`
-- GitHub-hosted proof already established in this session for ruleset-required checks, CodeQL, secret scanning, and push protection
+- hosted proof for ruleset-required checks, CodeQL, secret scanning, and push protection belongs on real pull-request and platform enforcement paths rather than in the repo-local replay alone
 
 ## 3. 🚫 What this file does not claim
 
 This file does **not** claim more than the evidence supports:
 
 - repo-local proof covers browser automation enforcement, collector-routed local observability, local metrics and baseline artifacts, repo-local MLflow proof, and bounded self-hosted local Langfuse proof
-- GitHub-hosted proof is already established in this session for ruleset-required checks, CodeQL, secret scanning, and push protection
-- full D3 closeout still depends on exactly one external GitHub-hosted proof point: a real PR-path `dependency-review` execution that does not skip
+- this file does not treat repo-local replay as proof of hosted ruleset-required checks, CodeQL, secret scanning, or push protection
+- managed Langfuse or managed MLflow operations remain later deployment choices rather than current Sprint 1 proof
+- edge, CDN, and API gateway providers remain intentionally undecided behind adapters
 - this file does not upgrade repo-local Langfuse or MLflow evidence into hosted/team-shared durability claims
 - this file does not claim managed Cloud Run deployment proof
 
@@ -82,4 +84,4 @@ bun run verify
 
 ## 6. 📌 Handoff note
 
-Sprint 2 can build against a real local runtime baseline plus enforced browser automation, tracked repo-local eval and performance artifacts, local MLflow proof, self-hosted local Langfuse proof, collector-routed observability proof, and already-proven GitHub-hosted ruleset and scanning enforcement. The strongest remaining D3 blocker is narrow and external: prove one non-skipped `dependency-review` run on a real GitHub pull-request path, then update closeout language from “earned except for one external PR-path proof” to fully closed.
+Sprint 2 can build against a real local runtime baseline plus enforced browser automation, tracked repo-local eval and performance artifacts, self-hosted local MLflow proof, self-hosted local Langfuse proof, and collector-routed observability proof. Hosted required checks and platform enforcement remain PR-path and GitHub-platform evidence rather than repo-local closeout proof, while managed observability backends and concrete edge-routing providers remain follow-on work behind the Sprint 1 adapter and evidence boundaries.
