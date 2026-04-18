@@ -20,8 +20,10 @@ from __future__ import annotations
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
-from python.common.runtime_store import RuntimeStore
+from python.common.runtime_paths import measurements_history_path
+from python.common.runtime_store import JobExecutionError, RuntimeStore
 
 
 # ---------- runtime store tests ----------
@@ -106,7 +108,78 @@ class RuntimeStoreTest(unittest.TestCase):
         self.assertGreaterEqual(snapshot["job_success_total"], 1)
         self.assertEqual(snapshot["workspace_entry_timing_ms"], 123.0)
         self.assertEqual(snapshot["ai_ready_trace_coverage"], 1.0)
+        self.assertEqual(snapshot["job_failure_total"], 0)
+        self.assertEqual(snapshot["ingest_error_total"], 0)
+        self.assertEqual(snapshot["degraded_event_total"], 0)
+        self.assertEqual(snapshot["runtime_ready"], 1)
         self.assertNotIn("side_panel_open_timing_ms", snapshot)
+
+    def test_job_failure_persists_error_detail_and_allows_retry(self) -> None:
+        store = self.make_store()
+        session = store.create_session("failure@example.com", "web")
+        token = session["token"]
+        workspace_id = session["workspace"]["workspace"]["workspaceId"]
+        store.record_action(token, "note", "provider fallback must stay truthful", "web")
+        job = store.create_job(token, workspace_id, "idem-runtime-failure")
+
+        with patch.object(store, "_write_eval", side_effect=RuntimeError("provider offline")):
+            with self.assertRaises(JobExecutionError):
+                store.run_job(job["job_id"])
+
+        failed = store.job_view(job["job_id"])
+        self.assertEqual(failed["state"], "failed")
+        self.assertIn("evaluation failed", failed["summary"].lower())
+        self.assertIn("RuntimeError: provider offline", failed["error_detail"])
+        self.assertEqual(failed["retry_count"], 0)
+
+        retried = store.create_job(token, workspace_id, "idem-runtime-failure")
+        self.assertEqual(retried["job_id"], job["job_id"])
+
+        finished = store.run_job(job["job_id"])
+        self.assertEqual(finished["state"], "succeeded")
+        self.assertEqual(finished["retry_count"], 1)
+        self.assertEqual(finished["error_detail"], "")
+
+    def test_metrics_text_appends_measurement_history_with_hotspots(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir_name:
+            runtime_dir = Path(temp_dir_name)
+            with patch.dict("os.environ", {"SYNAWEAVE_RUNTIME_DIR": str(runtime_dir)}):
+                store = RuntimeStore(runtime_dir / "runtime.sqlite3")
+                store.emit_telemetry(
+                    surface="api",
+                    name="GET /v1/identity",
+                    status="error",
+                    duration_ms=250.0,
+                    trace_id="api_trace_1",
+                )
+                store.emit_telemetry(
+                    surface="api",
+                    name="GET /v1/identity",
+                    status="ok",
+                    duration_ms=125.0,
+                    trace_id="api_trace_2",
+                )
+                store.emit_telemetry(
+                    surface="web",
+                    name="web_workspace_bootstrap",
+                    status="degraded",
+                    duration_ms=90.0,
+                    trace_id="web_trace_degraded",
+                )
+
+                store.metrics_text()
+                store.metrics_text()
+                snapshot = store.metrics_snapshot()
+
+                measurement_rows = [
+                    line
+                    for line in measurements_history_path().read_text(encoding="utf-8").splitlines()
+                    if line.strip()
+                ]
+
+        self.assertEqual(len(measurement_rows), 2)
+        self.assertIn("GET /v1/identity", measurement_rows[-1])
+        self.assertEqual(snapshot["degraded_event_total"], 1)
 
 
 if __name__ == "__main__":
