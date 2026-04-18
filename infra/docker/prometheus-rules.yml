@@ -36,3 +36,19 @@ groups:
           service: observability
         annotations:
           summary: The job critical path lost durable trace coverage for at least one succeeded run.
+      - alert: SynaWeaveRuntimeNotReady
+        expr: synaweave_runtime_ready < 1
+        for: 1m
+        labels:
+          severity: warning
+          service: api
+        annotations:
+          summary: The bounded runtime is degraded because readiness dependencies are not all healthy.
+      - alert: SynaWeaveJobFailuresDetected
+        expr: synaweave_job_failure_total > 0
+        for: 1m
+        labels:
+          severity: warning
+          service: ingest
+        annotations:
+          summary: At least one Sprint 1 critical-path job ended in a failed state.
