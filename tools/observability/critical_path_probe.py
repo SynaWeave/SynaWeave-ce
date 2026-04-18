@@ -28,7 +28,11 @@ from pathlib import Path
 
 import httpx
 
-from python.common.runtime_paths import collector_trace_export_path
+from python.common.runtime_paths import (
+    backend_log_path,
+    collector_trace_export_path,
+    measurements_history_path,
+)
 
 
 # ---------- cli parsing ----------
@@ -107,14 +111,24 @@ def main() -> int:
         "synaweave_api_latency_p95_ms",
         "synaweave_job_duration_p95_ms",
         "synaweave_ai_ready_trace_coverage",
+        "synaweave_job_failure_total",
+        "synaweave_runtime_ready",
     ]
     missing_metrics = [name for name in required_metrics if name not in metrics.text]
     if missing_metrics:
         raise RuntimeError(f"metrics output missed required names: {', '.join(missing_metrics)}")
+    measurement_history = measurements_history_path()
+    backend_logs = backend_log_path()
+    if not measurement_history.exists():
+        raise RuntimeError(f"metrics history file was not written to {measurement_history}")
+    if not backend_logs.exists():
+        raise RuntimeError(f"backend log file was not written to {backend_logs}")
 
     print(
         json.dumps(
             {
+                "backendLogBytes": backend_logs.stat().st_size,
+                "measurementHistoryBytes": measurement_history.stat().st_size,
                 "traceId": trace_id,
                 "traceparent": traceparent,
                 "metricsChecked": required_metrics,
