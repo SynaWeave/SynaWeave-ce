@@ -52,8 +52,9 @@ The platform’s baseline tools are locked as:
 * **Playwright** for UI, browser, and end-to-end verification
 * **Playwright + `@axe-core/playwright`** for automated accessibility checks
 * **schema-driven contract tests** for public APIs and serialized interfaces
-* **Langfuse-backed online evaluation discipline** for AI-facing behaviors
-* **MLflow-backed offline experiment and evaluation discipline** for repeatable offline proof
+* **Langfuse-backed online evaluation discipline** for AI-facing behaviors when hosted infra is reachable
+* **MLflow-backed offline experiment and evaluation discipline** for repeatable offline proof when hosted infra is reachable
+* **harness-backed repo-local eval artifacts** for bounded proof until those hosted systems are confirmed
 
 ## 🔄 Verification mapping
 
@@ -300,6 +301,7 @@ Verification of real user journeys that cross multiple boundaries.
 * e2e tests must remain small in number but high in value
 * flaky e2e tests are treated as quality bugs
 * extension-critical flows must be represented here, not only in manual testing
+* when Chromium hides browser-owned extension chrome from Playwright, the test must state the exact proof limit instead of overstating container coverage
 
 ## 🔐 `testing/security`
 
@@ -357,7 +359,7 @@ Verification of performance baselines, latency regressions, and timing-sensitive
 ### 🎯 Responsibilities
 
 * API latency smoke checks
-* extension side-panel open timing
+* extension panel document and workspace-entry timing within the bounded local proof
 * web shell render timing
 * bootstrap action latency
 * ingest job duration checks
@@ -376,6 +378,8 @@ Verification of performance baselines, latency regressions, and timing-sensitive
 * lightweight benchmark and timing scripts
 * CI timing artifacts
 * telemetry-derived baselines from Prometheus, Grafana, or runtime metrics
+* versioned repo-local proof artifacts under `testing/performance/` when hosted telemetry is not yet available
+* Playwright output artifacts for browser-side web-shell and extension timing evidence
 
 ### 📏 Rules
 
@@ -442,7 +446,7 @@ Verification of AI-, retrieval-, ranking-, and model-related behavior through re
 
 ### 🛠️ Approved tools
 
-* Langfuse evaluation workflows
+* Langfuse evaluation workflows when reachable
 * reproducible test harnesses
 * dataset fixtures
 * typed evaluation results
@@ -455,6 +459,7 @@ Verification of AI-, retrieval-, ranking-, and model-related behavior through re
 * evals must be versionable and reproducible
 * benchmark datasets must have stable names and ownership
 * no AI feature is considered complete without appropriate eval coverage
+* repo-local proof must be clearly labeled as local when hosted Langfuse or MLflow confirmation is still pending
 
 ## 🛠️ Approved testing tools by layer
 
@@ -469,7 +474,7 @@ Verification of AI-, retrieval-, ranking-, and model-related behavior through re
 * `testing/security/` → targeted scripts, runtime tests, and repo security integrations
 * `testing/performance/` → targeted timing scripts and telemetry-assisted smoke checks
 * `testing/accessibility/` → Playwright + `@axe-core/playwright`
-* `testing/evals/` → Langfuse-backed and harness-backed eval workflows
+* `testing/evals/` → Langfuse-backed when reachable, MLflow-backed for local offline proof, and harness-backed eval workflows
 
 ### 🚫 Tooling rule
 
@@ -604,7 +609,7 @@ Must update:
 
 * `testing/evals/`
 * any relevant integration tests
-* Langfuse trace and eval references if naming or behavior changed
+* Langfuse trace and eval references if naming or behavior changed and the hosted adapter path is in scope
 
 ### ⚙️ Config or secret-boundary change
 
@@ -636,6 +641,18 @@ Sprint 1 must have:
 * one synthetic eval run
 * one stable naming convention
 * one location for future prompt, retrieval, answer, and ranking eval expansion
+
+Current Sprint 1 repo-local proof path:
+
+* fixture: `testing/evals/fixtures/runtime-digest-density.v1.json`
+* eval artifact: `testing/evals/artifacts/runtime-digest-density.local-proof.v1.json`
+* Langfuse artifact: `testing/evals/artifacts/runtime-digest-density.langfuse-local-proof.v1.json`
+* performance artifact: `testing/performance/runtime-baseline.local-proof.v1.json`
+* regeneration command: `python3 -m python.evaluation.runtime_eval`
+* Langfuse proof command: `python3 -m python.evaluation.langfuse_local_proof`
+* MLflow verification probe: `python3 -m python.evaluation.verify_mlflow_run`
+
+These artifacts now prove repo-local runtime evaluation, telemetry-derived performance, one repo-local MLflow offline run, and one bounded self-hosted local Langfuse trace-plus-score path. They do **not** by themselves prove hosted Langfuse operations, hosted or team-shared MLflow durability, or GitHub-hosted merge controls.
 
 ## 📊 Test artifacts and retention
 

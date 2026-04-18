@@ -68,7 +68,7 @@ What it does **not** yet prove as operational truth:
 
 * cloud deployment proof
 * integrated graph, retrieval, or AI product flows
-* full D3 automation and enforcement across accessibility, observability, and hosted branch controls
+* full D3 automation and enforcement across browser accessibility, broader observability, and hosted branch controls
 
 ## 📦 Current surface status
 
@@ -161,9 +161,15 @@ Operational notes:
 * the hosted `repo-verify` workflow runs `bun run verify`, and that root script now includes ADR validation alongside the other repo-level checks
 * the hosted `dependency-installability` workflow verifies clean Bun installs and direct Python dev-tool pins from the checked-in manifests without mutating the checked-out repository
 * local runtime metrics snapshots, JSONL traces, and sqlite-backed telemetry rows are generated under `build/runtime/` after exercising the runtime path or calling `/metrics`; they are local build artifacts, not tracked repo evidence
+* `python3 -m python.evaluation.runtime_eval` now regenerates versioned repo-local proof under `testing/evals/artifacts/runtime-digest-density.local-proof.v1.json` and `testing/performance/runtime-baseline.local-proof.v1.json`
+* the tracked proof artifacts are derived from actual runtime-store telemetry and eval writes, not from manual target notes alone
+* those repo-local eval and performance artifacts do not by themselves prove collector export; collector-routed trace proof is a separate local compose-backed path
 * `infra/docker/` contains local Prometheus, collector, and Grafana scaffolds for the runtime slice
 * hosted merge enforcement such as GitHub rulesets, required checks, and secret-scanning posture still requires GitHub-side confirmation before this file claims platform-enforced protection
-* automated browser accessibility, collector-routed telemetry, and hosted deployment proof remain incomplete
+* automated browser smoke and accessibility checks now cover the local web shell plus the packaged extension panel document
+* Playwright now uses the packaged extension options harness to issue a real `chrome.sidePanel.open()` request and confirm that the side-panel runtime booted `popup.html`
+* the repo still does not claim direct DOM inspection of the browser-owned side-panel container itself because Chromium does not expose that chrome to Playwright here
+* collector-routed API and ingest telemetry is locally reproducible through the optional compose-backed observability stack, but fuller browser-native and hosted deployment proof remain incomplete
 
 ## ☁️ Current runtime model
 
@@ -209,7 +215,7 @@ Target operational truth:
 
 ### 🕸️ Graph store
 
-Current status: **planned**
+Current status: **integrated**
 
 Target operational truth:
 
@@ -222,14 +228,20 @@ None of these may be treated as operational until the relevant runtime paths and
 
 ## 👀 Current observability status
 
-Current status: **planned**
+Current status: **integrated**
 
 Operational notes:
 
-* API and ingest telemetry are durable and queryable through local files plus `/metrics` after a local runtime run emits events
-* web and extension surfaces emit runtime events through the API telemetry endpoint
-* Prometheus, Grafana, and collector files exist under `infra/docker/` as local scaffolds
-* Langfuse, full collector routing, and broader D3 observability proof are not yet operational truth
+* `infra/docker/docker-compose.yml` now runs the local API, collector, Prometheus, Grafana, and MLflow stack together
+* `infra/docker/langfuse-compose.yml` now offers a separate bounded self-hosted Langfuse proof stack for one local trace-plus-score path
+* API and ingest export OpenTelemetry traces through the local collector when the compose stack or matching env is enabled
+* web and extension requests send W3C `traceparent` headers for request continuity, but they do not yet run full browser OTel SDK instrumentation
+* local metrics remain queryable through `/metrics`, Prometheus, and the versioned Grafana dashboard plus alert rules under `infra/docker/`
+* the reproducible critical-path probe lives at `python3 -m tools.observability.critical_path_probe`
+* `python3 -m python.evaluation.runtime_eval` now writes repo-local telemetry-derived eval and performance artifacts plus one real local MLflow run, but not collector export by itself
+* `python3 -m python.evaluation.langfuse_local_proof` proves one self-hosted local Langfuse trace and score write plus query path from the Sprint 1 dataset
+* `python3 -m python.evaluation.verify_mlflow_run` verifies that the latest repo-local MLflow run exists with the expected metrics and artifacts
+* hosted Langfuse operations, hosted or team-shared MLflow proof, and fuller browser-native observability proof remain incomplete and must not be described as finished runtime truth
 
 ## ✅ Current testing status
 
@@ -238,8 +250,14 @@ Current status: **integrated**
 Operational notes:
 
 * unit tests now cover the runtime store and API critical path
-* manual accessibility and performance baseline files now exist under `testing/`
-* automated browser accessibility and end-to-end runtime coverage still need follow-up wiring
+* manual accessibility notes still exist under `testing/` for checks beyond current automation coverage
+* Playwright now proves the web-shell sign-in, workspace bootstrap, durable write, and digest smoke path against the local runtime
+* Playwright also drives the packaged extension options harness to open the real side-panel runtime and records side-panel boot timing evidence under test output artifacts
+* Playwright plus Axe now scan the signed-in web shell and the packaged extension panel document
+* the current extension proof still stops short of direct side-panel container DOM inspection because Chromium does not expose that browser chrome to Playwright here
+* `testing/evals/fixtures/runtime-digest-density.v1.json` is the versioned Sprint 1 synthetic eval dataset
+* `testing/evals/artifacts/` and `testing/performance/runtime-baseline.local-proof.v1.json` now hold tracked repo-local machine-readable proof generated from the eval harness
+* those tracked artifacts prove the runtime-eval harness path, while compose-backed collector exports remain a separate observability proof path
 
 ## 🚦 Current CI and governance status
 

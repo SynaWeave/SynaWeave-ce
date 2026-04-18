@@ -143,8 +143,29 @@ def make_governance_tree(repo_root: Path) -> None:
 class TestVerifyGovernance(unittest.TestCase):
     def test_governance_pins_verify_script_with_adr_enforcement(self):
         verify_script = REQUIRED_PACKAGE_SCRIPTS["verify"]
+        self.assertIn("verify:browser", verify_script)
         self.assertIn("adr", verify_script)
         self.assertIn("commit", verify_script)
+
+    def test_governance_pins_browser_verification_scripts(self):
+        self.assertEqual(
+            REQUIRED_PACKAGE_SCRIPTS["deps:browser"],
+            "playwright install chromium",
+        )
+        self.assertIn("build:extension", REQUIRED_PACKAGE_SCRIPTS["test:e2e"])
+        self.assertIn("playwright test", REQUIRED_PACKAGE_SCRIPTS["test:e2e"])
+        self.assertIn(
+            "testing/accessibility",
+            REQUIRED_PACKAGE_SCRIPTS["test:accessibility"],
+        )
+        self.assertEqual(
+            REQUIRED_DEV_DEPENDENCIES["@playwright/test"],
+            "1.59.1",
+        )
+        self.assertEqual(
+            REQUIRED_DEV_DEPENDENCIES["@axe-core/playwright"],
+            "4.11.2",
+        )
 
     def test_governance_passes_with_required_files_and_fields(self):
         with tempfile.TemporaryDirectory() as raw_tmp:

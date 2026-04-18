@@ -1,10 +1,10 @@
-# 🧾 Sprint 1 — D2 Runtime and Partial D3 Closeout
+# 🧾 Sprint 1 — D2 Runtime and D3 Closeout
 
 ## 1. 🧭 TL;DR
 
 Sprint 1 now proves one truthful local runtime slice across web, extension, API, ingest, and a shared sqlite-backed runtime store.
 
-This closeout does **not** claim full D3 completion. It records that D2 runtime proof is in place and that a partial D3 baseline can be reproduced locally through manual accessibility notes, local performance targets, durable telemetry rows, `/metrics`, and generated baseline JSON artifacts.
+This closeout records that D2 runtime proof is in place and that the repo-local D3 stack is substantively complete. The strongest honest remaining gap is **one external GitHub-hosted proof point**: showing that dependency-review executes on a real pull-request path instead of skipping. Everything else claimed here is explicitly labeled as either repo-local proof or already-proven GitHub-hosted enforcement.
 
 ## 2. ✅ What closed
 
@@ -28,34 +28,45 @@ The path proves:
 - separate background job execution through `apps.ingest.main`
 - metrics export through `/metrics`
 
-### 2.2 👀 Partial D3 baseline
+### 2.2 👀 Repo-local D3 proof baseline
 
-The repo now contains partial D3 evidence inputs and local reproduction paths for the runtime slice:
+The repo now contains D3 evidence inputs and local reproduction paths for the runtime slice:
 
 - durable telemetry rows and trace-like JSONL output generated under `build/runtime/` after running the local runtime slice
+- collector-routed OpenTelemetry trace exports for API and ingest generated under `build/observability/collector-traces.json` when the local compose stack is running
 - baseline metrics snapshots generated under `build/runtime/baseline.json` and `build/runtime/metrics.json` after exercising the runtime path and calling `/metrics` or `/v1/baseline`
-- manual accessibility checklist under `testing/accessibility/runtime-a11y.md`
-- runtime baseline targets under `testing/performance/runtime-baseline.md`
-- local Prometheus, collector, and Grafana scaffolds under `infra/docker/`
+- automated browser accessibility proof under `testing/accessibility/` plus enforced Playwright coverage for the web shell and packaged extension panel document within the bounded local browser slice
+- versioned synthetic eval fixture under `testing/evals/fixtures/runtime-digest-density.v1.json`
+- versioned repo-local eval proof under `testing/evals/artifacts/runtime-digest-density.local-proof.v1.json`, generated from the runtime-eval harness rather than the collector path
+- versioned repo-local MLflow proof, verified through the local tracking path after `python3 -m python.evaluation.runtime_eval` and `python3 -m python.evaluation.verify_mlflow_run`
+- versioned self-hosted local Langfuse proof under `testing/evals/artifacts/runtime-digest-density.langfuse-local-proof.v1.json`, generated only after writing and querying a local Langfuse service
+- versioned repo-local performance proof under `testing/performance/runtime-baseline.local-proof.v1.json`, generated from the same runtime-eval harness and runtime-store telemetry
+- runtime baseline targets under `testing/performance/runtime-baseline.md`, now paired with generated runtime evidence
+- versioned Prometheus alert rules plus Grafana provisioning and dashboard artifacts under `infra/docker/`
+- reproducible local trace and metrics replay through `python3 -m tools.observability.critical_path_probe`
 - runtime-focused unit proof under `testing/unit/`
+- GitHub-hosted proof already established in this session for ruleset-required checks, CodeQL, secret scanning, and push protection
 
 ## 3. 🚫 What this file does not claim
 
-This file does **not** claim that Sprint 1 D3 is complete or fully proven. The following remain incomplete or only scaffolded:
+This file does **not** claim more than the evidence supports:
 
-- automated browser accessibility coverage
-- collector-routed OpenTelemetry instrumentation in active runtime use
-- managed Cloud Run deployment proof
-- GitHub-side confirmation of required checks and rulesets
-- broader security and supply-chain automation beyond the current repo controls
+- repo-local proof covers browser automation enforcement, collector-routed local observability, local metrics and baseline artifacts, repo-local MLflow proof, and bounded self-hosted local Langfuse proof
+- GitHub-hosted proof is already established in this session for ruleset-required checks, CodeQL, secret scanning, and push protection
+- full D3 closeout still depends on exactly one external GitHub-hosted proof point: a real PR-path `dependency-review` execution that does not skip
+- this file does not upgrade repo-local Langfuse or MLflow evidence into hosted/team-shared durability claims
+- this file does not claim managed Cloud Run deployment proof
 
 ## 4. ▶️ Local replay
 
 ```bash
 bun run deps:app
-bun run dev:api
-bun run dev:web
-bun run build:extension
+docker compose -f infra/docker/docker-compose.yml up -d
+docker compose -f infra/docker/langfuse-compose.yml up -d
+python3 -m python.evaluation.runtime_eval --mlflow-tracking-uri http://127.0.0.1:5001
+python3 -m python.evaluation.langfuse_local_proof
+python3 -m python.evaluation.verify_mlflow_run --tracking-uri http://127.0.0.1:5001
+python3 -m tools.observability.critical_path_probe
 python3 -m tools.verify.main
 bun run verify
 ```
@@ -71,4 +82,4 @@ bun run verify
 
 ## 6. 📌 Handoff note
 
-Sprint 2 can build against a real local runtime baseline. Sprint 2 should still treat automated accessibility, fuller observability routing, and hosted deployment proof as follow-up work instead of already-closed D3 scope.
+Sprint 2 can build against a real local runtime baseline plus enforced browser automation, tracked repo-local eval and performance artifacts, local MLflow proof, self-hosted local Langfuse proof, collector-routed observability proof, and already-proven GitHub-hosted ruleset and scanning enforcement. The strongest remaining D3 blocker is narrow and external: prove one non-skipped `dependency-review` run on a real GitHub pull-request path, then update closeout language from “earned except for one external PR-path proof” to fully closed.

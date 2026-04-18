@@ -6,7 +6,7 @@ SynaWeave is a governed, multi-surface repository for a knowledge-weaving learni
 - a FastAPI request boundary
 - a separate ingest job path
 - shared Python runtime helpers
-- locally generated baseline metrics, traces, and proof artifacts
+- locally generated runtime telemetry, optional compose-backed collector traces, and versioned eval/performance proof artifacts
 
 ## What this repo contains
 
@@ -27,7 +27,10 @@ SynaWeave is a governed, multi-surface repository for a knowledge-weaving learni
 - first runtime proof path: integrated
 - first background job proof path: integrated
 - local metrics and trace artifacts: reproducible locally after runtime exercise
-- D3 closeout: not yet proven
+- versioned repo-local eval fixture and proof artifact: integrated
+- partial D3 repo-local evidence: integrated
+- bounded local Langfuse trace-plus-score proof: integrated
+- full D3 closeout: not yet proven
 - hosted merge enforcement: still requires GitHub-side confirmation
 
 The current local Sprint 1 proof path is:
@@ -38,8 +41,9 @@ The current local Sprint 1 proof path is:
 5. run one separate ingest job to create a digest and evaluation record
 6. read the updated workspace state back through the browser surface
 7. inspect metrics at `/metrics` and the generated JSON artifacts under `build/runtime/` after exercising the runtime path
+8. compare repo-local proof outputs under `testing/evals/artifacts/` and `testing/performance/`
 
-This is a D2 runtime proof with partial D3 evidence. It is not a claim that automated accessibility, full observability routing, Cloud Run deployment, or broader D3 enforcement is complete.
+This is a D2 runtime proof with stronger repo-local D3 evidence. It now includes one repo-local MLflow-backed offline eval run and one bounded self-hosted local Langfuse proof path, but it is not a claim that hosted Langfuse operations, hosted or team-shared MLflow proof, browser-owned side-panel container automation, full browser-native observability routing, Cloud Run deployment, or broader D3 enforcement is complete.
 
 ## Repository-first entry points
 
@@ -60,6 +64,10 @@ cp .env.example .env
 bun run hooks:install
 python3 -m tools.dev.sync_environment sync
 bun run deps:app
+python3 -m python.evaluation.runtime_eval
+docker compose -f infra/docker/langfuse-compose.yml up -d
+python3 -m python.evaluation.langfuse_local_proof
+python3 -m python.evaluation.verify_mlflow_run
 python3 -m tools.verify.main
 bun run verify
 ```
@@ -70,6 +78,8 @@ bun run verify
 bun run dev:api
 bun run dev:web
 bun run build:extension
+bun run deps:browser
+bun run verify:browser
 ```
 
 Open:
@@ -78,6 +88,12 @@ Open:
 - Metrics: `http://127.0.0.1:8000/metrics`
 
 The extension source remains under `apps/extension/` and can be loaded unpacked in Chromium-based browsers for the local proof flow.
+
+Browser proof status:
+- `bun run test:e2e` covers the web-shell sign-in, workspace bootstrap, durable write, and digest path against the local runtime
+- `bun run test:e2e` now also uses the packaged extension options harness to trigger a real `chrome.sidePanel.open()` request and confirm that the browser-owned side-panel runtime booted `popup.html`, while writing web-shell and extension timing JSON under Playwright output artifacts
+- `bun run test:accessibility` runs Axe against the signed-in web shell and the packaged extension panel document
+- the repo still does not claim direct DOM inspection of the browser-owned side-panel container itself because Playwright only proves the open request plus runtime boot here, not the hidden Chromium container chrome
 
 ## Development expectations
 

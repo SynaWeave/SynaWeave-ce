@@ -1,0 +1,21 @@
+#  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# TL;DR  -->  provision the local Prometheus datasource so Sprint 1 dashboards stay versioned and replayable
+#
+# - Later Extension Points:
+#   --> add Tempo or other datasources only when those backends become real local defaults
+#
+# - Role:
+#   --> keeps Grafana bootstrapped without manual datasource clicks
+#   --> points dashboard artifacts at the shared local Prometheus service name
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+apiVersion: 1
+
+datasources:
+  - name: SynaWeave Prometheus
+    uid: synaweave-prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    editable: false

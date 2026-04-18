@@ -539,6 +539,8 @@ class RuntimeStore:
             f'synaweave_trace_event_total {snapshot["trace_event_total"]}',
             f'synaweave_api_latency_p95_ms {snapshot["api_latency_p95_ms"]}',
             f'synaweave_job_duration_p95_ms {snapshot["job_duration_p95_ms"]}',
+            f'synaweave_workspace_entry_timing_ms {snapshot["workspace_entry_timing_ms"]}',
+            f'synaweave_ai_ready_trace_coverage {snapshot["ai_ready_trace_coverage"]}',
         ]
         metrics_path().write_text(json.dumps(snapshot, indent=2, sort_keys=True), encoding="utf-8")
         baseline_path().write_text(json.dumps(snapshot, indent=2, sort_keys=True), encoding="utf-8")

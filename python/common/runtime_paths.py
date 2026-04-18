@@ -11,10 +11,12 @@ TL;DR  -->  centralize deterministic local runtime state paths for the first pro
 - Exports:
     --> `repo_root()`
     --> `runtime_dir()`
+    --> `observability_dir()`
     --> `db_path()`
     --> `trace_path()`
     --> `metrics_path()`
     --> `baseline_path()`
+    --> `collector_trace_export_path()`
 
 - Consumed By:
     --> API ingest telemetry and runtime tests that need one deterministic local state home
@@ -22,6 +24,7 @@ TL;DR  -->  centralize deterministic local runtime state paths for the first pro
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 
@@ -34,7 +37,16 @@ def repo_root() -> Path:
 # ---------- runtime dir ----------
 # Keep local durable state under build so tracked source paths stay clean and gitignored by default.
 def runtime_dir() -> Path:
-    path = repo_root() / "build" / "runtime"
+    override = os.environ.get("SYNAWEAVE_RUNTIME_DIR", "").strip()
+    path = Path(override) if override else repo_root() / "build" / "runtime"
+    path.mkdir(parents=True, exist_ok=True)
+    return path
+
+
+# ---------- observability dir ----------
+# Keep collector-side artifacts separated from app-owned runtime state while staying repo-local.
+def observability_dir() -> Path:
+    path = repo_root() / "build" / "observability"
     path.mkdir(parents=True, exist_ok=True)
     return path
 
@@ -55,3 +67,7 @@ def metrics_path() -> Path:
 
 def baseline_path() -> Path:
     return runtime_dir() / "baseline.json"
+
+
+def collector_trace_export_path() -> Path:
+    return observability_dir() / "collector-traces.json"

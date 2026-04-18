@@ -35,6 +35,7 @@ This file is the durable reasoning spine for Sprint 001 of the governed rebuild.
 
 ## Current Status
 
+- Sprint 001 Deliverable 3 has an approved local observability decision for compose-backed collector-routed API and ingest traces plus versioned dashboards and alerts.
 - Sprint 001 Deliverable 1 has seven approved decisions, including closeout hardening for pull request verification, secret-scan cleanup, and verifier test isolation.
 - Pull request commit verification checks authored pull request commits while hosted workflows still evaluate merge-result repository state for final branch protection evidence.
 - Secret-scan-safe placeholder cleanup removes realistic database examples that created false positives without improving repository guidance or safety posture.
@@ -51,6 +52,7 @@ This file is the durable reasoning spine for Sprint 001 of the governed rebuild.
 
 | Decision | Status |
 | --- | --- |
+| D3-T3 - make compose-backed collector-routed API and ingest traces the local observability baseline | approved |
 | D1-T8 - closeout hardening for PR verification, secret-scan placeholders, and verifier isolation | approved |
 | D1-T7 - Reserve provider-neutral auth contracts and config boundaries | approved |
 | D1-T6 - verifier tracks and repo-control test hardening | approved |
@@ -58,6 +60,49 @@ This file is the durable reasoning spine for Sprint 001 of the governed rebuild.
 | D1-T4 - protected-path control-surface alignment | approved |
 | D1-T2 - Make root docs and MASTER the only planning authority | approved |
 | D1 - Lock the shallow monorepo topology and reserved runtime homes | approved |
+
+---
+
+### D3-T3 - make compose-backed collector-routed API and ingest traces the local observability baseline
+
+- ***What was built?***
+  - Sprint 001 Deliverable 3 routes API and ingest OpenTelemetry traces through the local collector instead of leaving collector wiring as dead scaffold text.
+  - The local compose stack boots the collector, Prometheus, and Grafana together with versioned dashboard and alert artifacts for the critical runtime path.
+  - A reproducible probe replays auth, workspace action, ingest execution, metrics export, and collector evidence capture against the bounded local stack.
+  - The tracked eval and performance proof artifacts remain repo-local harness outputs, so the decision keeps collector evidence as a distinct proof path instead of overstating those artifacts.
+- ***Why was it chosen?***
+  - Deliverable 3 needed honest observability proof, and local files plus custom JSON rows were no longer enough for that standard.
+  - Collector-routed traces preserve the OpenTelemetry contract already locked in planning without inventing a second local routing story afterward.
+  - Versioned dashboards and alert rules were chosen because manual console setup would drift too easily from governed repository review.
+- ***What boundaries does it own?***
+  - This decision owns the compose-backed local observability baseline for API and ingest traces, Prometheus metrics, Grafana dashboards, and alert rule artifacts.
+  - It owns request-to-job trace continuity as far as the repo can prove locally through browser request headers, API spans, and ingest child spans.
+  - It does not claim full browser-native SDK instrumentation, Langfuse AI tracing, hosted deployment evidence, or production retention guarantees.
+- ***What breaks if it changes?***
+  - Reviewers would lose one reproducible path for proving that API requests and ingest execution still share a real trace lineage.
+  - Future observability work could fork into incompatible local topologies if the collector stopped being the enforced routing point.
+  - Alert and dashboard expectations for the Sprint 1 critical path would drift back into undocumented manual operator state.
+- ***What known edge cases or failure modes matter here?***
+  - Browser requests currently seed continuity through W3C trace headers, but full browser OTel SDK coverage remains intentionally partial.
+  - The runtime-eval harness generates telemetry-derived proof artifacts without traversing the collector, so docs must keep that evidence distinct from collector-export confirmation.
+  - Local compose startup order can briefly race collector readiness, so proof scripts and docs must stay explicit about replay timing.
+  - Durable runtime telemetry rows still help local baselines, but they are not a substitute for collector-exported traces across processes.
+- ***Why does this work matter?***
+  - Sprint 001 needed at least one honest end-to-end observability path before hosted deployment or AI trace claims become credible.
+  - It turns the repo from observability intent and scaffolds into a locally runnable trace, metrics, dashboard, and alert baseline.
+  - This work also gives maintainers a concrete verification script instead of asking reviewers to trust hand-waved screenshots.
+- ***What capability does it unlock?***
+  - Sprint 2 can extend the same collector, dashboard, and alert surfaces instead of replacing local proof wiring with a different stack.
+  - The critical runtime path can be replayed locally with evidence that spans both the request-serving and background execution boundaries.
+  - Operators can inspect Prometheus and Grafana outputs without reconstructing datasource, dashboard, or alert setup by hand.
+- ***Why is the chosen design safer or more scalable?***
+  - Collector-routed traces are safer than direct backend-specific exporters because they keep the telemetry routing layer provider-neutral from the start.
+  - Repo-owned Grafana and Prometheus artifacts scale better than UI-only setup because review and rollback stay versioned together.
+  - A bounded API plus ingest implementation was safer than broad platforming because it proves the critical path without overstating unfinished surfaces.
+- ***What trade-off did the team accept?***
+  - The team kept partial browser instrumentation rather than blocking the whole deliverable on a larger client-side observability project.
+  - Local proof writes trace exports to a file-backed collector artifact, which is less rich than a full trace backend but easier to prove.
+  - Compose startup remains dependency-heavy because runtime evidence is preferred over a lighter but scaffold-only observability story.
 
 ---
 

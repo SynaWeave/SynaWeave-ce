@@ -1,0 +1,157 @@
+#  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# TL;DR  -->  boot one bounded local Langfuse stack for Sprint 1 trace-plus-score proof
+#
+# - Later Extension Points:
+#   --> replace this low-scale local compose path only when shared hosted Langfuse becomes durable team truth
+#
+# - Role:
+#   --> starts a self-hosted Langfuse web worker and required state services
+#   --> auto-initializes one local-only project so the repo can prove real trace and score writes
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+name: synaweave-langfuse-local
+
+services:
+  langfuse-web:
+    image: docker.io/langfuse/langfuse:3
+    restart: unless-stopped
+    depends_on: &langfuse_depends_on
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+    ports:
+      - "3030:3000"
+    environment:
+      &langfuse_environment
+      NEXTAUTH_URL: ${LANGFUSE_LOCAL_NEXTAUTH_URL:-http://127.0.0.1:3030}
+      NEXTAUTH_SECRET: ${LANGFUSE_LOCAL_NEXTAUTH_SECRET:-synaweave-local-nextauth}
+      DATABASE_URL: ${LANGFUSE_LOCAL_DATABASE_URL:-postgresql://${LANGFUSE_LOCAL_POSTGRES_USER:-postgres}:${LANGFUSE_LOCAL_POSTGRES_PASSWORD:-postgres}@${LANGFUSE_LOCAL_POSTGRES_HOST:-postgres}:${LANGFUSE_LOCAL_POSTGRES_PORT:-5432}/${LANGFUSE_LOCAL_POSTGRES_DB:-postgres}}
+      SALT: ${LANGFUSE_LOCAL_SALT:-synaweave-local-salt}
+      ENCRYPTION_KEY: ${LANGFUSE_LOCAL_ENCRYPTION_KEY:-0000000000000000000000000000000000000000000000000000000000000000}
+      TELEMETRY_ENABLED: ${LANGFUSE_LOCAL_TELEMETRY_ENABLED:-false}
+      CLICKHOUSE_MIGRATION_URL: ${LANGFUSE_LOCAL_CLICKHOUSE_MIGRATION_URL:-clickhouse://clickhouse:9000}
+      CLICKHOUSE_URL: ${LANGFUSE_LOCAL_CLICKHOUSE_URL:-http://clickhouse:8123}
+      CLICKHOUSE_USER: ${LANGFUSE_LOCAL_CLICKHOUSE_USER:-clickhouse}
+      CLICKHOUSE_PASSWORD: ${LANGFUSE_LOCAL_CLICKHOUSE_PASSWORD:-clickhouse}
+      CLICKHOUSE_CLUSTER_ENABLED: ${LANGFUSE_LOCAL_CLICKHOUSE_CLUSTER_ENABLED:-false}
+      LANGFUSE_S3_EVENT_UPLOAD_BUCKET: ${LANGFUSE_LOCAL_EVENT_BUCKET:-langfuse}
+      LANGFUSE_S3_EVENT_UPLOAD_REGION: ${LANGFUSE_LOCAL_EVENT_REGION:-auto}
+      LANGFUSE_S3_EVENT_UPLOAD_ACCESS_KEY_ID: ${LANGFUSE_LOCAL_MINIO_ACCESS_KEY:-minio}
+      LANGFUSE_S3_EVENT_UPLOAD_SECRET_ACCESS_KEY: ${LANGFUSE_LOCAL_MINIO_SECRET_KEY:-miniosecret}
+      LANGFUSE_S3_EVENT_UPLOAD_ENDPOINT: ${LANGFUSE_LOCAL_MINIO_ENDPOINT:-http://minio:9000}
+      LANGFUSE_S3_EVENT_UPLOAD_FORCE_PATH_STYLE: ${LANGFUSE_LOCAL_FORCE_PATH_STYLE:-true}
+      LANGFUSE_S3_EVENT_UPLOAD_PREFIX: ${LANGFUSE_LOCAL_EVENT_PREFIX:-events/}
+      LANGFUSE_S3_MEDIA_UPLOAD_BUCKET: ${LANGFUSE_LOCAL_MEDIA_BUCKET:-langfuse}
+      LANGFUSE_S3_MEDIA_UPLOAD_REGION: ${LANGFUSE_LOCAL_MEDIA_REGION:-auto}
+      LANGFUSE_S3_MEDIA_UPLOAD_ACCESS_KEY_ID: ${LANGFUSE_LOCAL_MINIO_ACCESS_KEY:-minio}
+      LANGFUSE_S3_MEDIA_UPLOAD_SECRET_ACCESS_KEY: ${LANGFUSE_LOCAL_MINIO_SECRET_KEY:-miniosecret}
+      LANGFUSE_S3_MEDIA_UPLOAD_ENDPOINT: ${LANGFUSE_LOCAL_MINIO_ENDPOINT:-http://minio:9000}
+      LANGFUSE_S3_MEDIA_UPLOAD_FORCE_PATH_STYLE: ${LANGFUSE_LOCAL_FORCE_PATH_STYLE:-true}
+      LANGFUSE_S3_MEDIA_UPLOAD_PREFIX: ${LANGFUSE_LOCAL_MEDIA_PREFIX:-media/}
+      REDIS_HOST: ${LANGFUSE_LOCAL_REDIS_HOST:-redis}
+      REDIS_PORT: ${LANGFUSE_LOCAL_REDIS_PORT:-6379}
+      REDIS_AUTH: ${LANGFUSE_LOCAL_REDIS_AUTH:-synaweave-local-redis}
+      REDIS_TLS_ENABLED: ${LANGFUSE_LOCAL_REDIS_TLS_ENABLED:-false}
+      LANGFUSE_INIT_ORG_ID: ${LANGFUSE_LOCAL_INIT_ORG_ID:-synaweave-local}
+      LANGFUSE_INIT_ORG_NAME: ${LANGFUSE_LOCAL_INIT_ORG_NAME:-SynaWeave Local}
+      LANGFUSE_INIT_PROJECT_ID: ${LANGFUSE_LOCAL_INIT_PROJECT_ID:-sprint-1-local-proof}
+      LANGFUSE_INIT_PROJECT_NAME: ${LANGFUSE_LOCAL_INIT_PROJECT_NAME:-Sprint 1 Local Proof}
+      LANGFUSE_INIT_PROJECT_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY:-synaweave-local-public-key}
+      LANGFUSE_INIT_PROJECT_SECRET_KEY: ${LANGFUSE_SECRET_KEY:-synaweave-local-secret-key}
+      LANGFUSE_INIT_USER_EMAIL: ${LANGFUSE_LOCAL_INIT_USER_EMAIL:-langfuse-local@example.test}
+      LANGFUSE_INIT_USER_NAME: ${LANGFUSE_LOCAL_INIT_USER_NAME:-SynaWeave Local Admin}
+      LANGFUSE_INIT_USER_PASSWORD: ${LANGFUSE_LOCAL_INIT_USER_PASSWORD:-synaweave-local-password}
+
+  langfuse-worker:
+    image: docker.io/langfuse/langfuse-worker:3
+    restart: unless-stopped
+    depends_on: *langfuse_depends_on
+    environment: *langfuse_environment
+
+  clickhouse:
+    image: docker.io/clickhouse/clickhouse-server:latest
+    restart: unless-stopped
+    user: "101:101"
+    environment:
+      CLICKHOUSE_DB: default
+      CLICKHOUSE_USER: ${LANGFUSE_LOCAL_CLICKHOUSE_USER:-clickhouse}
+      CLICKHOUSE_PASSWORD: ${LANGFUSE_LOCAL_CLICKHOUSE_PASSWORD:-clickhouse}
+      TZ: UTC
+    volumes:
+      - langfuse_clickhouse_data:/var/lib/clickhouse
+      - langfuse_clickhouse_logs:/var/log/clickhouse-server
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://127.0.0.1:8123/ping || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 5s
+
+  minio:
+    image: cgr.dev/chainguard/minio:latest
+    restart: unless-stopped
+    entrypoint: sh
+    command: -c 'mkdir -p /data/langfuse && minio server --address ":9000" --console-address ":9001" /data'
+    environment:
+      MINIO_ROOT_USER: ${LANGFUSE_LOCAL_MINIO_ACCESS_KEY:-minio}
+      MINIO_ROOT_PASSWORD: ${LANGFUSE_LOCAL_MINIO_SECRET_KEY:-miniosecret}
+    volumes:
+      - langfuse_minio_data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 2s
+      timeout: 5s
+      retries: 10
+      start_period: 3s
+
+  redis:
+    image: docker.io/redis:7
+    restart: unless-stopped
+    command:
+      - --requirepass
+      - ${LANGFUSE_LOCAL_REDIS_AUTH:-synaweave-local-redis}
+      - --maxmemory-policy
+      - noeviction
+    volumes:
+      - langfuse_redis_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a ${LANGFUSE_LOCAL_REDIS_AUTH:-synaweave-local-redis} ping"]
+      interval: 3s
+      timeout: 5s
+      retries: 20
+      start_period: 3s
+
+  postgres:
+    image: docker.io/postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${LANGFUSE_LOCAL_POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${LANGFUSE_LOCAL_POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${LANGFUSE_LOCAL_POSTGRES_DB:-postgres}
+      TZ: UTC
+      PGTZ: UTC
+    volumes:
+      - langfuse_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${LANGFUSE_LOCAL_POSTGRES_USER:-postgres} -d ${LANGFUSE_LOCAL_POSTGRES_DB:-postgres}"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+      start_period: 3s
+
+volumes:
+  langfuse_postgres_data:
+    driver: local
+  langfuse_clickhouse_data:
+    driver: local
+  langfuse_clickhouse_logs:
+    driver: local
+  langfuse_minio_data:
+    driver: local
+  langfuse_redis_data:
+    driver: local

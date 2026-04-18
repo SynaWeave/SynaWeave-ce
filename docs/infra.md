@@ -452,6 +452,18 @@ Infrastructure observability is mandatory, not optional.
 - collector configuration is versioned
 - dashboards are treated as infrastructure artifacts, not ad hoc console work
 - telemetry endpoints and credentials follow the same secret/config classification rules as other infra
+- the local Sprint 1 observability baseline is the repo-owned compose stack under `infra/docker/`
+
+### 🧪 Current Sprint 1 proof boundary
+- repo-local proof is currently generated from runtime telemetry and eval writes via `python3 -m python.evaluation.runtime_eval`
+- tracked local proof artifacts live under `testing/evals/artifacts/` and `testing/performance/`
+- local MLflow proof can also be served through `infra/docker/docker-compose.yml` on `http://127.0.0.1:5001` with repo-local state under `build/mlflow/`
+- a separate low-scale Langfuse compose stack under `infra/docker/langfuse-compose.yml` can now prove one self-hosted local trace and score write plus query path
+- that Langfuse compose path now derives its Postgres connection from `.env` keys such as `LANGFUSE_LOCAL_DATABASE_URL` or the discrete `LANGFUSE_LOCAL_POSTGRES_*` values so the committed compose file does not carry a literal DSN pattern
+- collector-routed API and ingest trace proof plus Grafana and Prometheus artifacts live under `infra/docker/` and `build/observability/` when the local compose stack or equivalent env is enabled
+- the repo-local eval and performance artifacts complement that observability path but do not by themselves prove collector export, hosted backends, or browser-native SDK coverage
+- this repo now proves one repo-local MLflow tracking path and one bounded self-hosted local Langfuse path, but it still cannot honestly claim hosted Langfuse operations or hosted/team-shared MLflow durability without reachable external deployments, credentials, and stored run records outside the repository itself
+- GitHub-side required checks, rulesets, code scanning, and hosted secret scanning are also external confirmation points rather than repo-local proof
 
 ### 📊 Baseline dashboard families
 At minimum, infrastructure must support dashboards for:

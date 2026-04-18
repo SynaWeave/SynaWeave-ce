@@ -1,0 +1,78 @@
+{
+  "datasetName": "runtime-digest-density",
+  "datasetVersion": "v1",
+  "owner": "sprint-001-d3",
+  "flow": "workspace_digest_v1",
+  "performanceThresholds": {
+    "workspaceEntryTimingMsMax": 200,
+    "apiLatencyP95MsMax": 500,
+    "jobDurationP95MsMax": 1000
+  },
+  "cases": [
+    {
+      "caseId": "web-note-capture-digest",
+      "email": "eval-web@example.com",
+      "surface": "web",
+      "telemetry": [
+        {
+          "surface": "api",
+          "name": "POST /v1/auth/link",
+          "status": "ok",
+          "durationMs": 74,
+          "traceId": "trc_eval_web_api_auth",
+          "detail": "/v1/auth/link"
+        },
+        {
+          "surface": "web",
+          "name": "web_workspace_bootstrap",
+          "status": "ok",
+          "durationMs": 118,
+          "traceId": "trc_eval_web_bootstrap",
+          "detail": "web bootstrap after auth"
+        }
+      ],
+      "actions": [
+        {
+          "kind": "note",
+          "value": "graph retrieval needs durable local evidence",
+          "source": "web"
+        },
+        {
+          "kind": "capture",
+          "value": "collector-routed traces require the compose stack beyond this repo-local eval harness",
+          "source": "extension"
+        }
+      ]
+    },
+    {
+      "caseId": "extension-note-digest",
+      "email": "eval-extension@example.com",
+      "surface": "extension",
+      "telemetry": [
+        {
+          "surface": "api",
+          "name": "POST /v1/jobs/workspace",
+          "status": "ok",
+          "durationMs": 96,
+          "traceId": "trc_eval_extension_api_job",
+          "detail": "/v1/jobs/workspace"
+        },
+        {
+          "surface": "extension",
+          "name": "extension_workspace_bootstrap",
+          "status": "ok",
+          "durationMs": 164,
+          "traceId": "trc_eval_extension_bootstrap",
+          "detail": "extension side panel bootstrap"
+        }
+      ],
+      "actions": [
+        {
+          "kind": "note",
+          "value": "langfuse and hosted mlflow still need confirmation beyond repo-local proof",
+          "source": "extension"
+        }
+      ]
+    }
+  ]
+}

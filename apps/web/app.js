@@ -168,7 +168,13 @@ function renderActions(actions) {
 }
 
 async function fetchJson(path, init) {
-	const response = await fetch(`${API_BASE_URL}${path}`, init);
+	const response = await fetch(`${API_BASE_URL}${path}`, {
+		...init,
+		headers: {
+			...(init?.headers || {}),
+			...makeTraceHeaders(),
+		},
+	});
 	if (!response.ok) {
 		throw new Error(`Request failed: ${response.status}`);
 	}
@@ -204,4 +210,14 @@ async function emitTelemetry(name, startedAt, status, detail) {
 
 function setStatus(message) {
 	els.statusLine.textContent = message;
+}
+
+function makeTraceHeaders() {
+	const traceId = Array.from(crypto.getRandomValues(new Uint8Array(16)))
+		.map((value) => value.toString(16).padStart(2, "0"))
+		.join("");
+	const spanId = Array.from(crypto.getRandomValues(new Uint8Array(8)))
+		.map((value) => value.toString(16).padStart(2, "0"))
+		.join("");
+	return { traceparent: `00-${traceId}-${spanId}-01` };
 }

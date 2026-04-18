@@ -17,6 +17,7 @@ TL;DR  -->  serve the first runtime path for auth workspace jobs telemetry and m
 
 from __future__ import annotations
 
+import os
 import subprocess
 import sys
 import time
@@ -26,14 +27,23 @@ from typing import Any
 from fastapi import FastAPI, Header, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, PlainTextResponse
+from opentelemetry import trace
+from opentelemetry.trace import Status, StatusCode
 from pydantic import BaseModel, Field
 
+from python.common.observability import (
+    current_trace_id,
+    extract_trace_context,
+    init_tracing,
+    inject_current_trace_headers,
+)
 from python.common.runtime_store import RuntimeStore
 from python.common.runtime_time import utc_now_iso
 
 # ---------- app bootstrap ----------
 # Keep one store per process because the local proof path only needs one sqlite boundary.
 store = RuntimeStore()
+tracer = init_tracing("synaweave-api")
 app = FastAPI(title="SynaWeave Sprint 1 API", version="0.1.0")
 
 # Keep browser access open for the local proof path across web and extension shells.
@@ -80,7 +90,7 @@ def runtime_meta(request: Request) -> dict[str, Any]:
     request_id = request.state.request_id
     return {
         "requestId": request_id,
-        "traceId": request_id.replace("req_", "trc_", 1),
+        "traceId": request.state.trace_id,
         "version": app.version,
         "ts": utc_now_iso(),
     }
@@ -124,18 +134,39 @@ async def runtime_probe(request: Request, call_next):
     request_id = f"req_{uuid.uuid4().hex[:12]}"
     request.state.request_id = request_id
     started_at = time.perf_counter()
-    response = await call_next(request)
-    duration_ms = round((time.perf_counter() - started_at) * 1000, 2)
-    store.emit_telemetry(
-        surface="api",
-        name=f"{request.method} {request.url.path}",
-        status="ok" if response.status_code < 400 else "error",
-        duration_ms=duration_ms,
-        trace_id=request_id.replace("req_", "trc_", 1),
-        detail=request.url.path,
-    )
-    response.headers["x-request-id"] = request_id
-    return response
+    parent_context = extract_trace_context(dict(request.headers))
+    with tracer.start_as_current_span(
+        f"{request.method} {request.url.path}",
+        context=parent_context,
+        kind=trace.SpanKind.SERVER,
+    ) as span:
+        span.set_attribute("http.method", request.method)
+        span.set_attribute("http.route", request.url.path)
+        span.set_attribute("synaweave.request_id", request_id)
+        request.state.trace_id = current_trace_id()
+        try:
+            response = await call_next(request)
+        except Exception as exc:
+            span.record_exception(exc)
+            span.set_status(Status(StatusCode.ERROR))
+            raise
+        duration_ms = round((time.perf_counter() - started_at) * 1000, 2)
+        status = "ok" if response.status_code < 400 else "error"
+        span.set_attribute("http.status_code", response.status_code)
+        if status == "error":
+            span.set_status(Status(StatusCode.ERROR))
+        store.emit_telemetry(
+            surface="api",
+            name=f"{request.method} {request.url.path}",
+            status=status,
+            duration_ms=duration_ms,
+            trace_id=request.state.trace_id,
+            detail=request.url.path,
+        )
+        response.headers["x-request-id"] = request_id
+        response.headers["x-trace-id"] = request.state.trace_id
+        response.headers.update(inject_current_trace_headers())
+        return response
 
 
 # ---------- health ----------
@@ -240,9 +271,15 @@ def workspace_job(
     except PermissionError as exc:
         raise HTTPException(status_code=403, detail=str(exc)) from exc
     if body.waitForFinish:
+        carrier = inject_current_trace_headers()
         subprocess.run(
             [sys.executable, "-m", "apps.ingest.main", "--job-id", job["job_id"]],
             check=True,
+            env={
+                **os.environ,
+                "TRACEPARENT": carrier.get("traceparent", ""),
+                "TRACESTATE": carrier.get("tracestate", ""),
+            },
         )
         job = store.job_view(job["job_id"], user_id=user_id)
     return ok(request, job, status="accepted")

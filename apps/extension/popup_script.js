@@ -19,6 +19,8 @@ TL;DR  -->  drive the first authenticated extension side-panel shell for shared 
 // Keep local API targeting explicit so the side-panel proof works without a bundler.
 const API_BASE_URL = "http://127.0.0.1:8000";
 const TOKEN_KEY = "synaweave.extensionToken";
+const PANEL_OPEN_REQUEST_KEY = "synaweave.sidePanelOpenRequestedAt";
+const PANEL_RUNTIME_EVIDENCE_KEY = "synaweave.sidePanelRuntimeEvidence";
 const TRACE_PREFIX = "ext";
 
 // ---------- dom handles ----------
@@ -44,6 +46,7 @@ const els = {
 
 // ---------- boot ----------
 // Rehydrate any stored token first so panel reopen continuity is part of the runtime proof.
+void recordPanelRuntimeEvidence();
 void refreshRuntime();
 
 // ---------- auth flow ----------
@@ -222,7 +225,13 @@ function renderActions(actions) {
 // ---------- fetch helpers ----------
 // Keep public and authed fetch paths aligned with the web shell contract.
 async function fetchJson(path, init) {
-	const response = await fetch(`${API_BASE_URL}${path}`, init);
+	const response = await fetch(`${API_BASE_URL}${path}`, {
+		...init,
+		headers: {
+			...(init?.headers || {}),
+			...makeTraceHeaders(),
+		},
+	});
 	if (!response.ok) {
 		throw new Error(`Request failed: ${response.status}`);
 	}
@@ -262,4 +271,32 @@ async function emitTelemetry(name, startedAt, status, detail) {
 // Keep operator-visible status text in one place for easier debugging.
 function setStatus(message) {
 	els.statusLine.textContent = message;
+}
+
+function makeTraceHeaders() {
+	const traceId = Array.from(crypto.getRandomValues(new Uint8Array(16)))
+		.map((value) => value.toString(16).padStart(2, "0"))
+		.join("");
+	const spanId = Array.from(crypto.getRandomValues(new Uint8Array(8)))
+		.map((value) => value.toString(16).padStart(2, "0"))
+		.join("");
+	return { traceparent: `00-${traceId}-${spanId}-01` };
+}
+
+async function recordPanelRuntimeEvidence() {
+	const requested = await chrome.storage.local
+		.get(PANEL_OPEN_REQUEST_KEY)
+		.catch(() => ({}));
+	const requestedAt = Number(requested[PANEL_OPEN_REQUEST_KEY] || 0);
+	await chrome.storage.local
+		.set({
+			[PANEL_RUNTIME_EVIDENCE_KEY]: {
+				bootedAt: Date.now(),
+				documentReadyState: document.readyState,
+				href: window.location.href,
+				panelSurfaceReadyMs: Number(performance.now().toFixed(2)),
+				requestAgeMs: requestedAt ? Date.now() - requestedAt : null,
+			},
+		})
+		.catch(() => null);
 }

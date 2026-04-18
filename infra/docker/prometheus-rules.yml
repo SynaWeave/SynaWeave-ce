@@ -1,0 +1,38 @@
+#  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# TL;DR  -->  alert on the first Sprint 1 critical-path symptoms instead of every internal event
+#
+# - Later Extension Points:
+#   --> widen rule groups only when more runtime surfaces become part of the default local stack
+#
+# - Role:
+#   --> codifies local alert thresholds for API latency ingest duration and trace coverage drift
+#   --> keeps Prometheus alerting versioned beside the matching scrape config and dashboards
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+groups:
+  - name: synaweave-critical-path
+    rules:
+      - alert: SynaWeaveApiLatencyHigh
+        expr: synaweave_api_latency_p95_ms > 500
+        for: 2m
+        labels:
+          severity: warning
+          service: api
+        annotations:
+          summary: API critical-path latency drifted above the local Sprint 1 baseline.
+      - alert: SynaWeaveIngestDurationHigh
+        expr: synaweave_job_duration_p95_ms > 1000
+        for: 2m
+        labels:
+          severity: warning
+          service: ingest
+        annotations:
+          summary: Ingest critical-path duration drifted above the local Sprint 1 baseline.
+      - alert: SynaWeaveTraceCoverageLow
+        expr: synaweave_ai_ready_trace_coverage < 1
+        for: 2m
+        labels:
+          severity: warning
+          service: observability
+        annotations:
+          summary: The job critical path lost durable trace coverage for at least one succeeded run.

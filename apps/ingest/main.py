@@ -20,18 +20,34 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 
+from opentelemetry import trace
+
+from python.common.observability import extract_trace_context, init_tracing
 from python.common.runtime_store import RuntimeStore
 
 # ---------- worker bootstrap ----------
 # Keep one shared store instance because each CLI invocation only needs bounded local work.
 store = RuntimeStore()
+tracer = init_tracing("synaweave-ingest")
 
 
 # ---------- job execution ----------
 # Keep the function tiny so tests and the API trigger path can both reuse the same worker logic.
 def run_job(job_id: str) -> dict[str, object]:
-    return store.run_job(job_id)
+    carrier = {
+        "traceparent": os.getenv("TRACEPARENT", ""),
+        "tracestate": os.getenv("TRACESTATE", ""),
+    }
+    with tracer.start_as_current_span(
+        "workspace_digest_job",
+        context=extract_trace_context(carrier),
+        kind=trace.SpanKind.CONSUMER,
+    ) as span:
+        span.set_attribute("synaweave.job_id", job_id)
+        span.set_attribute("synaweave.runtime", "ingest")
+        return store.run_job(job_id)
 
 
 # ---------- cli parsing ----------
