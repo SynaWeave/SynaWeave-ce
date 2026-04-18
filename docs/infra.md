@@ -56,9 +56,11 @@ That means:
 The initial hosting split is:
 
 - Cloud Run for request-serving services and run-to-completion jobs
-- Supabase for operational Postgres, Auth, and Storage
+- Supabase as the default Sprint 1 adapter target for operational Postgres, Auth, and Storage
 - GitHub Pages for public static documentation and marketing
 - OpenTelemetry Collector, Prometheus, Grafana, Langfuse, and MLflow for telemetry, AI observability, and offline experiment evidence
+
+Those defaults are implementation targets, not permanent domain commitments. Provider-specific behavior must stay behind adapters so later platform changes do not rewrite product contracts.
 
 ---
 
@@ -129,6 +131,12 @@ This is hosted as a product-facing web application:
 ## 🗃️ Data-plane model
 
 The data plane is deliberately split by responsibility.
+
+Provider posture:
+
+- Sprint 1 defaults the operational relational, auth, and storage adapters toward Supabase-compatible contracts
+- the repo does not lock the long-term product contract to Supabase naming, SDK calls, or hosted-only assumptions
+- any later move away from Supabase must preserve the same browser-safe, server-only, and policy-enforced boundaries documented here
 
 ### 🗃️ Operational store
 Purpose:
@@ -333,6 +341,12 @@ The network architecture is intentionally simple at first.
 
 These seams are designed now, even if not activated in Sprint 1.
 
+Current Sprint 1 posture:
+
+- no gateway, CDN, or edge vendor is locked yet for the governed platform baseline
+- these seams remain deferred until scale, security, or latency evidence requires activation
+- any eventual provider must sit behind adapter-owned boundaries rather than changing public contracts directly
+
 ### 📡 API gateway seam
 Purpose:
 - centralized auth enforcement
@@ -446,6 +460,7 @@ Infrastructure observability is mandatory, not optional.
 - Prometheus for metrics
 - Grafana for dashboards
 - Langfuse for AI and LLM observability
+- MLflow for offline experiment and evaluation tracking
 
 ### 📏 Rules
 - every deployable runtime emits telemetry
@@ -453,6 +468,8 @@ Infrastructure observability is mandatory, not optional.
 - dashboards are treated as infrastructure artifacts, not ad hoc console work
 - telemetry endpoints and credentials follow the same secret/config classification rules as other infra
 - the local Sprint 1 observability baseline is the repo-owned compose stack under `infra/docker/`
+- critical-path metrics, alert rules, and dashboard definitions must be recorded durably enough for later comparison and review
+- when branch claims depend on telemetry, the supporting metrics, traces, or evaluation outputs must exist as machine-readable artifacts, versioned config, or replayable local stores
 
 ### 🧪 Current Sprint 1 proof boundary
 - repo-local proof is currently generated from runtime telemetry and eval writes via `python3 -m python.evaluation.runtime_eval`
@@ -462,7 +479,7 @@ Infrastructure observability is mandatory, not optional.
 - that Langfuse compose path now derives its Postgres connection from `.env` keys such as `LANGFUSE_LOCAL_DATABASE_URL` or the discrete `LANGFUSE_LOCAL_POSTGRES_*` values so the committed compose file does not carry a literal DSN pattern
 - collector-routed API and ingest trace proof plus Grafana and Prometheus artifacts live under `infra/docker/` and `build/observability/` when the local compose stack or equivalent env is enabled
 - the repo-local eval and performance artifacts complement that observability path but do not by themselves prove collector export, hosted backends, or browser-native SDK coverage
-- this repo now proves one repo-local MLflow tracking path and one bounded self-hosted local Langfuse path, but it still cannot honestly claim hosted Langfuse operations or hosted/team-shared MLflow durability without reachable external deployments, credentials, and stored run records outside the repository itself
+- this repo now proves one self-hosted local MLflow tracking path and one bounded self-hosted local Langfuse path, while managed Langfuse or MLflow remain later deployment options rather than current operational truth
 - GitHub-side required checks, rulesets, code scanning, and hosted secret scanning are also external confirmation points rather than repo-local proof
 
 ### 📊 Baseline dashboard families
@@ -474,6 +491,12 @@ At minimum, infrastructure must support dashboards for:
 - deploy health
 - AI trace completeness and cost signals
 - future retrieval and ranking quality signals
+
+At minimum, infrastructure must also preserve durable recorded evidence for:
+
+- baseline runtime metrics snapshots that can be compared across bounded replay runs
+- alert definitions tied to the critical path rather than only screenshots or console state
+- machine-readable evaluation and performance artifacts whenever branch claims depend on those measurements
 
 ---
 
@@ -566,8 +589,8 @@ Containerization is part of the permanent infrastructure contract.
 These seams are intentionally designed now so later investor-backed growth does not require rewriting the repo shape.
 
 ### 🧠 Planned seams
-- API gateway insertion
-- CDN insertion
+- API gateway insertion behind adapters
+- CDN insertion behind adapters
 - cache layer insertion
 - queue layer insertion
 - read-replica routing
