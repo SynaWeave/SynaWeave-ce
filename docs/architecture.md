@@ -34,6 +34,12 @@ The platform shape is intentionally strict:
 - shared TypeScript packages under `packages/`
 - reusable Python intelligence modules under `python/`
 
+Provider selection is intentionally adapter-first:
+
+- domain and contract layers stay provider-neutral, while provider-specific behavior lives behind owned adapters
+- Sprint 1 may name default adapter targets where the branch already proves one concrete path, but those defaults are not permanent lock-in
+- edge, CDN, and API gateway choices stay deferred until adapters need a concrete external platform decision
+
 No second documentation runtime exists in `apps/`, and no other top-level app runtime is part of Sprint 1.
 
 ---
@@ -90,6 +96,15 @@ Rules in this flow:
 - every public payload crosses `packages/contracts`
 - every durable write passes through `apps/api`
 - job work can read and enrich durable state but does not own the primary user-facing contract
+- provider-specific stores, auth systems, and telemetry backends stay behind adapter seams instead of leaking into product contracts
+
+## 🔌 Adapter-first provider posture
+
+The rebuild keeps provider choices behind adapters from the start.
+
+- Sprint 1 treats Supabase as the default adapter target for auth, operational Postgres, and storage-facing contracts because that target fits the current branch shape
+- that default target does not make Supabase part of the domain contract, and later replacements must preserve the same contract boundaries
+- edge routing, CDN placement, and API gateway insertion remain intentionally undecided until runtime scale or operations needs force a concrete adapter-backed choice
 
 ---
 
@@ -136,14 +151,21 @@ The observability model follows a single event model:
 
 - traces, metrics, and logs are emitted by runtime surfaces
 - runtime exports route through OpenTelemetry collector pipelines
-- product-facing AI traces and online scores route through Langfuse
-- offline experiment and offline evaluation evidence route through MLflow
+- product-facing AI traces and online scores route through Langfuse adapters
+- offline experiment and offline evaluation evidence route through MLflow adapters
 
 Evidence obligations:
 
 - one reproducible trace for the critical path
 - one reproducible failure path with clear error metadata
 - one reproducible baseline metric per core runtime path
+- durable metric, trace, dashboard, and evaluation records must be preserved in versioned config, machine-readable artifacts, or replayable local stores
+
+Sprint 1 observability posture stays bounded and honest:
+
+- self-hosted Langfuse and MLflow are the current local proof backends, because the branch proves those paths without claiming managed service durability
+- managed Langfuse and managed MLflow remain valid later deployment targets as long as they stay behind the same adapters and evidence rules
+- collector routing, Prometheus metrics, Grafana dashboards, and versioned proof artifacts remain the durable review surface even when backend hosting changes later
 
 ---
 
