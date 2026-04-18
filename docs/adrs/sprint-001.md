@@ -35,13 +35,14 @@ This file is the durable reasoning spine for Sprint 001 of the governed rebuild.
 
 ## Current Status
 
+- Deliverable 3 has three approved decisions covering collector-routed observability, durable evidence recording, and self-hosted local AI-quality backends with managed later options.
+- Deliverable 2 has three approved decisions covering the bounded runtime slice, adapter-first provider posture, and deferred edge or gateway provider selection.
 - Sprint 001 Deliverable 3 has an approved local observability decision for compose-backed collector-routed API and ingest traces plus versioned dashboards and alerts.
 - Sprint 001 Deliverable 1 has seven approved decisions, including closeout hardening for pull request verification, secret-scan cleanup, and verifier test isolation.
 - Pull request commit verification checks authored pull request commits while hosted workflows still evaluate merge-result repository state for final branch protection evidence.
-- Secret-scan-safe placeholder cleanup removes realistic database examples that created false positives without improving repository guidance or safety posture.
-- Verifier tests isolate temporary repositories from CI-exported commit metadata so local and hosted runs prove the same intended repo-control behavior.
-- All repo-contained verification checks for the branch are passing under the tightened Sprint 001 Deliverable 1 closeout controls.
-- Shared contract and configuration surfaces remain reserved in governed package boundaries instead of app-local placeholders.
+- Self-hosted local Langfuse and MLflow proof remain bounded Sprint 1 backends, while managed service adoption stays a later adapter-preserving choice.
+- Edge, CDN, and API gateway providers remain intentionally deferred behind adapters instead of being locked prematurely in Sprint 1.
+- Durable observability claims require versioned dashboards or alerts, machine-readable artifacts, or replayable local telemetry stores.
 - Sprint reasoning lives in one ADR ledger so approved choices remain durable beyond pull request summaries.
 
 ---
@@ -52,7 +53,12 @@ This file is the durable reasoning spine for Sprint 001 of the governed rebuild.
 
 | Decision | Status |
 | --- | --- |
+| D3-T5 - keep self-hosted local Langfuse and MLflow as the Sprint 1 proof baseline with managed later options | approved |
+| D3-T4 - require durable observability and metrics recording for Sprint 1 quality claims | approved |
 | D3-T3 - make compose-backed collector-routed API and ingest traces the local observability baseline | approved |
+| D2-T3 - keep edge, CDN, and API gateway choices deferred behind adapters during Sprint 1 | approved |
+| D2-T2 - make Supabase the default Sprint 1 adapter target without treating it as permanent lock-in | approved |
+| D2-T1 - lock one bounded multi-surface runtime slice before broader platform expansion | approved |
 | D1-T8 - closeout hardening for PR verification, secret-scan placeholders, and verifier isolation | approved |
 | D1-T7 - Reserve provider-neutral auth contracts and config boundaries | approved |
 | D1-T6 - verifier tracks and repo-control test hardening | approved |
@@ -60,6 +66,88 @@ This file is the durable reasoning spine for Sprint 001 of the governed rebuild.
 | D1-T4 - protected-path control-surface alignment | approved |
 | D1-T2 - Make root docs and MASTER the only planning authority | approved |
 | D1 - Lock the shallow monorepo topology and reserved runtime homes | approved |
+
+---
+
+### D3-T5 - keep self-hosted local Langfuse and MLflow as the Sprint 1 proof baseline with managed later options
+
+- ***What was built?***
+  - Sprint 001 Deliverable 3 proves one self-hosted local Langfuse path and one self-hosted local MLflow path instead of claiming managed service operations the branch cannot verify directly.
+  - The repo keeps those backends in compose-backed and local-service proof flows so reviewers can reproduce bounded observability and evaluation evidence without external tenant access.
+  - Root docs state that managed Langfuse and managed MLflow remain later deployment options as long as adapter boundaries and evidence semantics stay unchanged.
+- ***Why was it chosen?***
+  - The branch already proves local quality evidence honestly, while managed-service claims would require credentials, tenants, and persistence the repository does not control.
+  - Self-hosted local proof gives Sprint 1 a reproducible baseline without pretending that early environment convenience should decide the long-term vendor contract.
+  - This approach preserves the option to move toward managed operations later without rewriting the product-facing evaluation and telemetry boundaries immediately afterward.
+- ***What boundaries does it own?***
+  - This decision owns the current Sprint 1 backend posture for Langfuse and MLflow evidence, including the rule that those proof paths are self-hosted and local.
+  - It owns the statement that managed observability backends are future deployment choices rather than current operational truth or required product contracts.
+  - It does not own collector routing, Prometheus metrics, Grafana dashboards, or generic runtime telemetry rules that are covered by adjacent Deliverable 3 decisions.
+- ***What breaks if it changes?***
+  - Reviewers would lose a truthful distinction between local proof the branch can reproduce and managed service behavior the branch cannot currently validate.
+  - Future migrations could leak vendor assumptions into product contracts if managed backends were treated as architectural facts instead of replaceable adapter targets.
+  - Sprint closeout wording would drift if local evidence were described as managed durability without matching external deployments and retained records.
+- ***What known edge cases or failure modes matter here?***
+  - A local service can prove API usage and stored records while still failing to match future managed networking, auth, or retention characteristics.
+  - Teams may assume a managed vendor upgrade is trivial, even though adapter boundaries still need explicit credential, routing, and data-retention review.
+  - Local Langfuse and MLflow success does not prove team-shared durability when storage lives only under local compose volumes or build directories.
+- ***Why does this work matter?***
+  - Sprint 001 needed honest AI-quality and experiment evidence without waiting for platform accounts or hosted operations to become available.
+  - It keeps the repo's observability and evaluation story reviewable because maintainers can reproduce the exact bounded path from checked-in docs and commands.
+  - This work also makes later managed adoption safer because the current baseline already distinguishes product contracts from backend hosting choices.
+- ***What capability does it unlock?***
+  - Sprint 2 can build richer evaluation and observability flows against known adapters instead of reopening where AI-quality evidence belongs.
+  - Operators can later swap self-hosted local backends for managed services without changing the user-facing runtime contracts that already exist.
+  - Reviewers gain one durable baseline for comparing local proof, managed follow-up work, and future deployment claims with less ambiguity.
+- ***Why is the chosen design safer or more scalable?***
+  - Self-hosted local proof is safer than premature managed claims because the repository can reproduce and inspect the resulting evidence directly.
+  - Adapter-preserving backend swaps scale better than product-contract rewrites because later hosting changes remain operational rather than architectural by default.
+  - Keeping managed adoption deferred also reduces lock-in risk while the product and observability surfaces are still settling during the rebuild.
+- ***What trade-off did the team accept?***
+  - The team chose lower fidelity to future hosted operations in exchange for reproducible local proof that does not depend on external accounts.
+  - Contributors must keep local compose and proof commands healthy, which adds setup overhead compared with pointing at a managed service.
+  - Future reviewers should preserve this honesty even when managed services arrive, because reproducible proof still matters alongside hosted convenience.
+
+---
+
+### D3-T4 - require durable observability and metrics recording for Sprint 1 quality claims
+
+- ***What was built?***
+  - Sprint 001 Deliverable 3 documents that critical-path observability claims need durable recorded evidence rather than screenshots, memory, or prose-only summaries.
+  - The root docs align versioned dashboards, alert rules, machine-readable artifacts, and replayable local telemetry stores as the acceptable recording surfaces for those claims.
+  - Testing and operations guidance distinguish helper screenshots from the durable evidence that branch reviews and later comparisons depend on.
+- ***Why was it chosen?***
+  - Sprint 1 quality claims were becoming broad enough that reviewers needed a stable rule for what counts as durable evidence.
+  - Metrics and traces lose most of their value when a branch cannot regenerate, inspect, or compare them after the original run is gone.
+  - This rule fits the governed monorepo posture better than relying on human interpretation of dashboards that only existed temporarily in local browsers.
+- ***What boundaries does it own?***
+  - This decision owns the evidence rule for recorded observability, evaluation, and performance claims that appear in root docs or sprint closeout materials.
+  - It owns the requirement that durable records live in versioned config, machine-readable artifacts, or replayable stores rather than transient notes alone.
+  - It does not define every future metric name, SLO target, or dashboard panel shape for later sprints.
+- ***What breaks if it changes?***
+  - Reviewers would have no consistent way to tell whether a branch proved a metric trend or merely described one convincingly.
+  - Sprint closeout comparisons would become unreliable because recorded evidence could disappear between runs, machines, or review sessions.
+  - Future observability work might fork into incompatible evidence styles that are difficult to audit, reproduce, or automate.
+- ***What known edge cases or failure modes matter here?***
+  - A dashboard screenshot can look authoritative while hiding the exact query, timeframe, or alert definition that produced the visible number.
+  - Build-directory stores can be replayable locally while still being unsuitable as long-term team evidence unless docs label them as local proof only.
+  - Machine-readable artifacts can still mislead if they are detached from the command, dataset, or collector path that generated them.
+- ***Why does this work matter?***
+  - It makes Sprint 1 quality work reviewable across time instead of confining confidence to whoever watched one original run.
+  - The rule protects the repo from inflated metrics claims that would otherwise outrun the evidence stored alongside the branch.
+  - This decision also keeps observability aligned with the broader governance model that favors durable, inspectable, versioned technical truth.
+- ***What capability does it unlock?***
+  - Later sprints can compare performance, eval, and observability changes against prior recorded evidence without recreating baseline theory first.
+  - Reviewers can ask for narrower proofs because they know exactly which recording surfaces should exist when a branch makes quality claims.
+  - Automation can evolve around the same evidence surfaces instead of retrofitting structure onto informal screenshots and handwritten notes later.
+- ***Why is the chosen design safer or more scalable?***
+  - Durable recording is safer than screenshot-only review because exact metrics, queries, and artifacts remain inspectable after the original run ends.
+  - Versioned evidence scales better than oral or chat-based reporting because many reviewers can inspect the same proof asynchronously.
+  - Replayable local stores also scale better for bounded experiments because they let maintainers confirm claims without reconstructing hidden environment state.
+- ***What trade-off did the team accept?***
+  - The team chose extra artifact, dashboard, and alert maintenance work in exchange for more trustworthy long-term quality comparisons.
+  - Contributors lose some convenience because they must preserve or regenerate evidence instead of relying on one successful local viewing session.
+  - Future reviewers should keep that burden, since weak evidence rules would make later performance and observability claims much harder to trust.
 
 ---
 
@@ -103,6 +191,129 @@ This file is the durable reasoning spine for Sprint 001 of the governed rebuild.
   - The team kept partial browser instrumentation rather than blocking the whole deliverable on a larger client-side observability project.
   - Local proof writes trace exports to a file-backed collector artifact, which is less rich than a full trace backend but easier to prove.
   - Compose startup remains dependency-heavy because runtime evidence is preferred over a lighter but scaffold-only observability story.
+
+---
+
+### D2-T3 - keep edge, CDN, and API gateway choices deferred behind adapters during Sprint 1
+
+- ***What was built?***
+  - Sprint 001 Deliverable 2 keeps edge routing, CDN placement, and API gateway insertion as designed seams without locking a concrete provider into the runtime contracts.
+  - Root docs state that those network and delivery choices remain intentionally undecided while the branch proves only the bounded local runtime path.
+  - The architecture and infra docs both tie those future choices to adapter-preserving boundaries rather than direct public contract changes.
+- ***Why was it chosen?***
+  - Sprint 1 needed a real runtime slice sooner than it needed final traffic-routing or asset-delivery infrastructure selections.
+  - Locking a gateway or CDN too early would add provider bias before telemetry, scale, or security data justified one concrete option.
+  - Deferring the decision fits the repo posture of designing seams early while activating only the smallest honest runtime surface first.
+- ***What boundaries does it own?***
+  - This decision owns the rule that edge, CDN, and gateway choices are deferred infrastructure seams during Sprint 1.
+  - It owns the expectation that later activation happens behind adapters and does not rewrite public API envelopes casually.
+  - It does not own lower-level runtime hosting for the local proof slice or the broader Cloud Run target posture already documented elsewhere.
+- ***What breaks if it changes?***
+  - Premature provider selection could leak edge or gateway assumptions into contracts that should stay stable for clients and services.
+  - Reviewers would lose the explicit line between designed seams and truly locked infrastructure choices inside Sprint 1 documentation.
+  - Future migration work would become more expensive if runtime code started depending directly on one vendor's routing conventions too early.
+- ***What known edge cases or failure modes matter here?***
+  - Teams may treat a placeholder reverse proxy or local dev server as proof that the production gateway decision is already made.
+  - Asset URLs and caching headers can accidentally encode CDN assumptions even when docs say the provider remains undecided.
+  - Security hardening work may pressure the repo toward a gateway prematurely unless adapter boundaries remain explicit in review.
+- ***Why does this work matter?***
+  - It protects Sprint 1 from expanding into infrastructure selection work that is not required to prove the bounded runtime slice.
+  - The decision keeps public contracts cleaner because client-facing shapes do not inherit temporary edge-provider details accidentally.
+  - This work also leaves later scale decisions easier to review because the repo already marks them as deferred seams rather than silent assumptions.
+- ***What capability does it unlock?***
+  - Later sprints can adopt a gateway, CDN, or edge runtime when real latency, security, or cost signals justify that move.
+  - Operators can compare provider options against the same stable contracts instead of revisiting the client-facing API design each time.
+  - Reviewers gain a durable explanation for why Sprint 1 intentionally stops before broader network-platform commitments are made.
+- ***Why is the chosen design safer or more scalable?***
+  - Deferral is safer than premature locking because routing and caching vendors often impose subtle contract assumptions that are hard to unwind.
+  - Adapter-backed seams scale better because later platform insertions can change traffic flow without forcing product-level rewrites everywhere.
+  - This choice also keeps the monorepo more explainable by separating current runtime proof from future infrastructure optimization decisions.
+- ***What trade-off did the team accept?***
+  - The team chose some continued ambiguity about eventual edge architecture in exchange for tighter Sprint 1 focus and lower lock-in risk.
+  - Contributors do not get immediate provider-specific optimization guidance, which can feel slower during early deployment planning.
+  - Future reviewers should preserve that patience until concrete operational evidence justifies choosing one gateway, CDN, or edge platform.
+
+---
+
+### D2-T2 - make Supabase the default Sprint 1 adapter target without treating it as permanent lock-in
+
+- ***What was built?***
+  - Sprint 001 Deliverable 2 names Supabase as the default adapter target for auth, operational Postgres, and storage-oriented contracts in root docs.
+  - The same docs also state that Supabase is a current implementation target rather than a permanent domain commitment or naming authority.
+  - Architecture, infrastructure, and operations guidance align on adapter-first wording so provider specifics stay behind owned boundaries.
+- ***Why was it chosen?***
+  - The branch needed one concrete target for browser-safe auth, relational policy, and storage planning without pretending the vendor decision is irreversible.
+  - Supabase fits the current runtime slice well because it combines Postgres, auth, and storage concerns behind one practical integration target.
+  - Keeping the target explicit is clearer than vague neutrality, but treating it as an adapter choice preserves flexibility for later replacements.
+- ***What boundaries does it own?***
+  - This decision owns the default provider-target statement for Sprint 1 auth, relational, and storage adapter planning.
+  - It owns the rule that product and contract layers must not depend directly on Supabase-specific naming, SDK shapes, or hosted assumptions.
+  - It does not mandate that every local proof path already run on Supabase, nor does it settle future managed deployment posture permanently.
+- ***What breaks if it changes?***
+  - Root docs would drift into confusion if one file named Supabase as a baseline while another described total provider neutrality without a concrete target.
+  - Future provider swaps would become harder if product contracts quietly started depending on Supabase-only concepts during routine runtime work.
+  - Reviewers for auth and storage changes would lose a stable baseline for evaluating whether a branch preserved adapter-first behavior.
+- ***What known edge cases or failure modes matter here?***
+  - Contributors may misread “default target” as permission to import provider SDK assumptions directly into shared contracts or app entrypoints.
+  - Local sqlite proof can coexist with Supabase-targeted production adapters, so docs must keep local runtime proof separate from later hosted integration intent.
+  - Supabase bundles multiple concerns together, which can obscure the fact that auth, database, and storage adapters may evolve at different speeds.
+- ***Why does this work matter?***
+  - It gives Sprint 1 a truthful provider direction for current planning while still honoring the governed repo rule against casual lock-in.
+  - The decision reduces repeated debate over whether the branch is completely provider-agnostic or already biased toward one practical target.
+  - This work also helps later sprint docs speak consistently about auth, data, and storage boundaries across local proof and managed follow-on work.
+- ***What capability does it unlock?***
+  - Sprint 2 can implement richer auth, database, and storage adapters against one named default target without reopening the provider debate first.
+  - Reviewers can judge later provider work against an explicit rule: integrate concretely, but keep the contract and adapter boundary replaceable.
+  - Operators can evolve deployment choices gradually because the default target is documented as a baseline, not an irreversible architecture law.
+- ***Why is the chosen design safer or more scalable?***
+  - A named default target is safer than vague neutrality because implementation work still needs one practical starting point to stay coherent.
+  - Adapter-first wording is more scalable than direct vendor coupling because later provider changes remain localized instead of rippling through clients and contracts.
+  - This balance also lowers review ambiguity by making both the current target and the anti-lock-in rule visible in the same durable record.
+- ***What trade-off did the team accept?***
+  - The team chose a little extra wording complexity because the docs must describe both a real target and a non-lock-in rule simultaneously.
+  - Contributors need discipline to avoid turning a default target into silent architectural dependence inside shared layers.
+  - Future reviewers should keep enforcing that distinction, since convenience coupling would erase the flexibility this decision intentionally preserves.
+
+---
+
+### D2-T1 - lock one bounded multi-surface runtime slice before broader platform expansion
+
+- ***What was built?***
+  - Sprint 001 Deliverable 2 proves one bounded runtime slice across web, extension, API, ingest, and a shared local runtime store instead of scattered shell demos.
+  - The slice covers sign-in, shared identity resolution, workspace bootstrap, one durable action write, background processing, and baseline metrics export.
+  - Closeout guidance describes that slice as the actual Sprint 1 runtime baseline rather than an unfinished precursor blocked by unrelated external follow-up work.
+- ***Why was it chosen?***
+  - The rebuild needed one real end-to-end path so later features could attach to proven contracts and runtime boundaries.
+  - A bounded slice was more valuable than broader but shallower scaffolding because it established truthful runtime behavior under governed repo rules.
+  - This choice also kept Sprint 1 focused on proving the platform shape before expanding into richer AI, graph, or scale features.
+- ***What boundaries does it own?***
+  - This decision owns the definition of the first real runtime slice for Sprint 1 across the active product and service surfaces.
+  - It owns the rule that shared identity, durable writes, and background execution must cross the approved runtime boundaries rather than app-local shortcuts.
+  - It does not claim full production deployment, broad feature coverage, or final provider-specific infrastructure activation beyond the bounded slice.
+- ***What breaks if it changes?***
+  - Sprint 2 work would lose the stable baseline that later features and quality systems are supposed to extend.
+  - Reviewers could no longer rely on one agreed runtime path when evaluating changes to auth, workspace, jobs, or observability.
+  - Closeout language would regress into prototype-style ambiguity if the repo stopped naming which slice is real.
+- ***What known edge cases or failure modes matter here?***
+  - Local proof can overstate maturity if docs fail to distinguish bounded integration from full managed deployment readiness.
+  - A single slice may hide unproven adjacent flows, so later docs must stay precise about what the branch still does not claim.
+  - Background execution proof can appear synchronous to users even when the repo correctly maintains a separate ingest runtime boundary.
+- ***Why does this work matter?***
+  - It turns Sprint 1 from a governance-only reset into a platform rebuild with one honest runtime path.
+  - The decision gives quality, testing, and observability work a concrete critical path instead of a theoretical architecture sketch.
+  - This baseline also makes the repo easier to review because product, service, and job boundaries have one shared reference example.
+- ***What capability does it unlock?***
+  - Later deliverables can attach richer auth, capture, retrieval, and tutoring behaviors to the same bounded runtime spine.
+  - Observability and evaluation systems can compare future changes against one concrete cross-surface path that already exists.
+  - Contributors can reason about where new runtime work belongs because the first integrated slice already demonstrates the intended topology.
+- ***Why is the chosen design safer or more scalable?***
+  - One bounded slice is safer than many partial shells because it exposes real contract and runtime failures earlier.
+  - It scales better as a platform baseline because later features can extend an existing end-to-end path instead of inventing their own.
+  - The approach also lowers documentation drift by tying root docs and closeout language to one reproducible runtime reality.
+- ***What trade-off did the team accept?***
+  - The team chose narrower functional scope in exchange for a more trustworthy integrated baseline during Sprint 1.
+  - Some future runtime surfaces remain reserved or scaffolded, which can feel incomplete beside the proven critical path.
+  - Future reviewers should preserve that boundedness because over-claiming Sprint 1 would weaken the repo's evidence-first posture.
 
 ---
 
