@@ -50,6 +50,12 @@
 			<ul id="recent-actions" class="list"></ul>
 		</section>
 
+		<section id="degraded-card" class="card degraded hidden" aria-live="polite">
+			<h2>Degraded mode</h2>
+			<p id="degraded-message">A retryable runtime issue is holding the current session.</p>
+			<button id="retry-button" type="button">Retry last request</button>
+		</section>
+
 		<!-- keep runtime status always visible so operators can diagnose the proof path quickly -->
 		<section class="card">
 			<h2>Runtime status</h2>
