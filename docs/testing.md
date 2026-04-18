@@ -652,7 +652,15 @@ Current Sprint 1 repo-local proof path:
 * Langfuse proof command: `python3 -m python.evaluation.langfuse_local_proof`
 * MLflow verification probe: `python3 -m python.evaluation.verify_mlflow_run`
 
-These artifacts now prove repo-local runtime evaluation, telemetry-derived performance, one repo-local MLflow offline run, and one bounded self-hosted local Langfuse trace-plus-score path. They do **not** by themselves prove hosted Langfuse operations, hosted or team-shared MLflow durability, or GitHub-hosted merge controls.
+These artifacts now prove repo-local runtime evaluation, telemetry-derived performance, one self-hosted local MLflow offline run, and one bounded self-hosted local Langfuse trace-plus-score path. They do **not** by themselves prove managed Langfuse operations, managed or team-shared MLflow durability, or GitHub-hosted merge controls.
+
+### 📏 Durable recording rule
+
+When a branch claims quality, observability, eval, or performance progress from Sprint 1 evidence:
+
+* the supporting output must be recorded as machine-readable artifacts, versioned dashboards or alert rules, or replayable local telemetry stores
+* screenshots and prose summaries may help review, but they do not replace durable recorded metrics or eval outputs
+* if a metric or score cannot be regenerated or inspected from the recorded evidence, the branch must not present it as durable proof
 
 ## 📊 Test artifacts and retention
 
