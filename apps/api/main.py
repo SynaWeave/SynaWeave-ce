@@ -40,6 +40,8 @@ from python.common.observability import (
 from python.common.runtime_store import RuntimeStore
 from python.common.runtime_time import utc_now_iso
 
+JOB_WAIT_TIMEOUT_SECONDS = float(os.getenv("SYNAWEAVE_JOB_WAIT_TIMEOUT_SECONDS", "15"))
+
 # ---------- app bootstrap ----------
 # Keep one store per process because the local proof path only needs one sqlite boundary.
 store = RuntimeStore()
@@ -77,7 +79,7 @@ class JobBody(BaseModel):
 class TelemetryBody(BaseModel):
     surface: str = Field(pattern="^(web|extension|api|ingest)$")
     name: str = Field(min_length=2)
-    status: str = Field(pattern="^(ok|error)$")
+    status: str = Field(pattern="^(ok|error|degraded)$")
     durationMs: float = Field(ge=0)
     traceId: str = Field(min_length=6)
     costMicros: int = Field(default=0, ge=0)
@@ -98,6 +100,73 @@ def runtime_meta(request: Request) -> dict[str, Any]:
 
 def ok(request: Request, payload: dict[str, Any], status: str = "ok") -> dict[str, Any]:
     return {"status": status, "meta": runtime_meta(request), "payload": payload}
+
+
+def failed_job_response(
+    request: Request,
+    *,
+    job_id: str,
+    user_id: str,
+    summary: str,
+    error_detail: str,
+) -> JSONResponse:
+    job = store.job_view(job_id, user_id=user_id)
+    if job["state"] != "failed":
+        job = store.mark_job_failed(job_id, summary=summary, error_detail=error_detail)
+    store.record_backend_event(
+        component="api",
+        event="workspace_job.failed",
+        level="error",
+        trace_id=request.state.trace_id,
+        request_id=request.state.request_id,
+        job_id=job["job_id"],
+        workspace_id=job["workspace_id"],
+        user_id=user_id,
+        status=job["state"],
+        detail=error_detail,
+        fields={"summary": summary},
+    )
+    return JSONResponse(status_code=502, content=ok(request, job, status="error"))
+
+
+def retryable_job_response(
+    request: Request,
+    *,
+    job_id: str,
+    user_id: str,
+    summary: str,
+    error_detail: str,
+    retry_after_seconds: float,
+) -> JSONResponse:
+    job = store.job_view(job_id, user_id=user_id)
+    if job["state"] != "failed":
+        job = store.mark_job_failed(job_id, summary=summary, error_detail=error_detail)
+    store.record_backend_event(
+        component="api",
+        event="workspace_job.timed_out",
+        level="warning",
+        trace_id=request.state.trace_id,
+        request_id=request.state.request_id,
+        job_id=job["job_id"],
+        workspace_id=job["workspace_id"],
+        user_id=user_id,
+        status="degraded",
+        detail=error_detail,
+        fields={
+            "summary": summary,
+            "retryable": True,
+            "retry_after_seconds": retry_after_seconds,
+        },
+    )
+    body = ok(request, job, status="degraded")
+    body["detail"] = summary
+    body["retryable"] = True
+    body["retryAfterSeconds"] = retry_after_seconds
+    return JSONResponse(
+        status_code=504,
+        content=body,
+        headers={"Retry-After": str(int(retry_after_seconds))},
+    )
 
 
 # ---------- auth helpers ----------
@@ -134,9 +203,10 @@ async def runtime_probe(request: Request, call_next):
     request_id = f"req_{uuid.uuid4().hex[:12]}"
     request.state.request_id = request_id
     started_at = time.perf_counter()
+    route_name = f"{request.method} {request.url.path}"
     parent_context = extract_trace_context(dict(request.headers))
     with tracer.start_as_current_span(
-        f"{request.method} {request.url.path}",
+        route_name,
         context=parent_context,
         kind=trace.SpanKind.SERVER,
     ) as span:
@@ -147,8 +217,31 @@ async def runtime_probe(request: Request, call_next):
         try:
             response = await call_next(request)
         except Exception as exc:
+            duration_ms = round((time.perf_counter() - started_at) * 1000, 2)
             span.record_exception(exc)
             span.set_status(Status(StatusCode.ERROR))
+            store.emit_telemetry(
+                surface="api",
+                name=route_name,
+                status="error",
+                duration_ms=duration_ms,
+                trace_id=request.state.trace_id,
+                detail=request.url.path,
+            )
+            store.record_backend_event(
+                component="api",
+                event="request.failed",
+                level="error",
+                trace_id=request.state.trace_id,
+                request_id=request_id,
+                status="error",
+                detail=str(exc),
+                fields={
+                    "duration_ms": duration_ms,
+                    "method": request.method,
+                    "path": request.url.path,
+                },
+            )
             raise
         duration_ms = round((time.perf_counter() - started_at) * 1000, 2)
         status = "ok" if response.status_code < 400 else "error"
@@ -157,11 +250,26 @@ async def runtime_probe(request: Request, call_next):
             span.set_status(Status(StatusCode.ERROR))
         store.emit_telemetry(
             surface="api",
-            name=f"{request.method} {request.url.path}",
+            name=route_name,
             status=status,
             duration_ms=duration_ms,
             trace_id=request.state.trace_id,
             detail=request.url.path,
+        )
+        store.record_backend_event(
+            component="api",
+            event="request.completed",
+            level="error" if status == "error" else "info",
+            trace_id=request.state.trace_id,
+            request_id=request_id,
+            status=status,
+            detail=request.url.path,
+            fields={
+                "duration_ms": duration_ms,
+                "method": request.method,
+                "path": request.url.path,
+                "status_code": response.status_code,
+            },
         )
         response.headers["x-request-id"] = request_id
         response.headers["x-trace-id"] = request.state.trace_id
@@ -191,6 +299,17 @@ def ready(request: Request) -> JSONResponse:
         "ts": utc_now_iso(),
     }
     status_code = 200 if state == "ready" else 503
+    if status_code != 200:
+        store.record_backend_event(
+            component="api",
+            event="runtime.degraded",
+            level="warning",
+            trace_id=request.state.trace_id,
+            request_id=request.state.request_id,
+            status=state,
+            detail=",".join(readiness["errors"]),
+            fields={"errors": readiness["errors"]},
+        )
     return JSONResponse(status_code=status_code, content=ok(request, payload, status=state))
 
 
@@ -258,7 +377,7 @@ def workspace_job(
     body: JobBody,
     authorization: str | None = Header(default=None),
     idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
-) -> dict[str, Any]:
+) -> Any:
     token, user_id = require_authenticated_token(authorization)
     try:
         job = store.create_job(
@@ -270,18 +389,81 @@ def workspace_job(
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except PermissionError as exc:
         raise HTTPException(status_code=403, detail=str(exc)) from exc
+    store.record_backend_event(
+        component="api",
+        event="workspace_job.queued",
+        trace_id=request.state.trace_id,
+        request_id=request.state.request_id,
+        job_id=job["job_id"],
+        workspace_id=job["workspace_id"],
+        user_id=user_id,
+        status=job["state"],
+        detail="job accepted",
+        fields={"wait_for_finish": body.waitForFinish},
+    )
     if body.waitForFinish:
-        carrier = inject_current_trace_headers()
-        subprocess.run(
-            [sys.executable, "-m", "apps.ingest.main", "--job-id", job["job_id"]],
-            check=True,
-            env={
-                **os.environ,
-                "TRACEPARENT": carrier.get("traceparent", ""),
-                "TRACESTATE": carrier.get("tracestate", ""),
-            },
-        )
+        if job["state"] in {"queued", "failed"}:
+            carrier = inject_current_trace_headers()
+            try:
+                subprocess.run(
+                    [sys.executable, "-m", "apps.ingest.main", "--job-id", job["job_id"]],
+                    check=True,
+                    timeout=JOB_WAIT_TIMEOUT_SECONDS,
+                    env={
+                        **os.environ,
+                        "TRACEPARENT": carrier.get("traceparent", ""),
+                        "TRACESTATE": carrier.get("tracestate", ""),
+                    },
+                )
+            except subprocess.TimeoutExpired as exc:
+                return retryable_job_response(
+                    request,
+                    job_id=job["job_id"],
+                    user_id=user_id,
+                    summary=(
+                        "Workspace digest timed out before waitForFinish could confirm success. "
+                        "The job was marked failed so you can retry safely."
+                    ),
+                    error_detail=f"{type(exc).__name__}: {exc}",
+                    retry_after_seconds=JOB_WAIT_TIMEOUT_SECONDS,
+                )
+            except subprocess.CalledProcessError as exc:
+                return failed_job_response(
+                    request,
+                    job_id=job["job_id"],
+                    user_id=user_id,
+                    summary=(
+                        "Workspace digest ingest execution failed. "
+                        "Check error_detail for more detail."
+                    ),
+                    error_detail=f"{type(exc).__name__}: {exc}",
+                )
+            except OSError as exc:
+                return failed_job_response(
+                    request,
+                    job_id=job["job_id"],
+                    user_id=user_id,
+                    summary=(
+                        "Workspace digest worker could not start. "
+                        "Check error_detail for more detail."
+                    ),
+                    error_detail=f"{type(exc).__name__}: {exc}",
+                )
         job = store.job_view(job["job_id"], user_id=user_id)
+        if job["state"] == "failed":
+            return JSONResponse(status_code=502, content=ok(request, job, status="error"))
+        store.record_backend_event(
+            component="api",
+            event="workspace_job.completed",
+            trace_id=request.state.trace_id,
+            request_id=request.state.request_id,
+            job_id=job["job_id"],
+            workspace_id=job["workspace_id"],
+            user_id=user_id,
+            status=job["state"],
+            detail="job finished before response",
+        )
+        return ok(request, job, status="ok")
     return ok(request, job, status="accepted")
 
 
