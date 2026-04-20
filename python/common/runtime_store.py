@@ -324,7 +324,12 @@ class RuntimeStore:
                 (token, current_user["user_id"], surface, created_at, expires_at),
             )
 
-        identity = self.identity_for_token(token)
+        identity = {
+            "userId": current_user["user_id"],
+            "email": current_user["email"],
+            "bridgeCode": current_user["bridge_code"],
+            "sessionToken": token,
+        }
         return {
             "token": token,
             "identity": identity,
