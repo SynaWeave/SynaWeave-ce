@@ -298,7 +298,14 @@ test("web and extension resolve one live user workspace and bridge identity", as
 		await page.reload();
 		await expect(page.locator("#recent-actions")).toContainText(extensionNote);
 
-		await extensionPage.getByRole("button", { name: "Run digest job" }).click();
+		await Promise.all([
+			extensionPage.waitForResponse(
+				(response) =>
+					response.url().endsWith("/v1/jobs/workspace") && response.ok(),
+			),
+			extensionPage.getByRole("button", { name: "Run digest job" }).click(),
+		]);
+		await extensionPage.reload();
 		await expect(extensionPage.locator("#ext-last-digest")).toContainText(
 			extensionNote,
 		);
