@@ -35,15 +35,16 @@ This file is the durable reasoning spine for Sprint 001 of the governed rebuild.
 
 ## Current Status
 
-- Deliverable 3 has three approved decisions covering collector-routed observability, durable evidence recording, and self-hosted local AI-quality backends with managed later options.
-- Deliverable 2 has three approved decisions covering the bounded runtime slice, adapter-first provider posture, and deferred edge or gateway provider selection.
+- Deliverable 3 has five approved decisions covering collector-routed observability, durable evidence recording, self-hosted local AI-quality backends, schema-driven contract testing, and browser proof limits with durable vitals artifacts.
+- Deliverable 2 has four approved decisions covering the bounded runtime slice, adapter-first provider posture, Zuplo as the selected unified edge target, and deferred activation of edge or gateway seams.
 - Sprint 001 Deliverable 3 has an approved local observability decision for compose-backed collector-routed API and ingest traces plus versioned dashboards and alerts.
 - Sprint 001 Deliverable 1 has seven approved decisions, including closeout hardening for pull request verification, secret-scan cleanup, and verifier test isolation.
+- Shared contract bundles and schema-driven contract tests anchor Sprint 1 public runtime interfaces across API envelopes and extension message fixtures.
+- Browser proof records web-shell Core Web Vitals separately from side-panel open or popup boot timing, with explicit limits on what Playwright can inspect directly.
 - Pull request commit verification checks authored pull request commits while hosted workflows still evaluate merge-result repository state for final branch protection evidence.
 - Self-hosted local Langfuse and MLflow proof remain bounded Sprint 1 backends, while managed service adoption stays a later adapter-preserving choice.
-- Edge, CDN, and API gateway providers remain intentionally deferred behind adapters instead of being locked prematurely in Sprint 1.
-- Durable observability claims require versioned dashboards or alerts, machine-readable artifacts, or replayable local telemetry stores.
-- Sprint reasoning lives in one ADR ledger so approved choices remain durable beyond pull request summaries.
+- Zuplo is the selected Sprint 1 edge target, but local proof remains direct-to-API until that edge path is booted and verified.
+- Durable observability claims require versioned dashboards or alerts, machine-readable artifacts, or replayable local telemetry stores, and this ledger keeps those approved choices durable beyond pull request summaries.
 
 ---
 
@@ -53,6 +54,9 @@ This file is the durable reasoning spine for Sprint 001 of the governed rebuild.
 
 | Decision | Status |
 | --- | --- |
+| D3-T7 - record browser proof with web-shell vitals and explicit side-panel limits | approved |
+| D3-T6 - require schema-driven contract tests for Sprint 1 public interfaces | approved |
+| D2-T4 - select Zuplo as the unified Sprint 1 edge target behind adapters | approved |
 | D3-T5 - keep self-hosted local Langfuse and MLflow as the Sprint 1 proof baseline with managed later options | approved |
 | D3-T4 - require durable observability and metrics recording for Sprint 1 quality claims | approved |
 | D3-T3 - make compose-backed collector-routed API and ingest traces the local observability baseline | approved |
@@ -66,6 +70,129 @@ This file is the durable reasoning spine for Sprint 001 of the governed rebuild.
 | D1-T4 - protected-path control-surface alignment | approved |
 | D1-T2 - Make root docs and MASTER the only planning authority | approved |
 | D1 - Lock the shallow monorepo topology and reserved runtime homes | approved |
+
+---
+
+### D3-T7 - record browser proof with web-shell vitals and explicit side-panel limits
+
+- ***What was built?***
+  - Sprint 001 Deliverable 3 records one tracked browser-proof artifact that separates web-shell Core Web Vitals from extension side-panel open and popup boot timing evidence.
+  - The browser artifact states the exact proof limit: Playwright can prove the side-panel open request and runtime boot, but not direct DOM inspection of Chromium-owned side-panel chrome.
+  - Root docs and performance baselines point to `testing/performance/browser-shell-baseline.local-proof.v1.json` as the durable browser evidence surface for the bounded Sprint 1 path.
+- ***Why was it chosen?***
+  - Browser timing claims had become durable enough to deserve a tracked artifact, but extension-side-panel evidence still needed more precise wording than generic “browser vitals” language allowed.
+  - Treating web-shell Core Web Vitals and side-panel boot timing as the same proof class would overstate what the current automation stack can inspect or compare.
+  - A versioned browser artifact keeps Sprint 1 performance language reviewable without pretending the hidden browser-owned container has become visible to Playwright.
+- ***What boundaries does it own?***
+  - This decision owns the durable Sprint 1 browser-proof artifact, its scope, and the rule that web-shell vitals and extension boot timing stay labeled as different evidence classes.
+  - It owns the explicit limitation language for side-panel proof so root docs and closeout records cannot silently upgrade runtime boot evidence into full container inspection.
+  - It does not own service latency metrics, collector exports, or the runtime-eval harness outputs that are covered by adjacent Deliverable 3 decisions.
+- ***What breaks if it changes?***
+  - Reviewers could misread side-panel timing evidence as direct browser-container verification, which would make Sprint 1 browser claims less trustworthy.
+  - Future browser baselines would become harder to compare if web-shell Core Web Vitals and extension boot timing drift into one mixed metric bucket.
+  - README, operations, and closeout language would overstate the current browser automation surface the moment the proof boundary becomes vague.
+- ***What known edge cases or failure modes matter here?***
+  - Chromium still hides the browser-owned side-panel container DOM from Playwright, so tests can confirm open requests and booted runtime documents without exposing every rendered chrome detail.
+  - A healthy web-shell LCP, INP, or CLS value says nothing by itself about extension panel boot speed, because those surfaces have different runtime and browser constraints.
+  - Playwright output artifacts can capture richer ephemeral timing detail than the tracked artifact, so docs must keep local run outputs distinct from durable checked-in proof.
+- ***Why does this work matter?***
+  - Sprint 1 needed honest browser-quality evidence for the critical path instead of prose that blurred page vitals, extension boot timing, and unavailable browser chrome inspection.
+  - The tracked artifact gives future reviewers one stable browser baseline for later comparison without requiring access to the original Playwright run directory.
+  - This work also protects the repo from inflated extension-automation claims that would otherwise outrun what Chromium exposes to test tooling.
+- ***What capability does it unlock?***
+  - Later sprints can add richer browser timing or interaction proof while still comparing back to one bounded Sprint 1 baseline.
+  - Reviewers can ask for narrower browser evidence because the repo names exactly what current automation does and does not prove.
+  - Performance discussions can stay grounded in tracked artifacts instead of screenshots, memory, or ambiguous references to “browser tests passed.”
+- ***Why is the chosen design safer or more scalable?***
+  - Separate browser-proof classes are safer than one blended artifact because they prevent automation limits from being hidden inside attractive aggregate metrics.
+  - Versioned browser artifacts scale better than ephemeral local output alone because maintainers can compare runs across branches and time.
+  - Explicit proof limits also scale better for review because new browser automation can tighten the boundary later without rewriting Sprint 1 history.
+- ***What trade-off did the team accept?***
+  - The team chose narrower browser claims in exchange for wording and artifacts that match the real Playwright and Chromium evidence boundary exactly.
+  - Contributors maintain one more tracked proof file and must keep its limit language aligned with the automation harness.
+  - Future reviewers should preserve that discipline because a simpler but blurrier browser-proof story would be easier to write and harder to trust.
+
+---
+
+### D3-T6 - require schema-driven contract tests for Sprint 1 public interfaces
+
+- ***What was built?***
+  - Sprint 001 Deliverable 3 keeps a shared runtime contract bundle under `packages/contracts/runtime/public-interfaces.v1.json` and validates it through schema-driven contract tests.
+  - The contract test lane exercises live API responses plus extension selection-message fixtures so both service envelopes and browser-adjacent serialized payloads stay aligned.
+  - Package, testing, and root docs treat those contract tests as the owned Sprint 1 surface for public serialized-interface drift.
+- ***Why was it chosen?***
+  - The bounded runtime slice had become large enough that unit and e2e coverage alone no longer gave reviewers a clean answer for whether public envelopes still matched the documented contract.
+  - A shared bundle is clearer than scattered per-test assertions because the repo can review one versioned interface surface instead of re-deriving it from app code.
+  - Schema-driven validation fit Sprint 1 better than bringing in heavier contract infrastructure, because the proof needed to stay small, local, and governed.
+- ***What boundaries does it own?***
+  - This decision owns the Sprint 1 public-interface contract bundle, the schema-driven validation lane, and the rule that live API envelopes match that governed bundle.
+  - It owns extension selection-message fixture validation where those messages are part of the same bounded public runtime story.
+  - It does not own future generated SDKs, long-term schema-registry tooling, or private internal service payloads that never cross the approved public boundary.
+- ***What breaks if it changes?***
+  - API and extension payloads could drift silently while still passing unrelated unit or smoke tests, making public-boundary regressions harder to catch early.
+  - Reviewers would lose one durable place to inspect what Sprint 1 considers the canonical request and response shapes for the critical path.
+  - Docs that promise versioned and testable contracts would become much less trustworthy if the bundle or its validating tests stopped being required.
+- ***What known edge cases or failure modes matter here?***
+  - A minimal schema subset can still miss future keyword needs, so later expansions should stay deliberate instead of turning the contract lane into a second framework project.
+  - Live API tests can pass while extension fixtures drift, or vice versa, unless both stay pinned to the same bundle and naming convention.
+  - Schema-driven checks prove payload shape, but they do not replace deeper behavioral or auth-boundary tests for the same endpoints.
+- ***Why does this work matter?***
+  - Sprint 1 needed one stable answer for where public runtime contracts live once web, API, ingest, and extension paths all started sharing real payloads.
+  - This decision makes contract drift reviewable without asking maintainers to manually compare app code, docs, and browser fixtures every time.
+  - It also reinforces the governed-monorepo rule that cross-surface contracts belong in shared owned layers instead of app entrypoints.
+- ***What capability does it unlock?***
+  - Later sprints can extend the same contract bundle for richer workspace, job, or AI interfaces without reinventing contract ownership.
+  - Browser, API, and test lanes can all speak about one shared public-interface surface when changes touch serialized payloads.
+  - Reviewers gain a smaller and more exact verification lane for interface safety than rerunning every runtime proof path to infer shape stability.
+- ***Why is the chosen design safer or more scalable?***
+  - Shared schema-driven contracts are safer than ad hoc assertions because they force payload drift through one versioned review surface.
+  - The bounded custom schema checker scales better for Sprint 1 than introducing a heavier dependency stack whose maintenance would exceed the current need.
+  - Keeping extension fixtures and live API envelopes pinned together also scales better than letting each surface define its own truth separately.
+- ***What trade-off did the team accept?***
+  - The team chose some manual schema maintenance in exchange for a clearer contract boundary that stays lightweight and repo-local.
+  - Contributors must update both the bundle and the tests whenever public serialized interfaces change, which is slower than silent payload drift.
+  - Future reviewers should keep that friction because contract discipline is cheaper than debugging mismatched clients after interface changes merge.
+
+---
+
+### D2-T4 - select Zuplo as the unified Sprint 1 edge target behind adapters
+
+- ***What was built?***
+  - Sprint 001 Deliverable 2 names Zuplo as the selected unified target for edge routing, CDN, caching, and API gateway concerns in root architecture, infra, operations, and closeout docs.
+  - The same docs keep the current runtime proof honest by stating that local Sprint 1 execution still runs direct-to-API unless a Zuplo-backed path is separately booted and verified.
+  - Adapter wording remains explicit so Zuplo selection shapes the current implementation target without becoming a domain contract or mandatory permanent vendor lock.
+- ***Why was it chosen?***
+  - The branch had moved beyond abstract edge seams, and contributors needed one concrete target so docs could stop describing gateway, CDN, and cache concerns as completely undecided.
+  - Choosing one unified provider target is simpler than documenting separate speculative vendors for routing, CDN, and caching while none of those paths are yet booted.
+  - Zuplo fits the current Sprint 1 need for one adapter-owned edge path without forcing the local proof to overclaim deployed edge behavior prematurely.
+- ***What boundaries does it own?***
+  - This decision owns the selected Sprint 1 provider target for edge, CDN, caching, and gateway seams across root technical docs and closeout language.
+  - It owns the rule that Zuplo remains behind adapter-owned boundaries and must not rewrite public contracts, browser-safe boundaries, or server-only enforcement points directly.
+  - It does not own a live deployed edge runtime, final production caching policy, or proof that local replay already traverses the selected provider.
+- ***What breaks if it changes?***
+  - Root docs would drift back into ambiguity if some files described Zuplo as selected while others kept claiming all edge-provider choices were still fully undecided.
+  - Later edge activation work would lose a stable target narrative, making it harder to judge whether follow-on changes preserved adapter boundaries properly.
+  - Reviewers could mistake target selection for integrated runtime truth unless the decision keeps both the selection and the current proof limit visible together.
+- ***What known edge cases or failure modes matter here?***
+  - Teams may read “selected target” as proof that the current local runtime already traverses Zuplo, even though docs intentionally say that path is not yet booted.
+  - A unified provider target can still leak vendor concepts into public APIs unless adapter ownership stays explicit during later implementation work.
+  - CDN and gateway concerns often feel operational, but they can still backdoor contract drift through headers, cache keys, or auth assumptions if review gets loose.
+- ***Why does this work matter?***
+  - Sprint 1 needed closeout docs to reflect the real current choice instead of preserving older “undecided” language after the repo had already selected a concrete target.
+  - This decision reduces document drift across architecture, infra, operations, and sprint closeout records by giving them one shared edge-provider statement.
+  - It also leaves the repo more explainable because future edge work starts from a named target and a named proof limit instead of silent assumptions.
+- ***What capability does it unlock?***
+  - Later sprints can implement gateway, edge-cache, or CDN behavior against one selected provider target without reopening basic provider selection in every doc.
+  - Reviewers can evaluate edge-related changes against an explicit rule: integrate concretely, but keep the contract and adapter seam swappable.
+  - Operators gain a clearer path for future bootable edge proof because one provider target already owns the current follow-on conversation.
+- ***Why is the chosen design safer or more scalable?***
+  - One selected target is safer than indefinite ambiguity because implementation work eventually needs a concrete provider direction to stay coherent.
+  - Keeping that target behind adapters is more scalable than direct vendor coupling because later swaps remain operational rather than architectural by default.
+  - The decision is also safer than claiming a live edge runtime already exists, because it distinguishes selected intent from verified runtime proof explicitly.
+- ***What trade-off did the team accept?***
+  - The team chose some provider specificity in docs in exchange for less ambiguity about where future edge work should start.
+  - Contributors must keep repeating the difference between selected target and integrated runtime proof, which adds wording overhead to closeout and owner docs.
+  - Future reviewers should keep that distinction sharp because convenience claims about an unbooted edge path would weaken Sprint 1 evidence discipline.
 
 ---
 
