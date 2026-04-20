@@ -379,7 +379,7 @@ Verification of performance baselines, latency regressions, and timing-sensitive
 * CI timing artifacts
 * telemetry-derived baselines from Prometheus, Grafana, or runtime metrics
 * versioned repo-local proof artifacts under `testing/performance/` when hosted telemetry is not yet available
-* Playwright output artifacts for browser-side web-shell and extension timing evidence
+* Playwright output artifacts for browser-side web-shell Core Web Vitals evidence and extension side-panel open or boot timing evidence
 
 ### 📏 Rules
 
