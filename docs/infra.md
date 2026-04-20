@@ -57,6 +57,7 @@ The initial hosting split is:
 
 - Cloud Run for request-serving services and run-to-completion jobs
 - Supabase as the default Sprint 1 adapter target for operational Postgres, Auth, and Storage
+- Zuplo as the current unified Sprint 1 adapter target for edge routing, CDN, caching, and API gateway concerns
 - GitHub Pages for public static documentation and marketing
 - OpenTelemetry Collector, Prometheus, Grafana, Langfuse, and MLflow for telemetry, AI observability, and offline experiment evidence
 
@@ -339,12 +340,12 @@ The network architecture is intentionally simple at first.
 
 ## 📡 API gateway and CDN seams
 
-These seams are designed now, even if not activated in Sprint 1.
+These seams are designed now, even if the current branch only proves them as selected targets rather than integrated runtime truth in Sprint 1.
 
 Current Sprint 1 posture:
 
-- no gateway, CDN, or edge vendor is locked yet for the governed platform baseline
-- these seams remain deferred until scale, security, or latency evidence requires activation
+- Zuplo is the current unified target for gateway, CDN, and edge-cache concerns so one provider path can absorb those concerns behind a single adapter boundary
+- the current branch still keeps local Sprint 1 proof honest: local runtime execution can remain direct-to-API until a Zuplo-backed path becomes bootable and verified
 - any eventual provider must sit behind adapter-owned boundaries rather than changing public contracts directly
 
 ### 📡 API gateway seam
@@ -358,6 +359,7 @@ Purpose:
 Rules:
 - do not couple application contracts to a specific gateway vendor
 - gateway insertion must not require changing public API envelopes
+- the current target for this seam is Zuplo, but only through owned adapter configuration and route policy layers
 
 ### 🚀 CDN seam
 Purpose:
@@ -369,6 +371,7 @@ Purpose:
 Rules:
 - docs and asset URLs should not assume the absence of a CDN
 - cache headers and asset naming should allow future CDN adoption
+- the current target for this seam is Zuplo so CDN and edge-cache policy can stay unified with gateway controls while remaining swappable later
 
 ---
 
