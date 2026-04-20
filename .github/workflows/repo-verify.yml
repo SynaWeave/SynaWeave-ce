@@ -49,6 +49,14 @@ jobs:
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
 
+      - name: Cache Bun and Playwright assets
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.bun/install/cache
+            ~/.cache/ms-playwright
+          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock', 'package.json') }}
+
       - name: Install Bun dependencies
         run: |
           bun install --frozen-lockfile
