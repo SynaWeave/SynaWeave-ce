@@ -6,6 +6,7 @@ Tracked repo-local proof:
 
 - fixture: `testing/evals/fixtures/runtime-digest-density.v1.json`
 - performance artifact: `testing/performance/runtime-baseline.local-proof.v1.json`
+- browser artifact: `testing/performance/browser-shell-baseline.local-proof.v1.json`
 - eval artifact: `testing/evals/artifacts/runtime-digest-density.local-proof.v1.json`
 - regeneration command: `python3 -m python.evaluation.runtime_eval`
 
@@ -23,9 +24,18 @@ Current tracked repo-local proof from `runtime-baseline.local-proof.v1.json`:
 - job p95 duration observed: 132.2 ms
 - trace events captured during proof run: 6
 
+Current tracked repo-local browser proof from `browser-shell-baseline.local-proof.v1.json`:
+
+- web-shell LCP observed: 152 ms
+- web-shell INP observed: 48 ms
+- web-shell CLS observed: 0.0536
+- extension side-panel open-to-boot timing observed: 276 ms
+- extension popup document ready timing observed: 233.9 ms
+- this extension timing is boot/open evidence for the side-panel runtime, not Core Web Vitals
+
 Additional browser-timing evidence during `bun run test:e2e`:
 
-- Playwright writes `web-shell-timing.json` with browser-side web-shell navigation, workspace-ready, durable-action, and digest timings
+- Playwright writes `web-shell-timing.json` with browser-side web-shell Core Web Vitals evidence plus navigation, workspace-ready, durable-action, and digest timings
 - Playwright writes `extension-side-panel-timing.json` with the real `chrome.sidePanel.open()` request timing and the popup runtime boot timing observed from extension storage evidence
 - these JSON files are local test artifacts, not tracked repo-local proof, because they depend on the current Chromium test run
 
