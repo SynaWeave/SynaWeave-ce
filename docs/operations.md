@@ -238,8 +238,9 @@ Operational notes:
 * web and extension requests send W3C `traceparent` headers for request continuity, but they do not yet run full browser OTel SDK instrumentation
 * local metrics remain queryable through `/metrics`, Prometheus, and the versioned Grafana dashboard plus alert rules under `infra/docker/`
 * API middleware and ingest now write structured backend correlation logs under `build/runtime/backend-logs.jsonl` so request ids, trace ids, and job ids can be compared across the critical path
-* `/metrics` and `/v1/baseline` now append durable measurement history under `build/runtime/measurements.jsonl`, including hotspot summaries and failure or degraded-state counts that the dashboard and alerts expose where the current architecture supports them
-* the reproducible critical-path probe lives at `python3 -m tools.observability.critical_path_probe`
+* `/metrics` and `/v1/baseline` now append durable measurement history under `build/runtime/measurements.jsonl`, including hotspot summaries, failure or degraded-state counts, and latest replay job linkage that the dashboard and alerts expose where the current architecture supports them
+* the reproducible critical-path probe lives at `python3 -m tools.observability.critical_path_probe` and requires fresh replay-linked backend-log plus measurement-history evidence for its own job
+* malformed or corrupt runtime sqlite state is quarantined under `build/runtime/quarantine/` with a recovery record in `build/runtime/runtime-db-recovery.jsonl` instead of being silently deleted
 * `python3 -m python.evaluation.runtime_eval` now writes repo-local telemetry-derived eval and performance artifacts plus one self-hosted local MLflow run, but not collector export by itself
 * `python3 -m python.evaluation.langfuse_local_proof` proves one self-hosted local Langfuse trace and score write plus query path from the Sprint 1 dataset
 * `python3 -m python.evaluation.verify_mlflow_run` verifies that the latest self-hosted local MLflow run exists with the expected metrics and artifacts
@@ -253,11 +254,13 @@ Current status: **integrated**
 Operational notes:
 
 * unit tests now cover the runtime store and API critical path
+* schema-driven contract tests now validate live API envelopes and extension selection messages against `packages/contracts/runtime/public-interfaces.v1.json`
 * manual accessibility notes still exist under `testing/` for checks beyond current automation coverage
-* Playwright now proves the web-shell sign-in, workspace bootstrap, durable write, and digest smoke path against the local runtime
-* Playwright also drives the packaged extension options harness to open the real side-panel runtime and records side-panel boot timing evidence under test output artifacts
+* Playwright now proves the web-shell sign-in, workspace bootstrap, durable write, and digest smoke path against the local runtime, including one assembled flow that confirms the same user email, bridge code, and workspace id resolve across the live web shell and extension panel plus web-shell Core Web Vitals evidence in the browser timing artifact
+* Playwright also drives the packaged extension options harness to open the real side-panel runtime and records side-panel open plus popup boot timing evidence under test output artifacts
 * Playwright plus Axe now scan the signed-in web shell and the packaged extension panel document
 * the current extension proof still stops short of direct side-panel container DOM inspection because Chromium does not expose that browser chrome to Playwright here
+* `testing/performance/browser-shell-baseline.local-proof.v1.json` tracks the current repo-local browser baseline with web-shell Core Web Vitals and separate side-panel boot timing language
 * `testing/evals/fixtures/runtime-digest-density.v1.json` is the versioned Sprint 1 synthetic eval dataset
 * `testing/evals/artifacts/` and `testing/performance/runtime-baseline.local-proof.v1.json` now hold tracked repo-local machine-readable proof generated from the eval harness
 * those tracked artifacts prove the runtime-eval harness path, while compose-backed collector exports remain a separate observability proof path
@@ -268,8 +271,9 @@ Current status: **planned**
 
 Operational notes:
 
-* edge, CDN, and API gateway providers remain intentionally undecided in Sprint 1
+* Zuplo is the selected Sprint 1 target for unified edge, CDN, caching, and API gateway concerns
 * the current branch preserves those seams behind adapters and contract-stable public boundaries
+* the current local proof remains direct-to-API unless a Zuplo-backed path is explicitly booted and verified, so this section records a selected target rather than an integrated edge runtime
 * later activation must update this file when a concrete provider becomes bootable or integrated
 
 ## 🚦 Current CI and governance status
@@ -288,7 +292,9 @@ Operational truth begins when:
 Current posture:
 
 * workflows exist in the repository and are part of the governed control surface
+* GitHub rulesets are the first enforcement home for pull-request requirements, required statuses, stale approvals, and any merge-blocking CODEOWNERS review requirement
 * `repo-verify` is the full hosted verification path; `dependency-installability` is a separate hosted supply-chain lane for clean dependency install checks; the path-filtered `docs-guard`, `governance-guard`, and `protected-paths` workflows are focused supplemental workflows for matching pull-request changes
+* the CODEOWNERS file assigns platform-admin and core-maintainer ownership for protected-path review surfaces, but hosted merge blocking still depends on GitHub-side ruleset configuration
 * GitHub rulesets, branch protection, and secret-scanning enforcement remain external platform settings
 * merge-readiness claims must therefore distinguish local workflow and verifier evidence from hosted enforcement that still depends on those external controls being configured against the documented posture
 * this file must not describe the supplemental path-filtered workflows as confirmed GitHub-required ruleset checks unless that hosted enforcement is separately verified
