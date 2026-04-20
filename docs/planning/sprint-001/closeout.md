@@ -36,7 +36,9 @@ The repo now contains bounded D3 evidence inputs and local reproduction paths fo
 - collector-routed OpenTelemetry trace exports for API and ingest generated under `build/observability/collector-traces.json` when the local compose stack is running
 - baseline metrics snapshots generated under `build/runtime/baseline.json` and `build/runtime/metrics.json` after exercising the runtime path and calling `/metrics` or `/v1/baseline`
 - durable backend correlation logs and measurement history generated under `build/runtime/backend-logs.jsonl` and `build/runtime/measurements.jsonl` for replay-to-replay comparison of the API and job critical path
+- schema-driven contract tests for live API envelopes and extension message fixtures through `packages/contracts/runtime/public-interfaces.v1.json` plus `testing/contract/test_runtime_contracts.py`
 - automated browser accessibility proof under `testing/accessibility/` plus enforced Playwright coverage for the web shell and packaged extension panel document within the bounded local browser slice
+- versioned browser proof under `testing/performance/browser-shell-baseline.local-proof.v1.json`, recording web-shell Core Web Vitals plus separate side-panel open and popup boot timing with explicit browser-owned proof limits
 - versioned synthetic eval fixture under `testing/evals/fixtures/runtime-digest-density.v1.json`
 - versioned repo-local eval proof under `testing/evals/artifacts/runtime-digest-density.local-proof.v1.json`, generated from the runtime-eval harness rather than the collector path
 - versioned repo-local MLflow proof, verified through the local tracking path after `python3 -m python.evaluation.runtime_eval` and `python3 -m python.evaluation.verify_mlflow_run`
@@ -44,7 +46,7 @@ The repo now contains bounded D3 evidence inputs and local reproduction paths fo
 - versioned repo-local performance proof under `testing/performance/runtime-baseline.local-proof.v1.json`, generated from the same runtime-eval harness and runtime-store telemetry
 - runtime baseline targets under `testing/performance/runtime-baseline.md`, now paired with generated runtime evidence
 - versioned Prometheus alert rules plus Grafana provisioning and dashboard artifacts under `infra/docker/`
-- reproducible local trace and metrics replay through `python3 -m tools.observability.critical_path_probe`
+- reproducible local trace and metrics replay through `python3 -m tools.observability.critical_path_probe`, with fresh replay-linked backend-log and measurement-history evidence
 - runtime-focused unit proof under `testing/unit/`
 - hosted proof for ruleset-required checks, CodeQL, secret scanning, and push protection belongs on real pull-request and platform enforcement paths rather than in the repo-local replay alone
 
@@ -55,7 +57,7 @@ This file does **not** claim more than the evidence supports:
 - repo-local proof covers browser automation enforcement, collector-routed local observability, local metrics and baseline artifacts, repo-local MLflow proof, and bounded self-hosted local Langfuse proof
 - this file does not treat repo-local replay as proof of hosted ruleset-required checks, CodeQL, secret scanning, or push protection
 - managed Langfuse or managed MLflow operations remain later deployment choices rather than current Sprint 1 proof
-- edge, CDN, and API gateway providers remain intentionally undecided behind adapters
+- Zuplo is a selected Sprint 1 target behind adapters, but this file does not treat that selection as integrated edge-runtime proof
 - this file does not upgrade repo-local Langfuse or MLflow evidence into hosted/team-shared durability claims
 - this file does not claim managed Cloud Run deployment proof
 
@@ -84,4 +86,6 @@ bun run verify
 
 ## 6. 📌 Handoff note
 
-Sprint 2 can build against a real local runtime baseline plus enforced browser automation, tracked repo-local eval and performance artifacts, self-hosted local MLflow proof, self-hosted local Langfuse proof, and collector-routed observability proof. Hosted required checks and platform enforcement remain PR-path and GitHub-platform evidence rather than repo-local closeout proof, while managed observability backends and concrete edge-routing providers remain follow-on work behind the Sprint 1 adapter and evidence boundaries.
+Sprint 2 can build against a real local runtime baseline plus enforced browser automation, schema-driven contract tests, tracked repo-local eval and performance artifacts, self-hosted local MLflow proof, self-hosted local Langfuse proof, telemetry hardening artifacts, and collector-routed observability proof. This is a bounded Sprint 1 D3 closeout for the repo-local proof system, not a claim that hosted GitHub enforcement, managed observability backends, or a booted Zuplo edge runtime are already complete.
+
+Malformed local runtime sqlite state is also quarantined with a repo-local recovery record instead of being silently deleted, so durable-truth claims keep the bad artifact and the recovery trail together.
