@@ -43,6 +43,12 @@ GOVERNED_REQUIRED_STATUS_CHECKS = (
     "codeql / codeql-python",
 )
 
+GOVERNED_GITHUB_POSTURE_PHRASES = (
+    "Expected default-branch ruleset posture:",
+    "GitHub rulesets are the first enforcement home",
+    "CODEOWNERS file assigns platform-admin and core-maintainer owners for protected-path changes",
+)
+
 ROOT_DOC_FILES = (
     "architecture.md",
     "auth.md",
