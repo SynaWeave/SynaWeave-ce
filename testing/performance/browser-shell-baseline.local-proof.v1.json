@@ -1,0 +1,30 @@
+{
+	"artifactVersion": "v1",
+	"browserProofLimit": "Core Web Vitals proof is bounded to the web shell page. Extension timing evidence is tracked separately as side-panel open and popup boot timing because Playwright still cannot inspect the browser-owned side-panel container DOM directly.",
+	"extensionSidePanel": {
+		"openToBootMs": 276,
+		"panelSurfaceReadyMs": 233.9,
+		"proofType": "side-panel-open-and-boot-timing"
+	},
+	"generatedAt": "2026-04-19T07:56:10Z",
+	"proofType": "repo-local-browser-performance-baseline",
+	"sourceCommand": "bunx playwright test --config playwright.config.ts testing/e2e/web-shell.spec.ts testing/e2e/extension-side-panel.spec.ts",
+	"thresholdStatus": {
+		"webShellCls": true,
+		"webShellInp": true,
+		"webShellLcp": true
+	},
+	"thresholds": {
+		"webShellClsMax": 0.1,
+		"webShellInpMsMax": 200,
+		"webShellLcpMsMax": 2500
+	},
+	"webShell": {
+		"cls": 0.0536,
+		"fcpMs": 152,
+		"inpMs": 48,
+		"lcpMs": 152,
+		"proofType": "core-web-vitals-and-page-timing",
+		"workspaceReadyMs": 161.7
+	}
+}
