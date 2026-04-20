@@ -24,7 +24,12 @@ import os
 
 from opentelemetry import trace
 
-from python.common.observability import current_trace_id, extract_trace_context, init_tracing
+from python.common.observability import (
+    current_trace_id,
+    extract_trace_context,
+    flush_tracing,
+    init_tracing,
+)
 from python.common.runtime_store import JobExecutionError, RuntimeStore
 
 # ---------- worker bootstrap ----------
@@ -98,6 +103,8 @@ def main() -> int:
     except JobExecutionError:
         print(json.dumps(store.job_view(args.job_id), sort_keys=True))
         return 1
+    finally:
+        flush_tracing()
 
 
 if __name__ == "__main__":
