@@ -34,7 +34,7 @@ SynaWeave is a governed, multi-surface repository for a knowledge-weaving learni
 - selected Zuplo edge target: documented
 - bounded D3 repo-local closeout evidence: integrated
 - bounded local Langfuse trace-plus-score proof: integrated
-- full D3 closeout: not yet proven
+- full platform-hosted D3 closeout: not yet proven
 - hosted merge enforcement: still requires GitHub-side confirmation
 
 The current local Sprint 1 proof path is:
@@ -47,7 +47,7 @@ The current local Sprint 1 proof path is:
 7. inspect metrics at `/metrics` and the generated JSON artifacts under `build/runtime/` after exercising the runtime path
 8. compare repo-local proof outputs under `testing/evals/artifacts/` and `testing/performance/`
 
-This is a D2 runtime proof with stronger repo-local D3 evidence. It now includes one repo-local MLflow-backed offline eval run and one bounded self-hosted local Langfuse proof path, but it is not a claim that hosted Langfuse operations, hosted or team-shared MLflow proof, browser-owned side-panel container automation, full browser-native observability routing, Cloud Run deployment, or broader D3 enforcement is complete.
+This is a D2 runtime proof with bounded repo-local D3 closeout evidence. It now includes one repo-local MLflow-backed offline eval run and one bounded self-hosted local Langfuse proof path, but it is not a claim that hosted Langfuse operations, hosted or team-shared MLflow proof, browser-owned side-panel container automation, full browser-native observability routing, Cloud Run deployment, or broader platform-hosted D3 enforcement is complete.
 
 ## Repository-first entry points
 
@@ -73,7 +73,7 @@ docker compose -f infra/docker/langfuse-compose.yml up -d
 python3 -m python.evaluation.langfuse_local_proof
 python3 -m python.evaluation.verify_mlflow_run
 python3 -m tools.verify.main
-bun run verify
+PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium bun run verify
 ```
 
 ## Local runtime commands
