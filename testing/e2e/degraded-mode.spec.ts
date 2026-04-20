@@ -15,13 +15,13 @@ TL;DR  -->  prove degraded-mode browser behavior keeps retryable sessions alive 
   --> `bun run test:e2e`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  */
 
+import { type BrowserContext, type Page, expect, test } from "@playwright/test";
+
 import {
-	type BrowserContext,
-	type Page,
-	chromium,
-	expect,
-	test,
-} from "@playwright/test";
+	launchExtensionContext,
+	readExtensionId,
+	readExtensionToken,
+} from "./extension.helpers";
 
 const API_BASE_URL = "http://127.0.0.1:8000";
 const TRANSIENT_ERROR_MESSAGE =
@@ -208,16 +208,8 @@ test("extension popup keeps the stored session through transient bootstrap failu
 }, testInfo) => {
 	expect(browserName).toBe("chromium");
 
-	const context = await chromium.launchPersistentContext(
+	const context = await launchExtensionContext(
 		testInfo.outputPath("extension-degraded-profile"),
-		{
-			channel: "chromium",
-			headless: true,
-			args: [
-				"--disable-extensions-except=build/extension",
-				"--load-extension=build/extension",
-			],
-		},
 	);
 	const telemetry = await collectTelemetry(context);
 
@@ -334,27 +326,4 @@ async function expectTelemetry(
 
 async function readWebToken(page: Page) {
 	return page.evaluate(() => localStorage.getItem("synaweave.webToken"));
-}
-
-async function readExtensionId(context: BrowserContext) {
-	let [worker] = context.serviceWorkers();
-	if (!worker) {
-		worker = await context.waitForEvent("serviceworker");
-	}
-	return new URL(worker.url()).host;
-}
-
-async function readExtensionToken(page: Page) {
-	return page.evaluate(async () => {
-		const data = await (
-			window as unknown as Window & {
-				chrome: {
-					storage: {
-						local: { get: (key: string) => Promise<Record<string, string>> };
-					};
-				};
-			}
-		).chrome.storage.local.get("synaweave.extensionToken");
-		return data["synaweave.extensionToken"] || null;
-	});
 }
