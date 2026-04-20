@@ -38,7 +38,7 @@ Provider selection is intentionally adapter-first:
 
 - domain and contract layers stay provider-neutral, while provider-specific behavior lives behind owned adapters
 - Sprint 1 may name default adapter targets where the branch already proves one concrete path, but those defaults are not permanent lock-in
-- edge, CDN, and API gateway choices stay deferred until adapters need a concrete external platform decision
+- edge concerns stay adapter-owned, with Zuplo now selected as the current Sprint 1 target for CDN, caching, and API gateway insertion without making that provider part of the domain contract
 
 No second documentation runtime exists in `apps/`, and no other top-level app runtime is part of Sprint 1.
 
@@ -104,7 +104,8 @@ The rebuild keeps provider choices behind adapters from the start.
 
 - Sprint 1 treats Supabase as the default adapter target for auth, operational Postgres, and storage-facing contracts because that target fits the current branch shape
 - that default target does not make Supabase part of the domain contract, and later replacements must preserve the same contract boundaries
-- edge routing, CDN placement, and API gateway insertion remain intentionally undecided until runtime scale or operations needs force a concrete adapter-backed choice
+- Sprint 1 now names Zuplo as the current unified target for edge routing, CDN, caching, and API gateway concerns because one adapter-owned edge path is easier to document and govern than separate speculative vendors
+- that target remains an adapter decision, so future swaps must preserve the same public contracts, browser-safe boundaries, and server-only enforcement points
 
 ---
 
