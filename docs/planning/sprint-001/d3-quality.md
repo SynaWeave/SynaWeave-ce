@@ -27,6 +27,13 @@ D3 is complete only when:
 * at least one AI-ready flow is traced and evaluated
 * the repository blocks unsafe changes at commit, push, and pull request time
 
+Current bounded closeout snapshot:
+
+* collector-routed API and ingest telemetry is locally reproducible
+* schema-driven contract tests cover the shared public runtime interfaces
+* browser proof records web-shell Core Web Vitals and explicit side-panel proof limits in a tracked artifact
+* hosted GitHub ruleset enforcement and managed observability backends remain external confirmation points
+
 ---
 
 ## 2. 📌 Deliverable intent
@@ -216,16 +223,16 @@ The platform needs one durable home for experiment tracking, batch comparison, m
 ### 7.5 🐙 Branch and merge quality standard
 
 **Decision**
-The default branch must operate under strict required checks.
+Default-branch merge enforcement is rulesets-first on GitHub, while the repository documents the exact hosted check names and ownership posture it expects those rulesets to enforce.
 
 **Why**
-GitHub’s protected-branch model explicitly supports required status checks, and strict mode requires the branch to be up to date before merge. That is the correct baseline for a repo that intends to accumulate production-critical AI, data, and auth logic. ([docs.github.com](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches))
+GitHub’s branch-protection and ruleset model is the real enforcement home for required statuses, stale approvals, and CODEOWNERS review posture. The repo still needs exact workflow names and ownership files checked in, but it should not pretend those files alone prove hosted merge blocking. ([docs.github.com](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches); [docs.github.com](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/about-rulesets))
 
 **Specification**
 
-* required checks must block merge
-* the default branch must use strict required-status-check semantics
-* local success is not sufficient if PR checks fail
+* repo docs must name the hosted required-check statuses exactly as workflows emit them
+* GitHub rulesets are the first enforcement home for pull-request requirements, required statuses, stale approvals, and any merge-blocking CODEOWNERS review requirement
+* local success is not sufficient if PR checks fail or configured GitHub rulesets reject the change
 
 ### 7.6 🔐 Code scanning standard
 
