@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import subprocess
 import unittest
+import uuid
 from unittest.mock import patch
 
 from fastapi.testclient import TestClient
@@ -37,9 +38,10 @@ client = TestClient(app)
 
 class RuntimeApiTest(unittest.TestCase):
     def test_auth_bootstrap_action_job_and_metrics(self) -> None:
+        stamp = uuid.uuid4().hex[:8]
         auth = client.post(
             "/v1/auth/link",
-            json={"email": "api-proof@example.com", "surface": "web"},
+            json={"email": f"api-proof-{stamp}@example.com", "surface": "web"},
         )
         self.assertEqual(auth.status_code, 200)
         token = auth.json()["payload"]["token"]
@@ -58,7 +60,7 @@ class RuntimeApiTest(unittest.TestCase):
 
         job = client.post(
             "/v1/jobs/workspace",
-            headers={**headers, "Idempotency-Key": "api-runtime-proof"},
+            headers={**headers, "Idempotency-Key": f"api-runtime-proof-{stamp}"},
             json={"workspaceId": workspace_id, "waitForFinish": True},
         )
         self.assertEqual(job.status_code, 200)
