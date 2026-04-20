@@ -21,7 +21,6 @@ const API_BASE_URL = "http://127.0.0.1:8000";
 const TOKEN_KEY = "synaweave.extensionToken";
 const PANEL_OPEN_REQUEST_KEY = "synaweave.sidePanelOpenRequestedAt";
 const PANEL_RUNTIME_EVIDENCE_KEY = "synaweave.sidePanelRuntimeEvidence";
-const TRACE_PREFIX = "ext";
 const TRANSIENT_ERROR_MESSAGE =
 	"Temporary API or provider failure. Session kept so you can retry.";
 
@@ -334,15 +333,18 @@ async function authedFetchJson(path, init) {
 // Emit lightweight proof telemetry without blocking the panel interaction path.
 async function emitTelemetry(name, startedAt, status, detail) {
 	const durationMs = Number((performance.now() - startedAt).toFixed(2));
+	const token = await readToken();
 	await fetch(`${API_BASE_URL}/v1/telemetry/emit`, {
 		method: "POST",
-		headers: { "Content-Type": "application/json" },
+		headers: {
+			"Content-Type": "application/json",
+			...(token ? { Authorization: `Bearer ${token}` } : {}),
+		},
 		body: JSON.stringify({
 			surface: "extension",
 			name,
 			status,
 			durationMs,
-			traceId: `${TRACE_PREFIX}_${Date.now()}`,
 			detail,
 		}),
 	}).catch(() => null);
