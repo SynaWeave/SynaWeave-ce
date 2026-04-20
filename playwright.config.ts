@@ -18,6 +18,14 @@ TL;DR  -->  run the bounded local browser and accessibility proof against the Sp
 
 import { defineConfig } from "@playwright/test";
 
+const CHROMIUM_EXECUTABLE_PATH =
+	process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH || process.env.CHROMIUM_BIN;
+const PLAYWRIGHT_HEADLESS = process.env.PLAYWRIGHT_HEADLESS !== "false";
+const CHROMIUM_LAUNCH_ARGS =
+	process.platform === "linux"
+		? ["--no-sandbox", "--disable-dev-shm-usage"]
+		: [];
+
 export default defineConfig({
 	testDir: "./testing",
 	testMatch: "**/*.spec.ts",
@@ -30,7 +38,13 @@ export default defineConfig({
 	reporter: [["list"]],
 	use: {
 		baseURL: "http://127.0.0.1:3000",
-		headless: true,
+		headless: PLAYWRIGHT_HEADLESS,
+		launchOptions: {
+			...(CHROMIUM_EXECUTABLE_PATH
+				? { executablePath: CHROMIUM_EXECUTABLE_PATH }
+				: {}),
+			args: CHROMIUM_LAUNCH_ARGS,
+		},
 		screenshot: "only-on-failure",
 		trace: "retain-on-failure",
 		video: "off",
