@@ -287,11 +287,12 @@ REQUIRED_PACKAGE_SCRIPTS = {
         "bun run build:extension && playwright test --config playwright.config.ts "
         "testing/accessibility"
     ),
-    "verify:browser": "bun run test:browser",
+    "verify:browser": "bun run build:extension && python3 tools/verify_browser.py",
     "verify": (
-        "bun run lint && bun run typecheck && bun run test && bun run verify:browser && "
-        "python3 -m tools.verify.main --checks shape,docs,commentary,governance,"
-        "headers,security,html_ship,adr,workflows,suppressions,commit"
+        "bun run lint:ts && bun run typecheck:ts && bun run verify:python && "
+        "bun run verify:browser && python3 -m tools.verify.main --checks "
+        "shape,docs,commentary,governance,headers,security,html_ship,adr,"
+        "workflows,suppressions,commit"
     ),
     "verify:docs": "python3 -m tools.verify.main --checks docs,adr",
     "verify:adr": "python3 -m tools.verify.main --checks adr",
