@@ -28,7 +28,11 @@ SynaWeave is a governed, multi-surface repository for a knowledge-weaving learni
 - first background job proof path: integrated
 - local metrics and trace artifacts: reproducible locally after runtime exercise
 - versioned repo-local eval fixture and proof artifact: integrated
-- partial D3 repo-local evidence: integrated
+- runtime contract tests: integrated
+- browser vitals proof: integrated
+- telemetry hardening baseline: integrated
+- selected Zuplo edge target: documented
+- bounded D3 repo-local closeout evidence: integrated
 - bounded local Langfuse trace-plus-score proof: integrated
 - full D3 closeout: not yet proven
 - hosted merge enforcement: still requires GitHub-side confirmation
@@ -91,7 +95,9 @@ The extension source remains under `apps/extension/` and can be loaded unpacked 
 
 Browser proof status:
 - `bun run test:e2e` covers the web-shell sign-in, workspace bootstrap, durable write, and digest path against the local runtime
-- `bun run test:e2e` now also uses the packaged extension options harness to trigger a real `chrome.sidePanel.open()` request and confirm that the browser-owned side-panel runtime booted `popup.html`, while writing web-shell and extension timing JSON under Playwright output artifacts
+- `bun run test:contract` validates the shared runtime contract bundle against live API responses and extension message fixtures
+- `testing/performance/browser-shell-baseline.local-proof.v1.json` now tracks durable repo-local browser proof for web-shell Core Web Vitals plus separate side-panel open and popup boot timing
+- `bun run test:e2e` also uses the packaged extension options harness to trigger a real `chrome.sidePanel.open()` request and confirm that the browser-owned side-panel runtime booted `popup.html`, while writing web-shell and extension timing JSON under Playwright output artifacts
 - `bun run test:accessibility` runs Axe against the signed-in web shell and the packaged extension panel document
 - the repo still does not claim direct DOM inspection of the browser-owned side-panel container itself because Playwright only proves the open request plus runtime boot here, not the hidden Chromium container chrome
 
