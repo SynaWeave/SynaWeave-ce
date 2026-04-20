@@ -24,6 +24,7 @@ from pathlib import Path
 
 from tools.verify.governance import check_governance
 from tools.verify.policy import (
+    GOVERNED_GITHUB_POSTURE_PHRASES,
     GOVERNED_REQUIRED_STATUS_CHECKS,
     MIN_SUBJECT_WORDS,
     PR_TEMPLATE_REQUIRED_FIELDS,
@@ -106,7 +107,9 @@ def make_governance_tree(repo_root: Path) -> None:
     )
     (repo_root / "GOVERNANCE.md").write_text(
         "# Governance\n\n"
-        "Expected default-branch posture:\n\n"
+        "Expected default-branch ruleset posture:\n\n"
+        + "\n".join(f"- {phrase}" for phrase in GOVERNED_GITHUB_POSTURE_PHRASES[1:])
+        + "\n"
         + "\n".join(f"- `{status_check}`" for status_check in GOVERNED_REQUIRED_STATUS_CHECKS)
         + "\n"
     )
@@ -192,6 +195,37 @@ class TestVerifyGovernance(unittest.TestCase):
             )
             issues = check_governance(repo_root)
             self.assertTrue(any("dependency-installability" in issue for issue in issues))
+
+    def test_governance_requires_rulesets_first_wording(self):
+        with tempfile.TemporaryDirectory() as raw_tmp:
+            repo_root = Path(raw_tmp)
+            make_governance_tree(repo_root)
+            (repo_root / "GOVERNANCE.md").write_text(
+                (repo_root / "GOVERNANCE.md")
+                .read_text()
+                .replace(
+                    "Expected default-branch ruleset posture:\n\n",
+                    "Expected default-branch posture:\n\n",
+                )
+            )
+            issues = check_governance(repo_root)
+            self.assertTrue(any("ruleset posture" in issue for issue in issues))
+
+    def test_governance_requires_codeowners_posture_note(self):
+        with tempfile.TemporaryDirectory() as raw_tmp:
+            repo_root = Path(raw_tmp)
+            make_governance_tree(repo_root)
+            (repo_root / "GOVERNANCE.md").write_text(
+                (repo_root / "GOVERNANCE.md")
+                .read_text()
+                .replace(
+                    "- CODEOWNERS file assigns platform-admin and core-maintainer "
+                    "owners for protected-path changes\n",
+                    "",
+                )
+            )
+            issues = check_governance(repo_root)
+            self.assertTrue(any("CODEOWNERS file assigns" in issue for issue in issues))
 
     def test_governance_requires_platform_admin_owners_for_infra_docker(self):
         with tempfile.TemporaryDirectory() as raw_tmp:
