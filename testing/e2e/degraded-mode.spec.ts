@@ -44,6 +44,7 @@ test("web shell keeps the session through transient bootstrap failures and clear
 	await page.goto("/");
 	await page.getByLabel("Email").fill(email);
 	await page.getByRole("button", { name: "Start workspace session" }).click();
+	await expect(page.getByRole("heading", { name: "Workspace" })).toBeVisible();
 	await expect(page.locator("#identity-email")).toHaveText(email);
 
 	let blockBootstrap = true;
