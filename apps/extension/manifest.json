@@ -40,7 +40,7 @@
 				"default": "Ctrl+Shift+K",
 				"mac": "Command+Shift+K"
 			},
-			"description": "Pull the current selection into the side panel"
+			"description": "Open the SynaWeave side panel"
 		}
 	}
 }
