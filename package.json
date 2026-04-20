@@ -19,8 +19,8 @@
 		"test:browser": "bun run test:e2e && bun run test:accessibility",
 		"test:e2e": "bun run build:extension && playwright test --config playwright.config.ts testing/e2e",
 		"test:accessibility": "bun run build:extension && playwright test --config playwright.config.ts testing/accessibility",
-		"verify:browser": "bun run test:browser",
-		"verify": "bun run lint && bun run typecheck && bun run test && bun run verify:browser && python3 -m tools.verify.main --checks shape,docs,commentary,governance,headers,security,html_ship,adr,workflows,suppressions,commit",
+		"verify:browser": "bun run build:extension && python3 tools/verify_browser.py",
+		"verify": "bun run lint:ts && bun run typecheck:ts && bun run verify:python && bun run verify:browser && python3 -m tools.verify.main --checks shape,docs,commentary,governance,headers,security,html_ship,adr,workflows,suppressions,commit",
 		"verify:docs": "python3 -m tools.verify.main --checks docs,adr",
 		"verify:adr": "python3 -m tools.verify.main --checks adr",
 		"verify:governance": "python3 -m tools.verify.main --checks governance",
@@ -40,7 +40,10 @@
 		"hooks:install": "python3 tools/install_hooks.py",
 		"dev:api": "python3 -m uvicorn apps.api.main:app --reload --host 127.0.0.1 --port 8000",
 		"dev:web": "python3 -m http.server 3000 --directory apps/web",
-		"dev:ingest": "python3 -m apps.ingest.main --job-id REPLACE_ME"
+		"dev:ingest": "python3 -m apps.ingest.main --job-id REPLACE_ME",
+		"test:e2e:prepared": "playwright test --config playwright.config.ts testing/e2e",
+		"test:accessibility:prepared": "playwright test --config playwright.config.ts testing/accessibility",
+		"verify:python": "bun run deps:app && python3 -m ruff check apps/api apps/ingest python/common python/evaluation tools testing && python3 -m pyright apps/api apps/ingest python/common python/evaluation tools testing && python3 -m unittest discover -s testing/unit -p 'test_*.py' -t . && python3 -m unittest discover -s testing/contract -p 'test_*.py' -t ."
 	},
 	"workspaces": [
 		"apps/*",
