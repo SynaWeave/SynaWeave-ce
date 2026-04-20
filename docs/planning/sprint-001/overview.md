@@ -74,20 +74,20 @@ The old README proved:
 * TSV export
 * the original MVP framing plus later stretch-goal ideas. ([github.com](https://github.com/SynaWeave/SynaWeave-ce))
 
-### 3.2 📏 What this branch still does not yet prove
+### 3.2 ✅ What this branch now proves at Sprint 1 closeout
 
-The current branch still does **not** yet prove:
+The current branch now proves:
 
 * a web control plane
 * a request-serving backend
 * a background-job boundary
-* bootable web, API, or ingest runtimes inside the new repo shape
+* bootable web, API, and ingest runtimes inside the new repo shape
 * integrated auth across browser and web surfaces
 * first durable operational writes in the rebuilt platform model
-* supply-chain scanning
-* a measurable product proof baseline
+* schema-driven contract tests, browser-vitals proof, and telemetry hardening for the bounded critical path
+* a selected Zuplo edge target behind adapters while the local runtime proof remains direct-to-API
 
-Sprint 1 closes exactly those gaps.
+Hosted GitHub ruleset enforcement, managed observability backends, and a booted Zuplo edge runtime remain external confirmation or follow-on work rather than inflated Sprint 1 claims.
 
 ---
 
