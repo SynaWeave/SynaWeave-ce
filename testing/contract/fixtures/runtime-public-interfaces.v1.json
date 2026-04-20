@@ -1,0 +1,25 @@
+{
+  "authLinkRequest": {
+    "email": "contract-proof@example.com",
+    "surface": "web"
+  },
+  "workspaceActionRequest": {
+    "kind": "note",
+    "value": "contract fixtures keep serialized shapes honest",
+    "source": "web"
+  },
+  "telemetryEmitRequest": {
+    "surface": "web",
+    "name": "web_workspace_bootstrap",
+    "status": "degraded",
+    "durationMs": 12.5,
+    "detail": "transient:504:upstream timeout"
+  },
+  "extensionSelectionRequest": {
+    "type": "selection:get"
+  },
+  "extensionSelectionResponse": {
+    "ok": true,
+    "text": "Selected text from the active page"
+  }
+}
