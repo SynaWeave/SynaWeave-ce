@@ -93,7 +93,11 @@ class RuntimeObservabilityTest(unittest.TestCase):
     def test_backend_logs_capture_request_and_job_correlation(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir_name:
             runtime_dir = Path(temp_dir_name)
-            with patch.dict("os.environ", {"SYNAWEAVE_RUNTIME_DIR": str(runtime_dir)}):
+            isolated_store = RuntimeStore(runtime_dir / "runtime.sqlite3")
+            with (
+                patch.dict("os.environ", {"SYNAWEAVE_RUNTIME_DIR": str(runtime_dir)}),
+                patch("apps.api.main.store", isolated_store),
+            ):
                 auth = client.post(
                     "/v1/auth/link",
                     json={"email": "logproof@example.com", "surface": "web"},
@@ -154,7 +158,11 @@ class RuntimeObservabilityTest(unittest.TestCase):
     def test_backend_logs_capture_timeout_as_retryable_degraded_truth(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir_name:
             runtime_dir = Path(temp_dir_name)
-            with patch.dict("os.environ", {"SYNAWEAVE_RUNTIME_DIR": str(runtime_dir)}):
+            isolated_store = RuntimeStore(runtime_dir / "runtime.sqlite3")
+            with (
+                patch.dict("os.environ", {"SYNAWEAVE_RUNTIME_DIR": str(runtime_dir)}),
+                patch("apps.api.main.store", isolated_store),
+            ):
                 auth = client.post(
                     "/v1/auth/link",
                     json={"email": "timeoutlog@example.com", "surface": "web"},
