@@ -157,8 +157,12 @@ class RuntimeStoreTest(unittest.TestCase):
             database_path = Path(temp_dir_name) / "runtime.sqlite3"
             store = RuntimeStore(database_path)
 
-            with sqlite3.connect(database_path) as connection:
+            connection = sqlite3.connect(database_path)
+            try:
                 connection.execute("drop table telemetry")
+                connection.commit()
+            finally:
+                connection.close()
 
             event = store.emit_telemetry(
                 surface="web",
@@ -177,8 +181,12 @@ class RuntimeStoreTest(unittest.TestCase):
             store = RuntimeStore(database_path)
             session = store.create_session("recover-session@example.com", "web")
 
-            with sqlite3.connect(database_path) as connection:
+            connection = sqlite3.connect(database_path)
+            try:
                 connection.execute("drop table sessions")
+                connection.commit()
+            finally:
+                connection.close()
 
             with self.assertRaises(KeyError):
                 store.identity_for_token(session["token"])
