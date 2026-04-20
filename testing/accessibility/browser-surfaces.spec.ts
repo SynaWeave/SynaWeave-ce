@@ -16,7 +16,12 @@ TL;DR  -->  run automated accessibility smoke checks for the signed-in web shell
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  */
 
 import AxeBuilder from "@axe-core/playwright";
-import { chromium, expect, test } from "@playwright/test";
+import { expect, test } from "@playwright/test";
+
+import {
+	launchExtensionContext,
+	readExtensionId,
+} from "../e2e/extension.helpers";
 
 test("signed-in web shell has no automated accessibility violations", async ({
 	page,
@@ -38,25 +43,12 @@ test("packaged extension panel document has no automated accessibility violation
 }, testInfo) => {
 	expect(browserName).toBe("chromium");
 
-	const context = await chromium.launchPersistentContext(
+	const context = await launchExtensionContext(
 		testInfo.outputPath("extension-profile"),
-		{
-			channel: "chromium",
-			headless: true,
-			args: [
-				"--disable-extensions-except=build/extension",
-				"--load-extension=build/extension",
-			],
-		},
 	);
 
 	try {
-		let [worker] = context.serviceWorkers();
-		if (!worker) {
-			worker = await context.waitForEvent("serviceworker");
-		}
-
-		const extensionId = new URL(worker.url()).host;
+		const extensionId = await readExtensionId(context);
 		const page = await context.newPage();
 		const email = `playwright-a11y-ext-${Date.now()}@example.com`;
 
