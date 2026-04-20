@@ -18,7 +18,6 @@ TL;DR  -->  drive the first authenticated web control-plane shell for sign-in wo
 const API_BASE_URL =
 	localStorage.getItem("synaweave.apiBaseUrl") || "http://127.0.0.1:8000";
 const TOKEN_KEY = "synaweave.webToken";
-const TRACE_PREFIX = "web";
 const TRANSIENT_ERROR_MESSAGE =
 	"Temporary API or provider failure. Session kept so you can retry.";
 
@@ -275,15 +274,18 @@ async function authedFetchJson(path, init) {
 
 async function emitTelemetry(name, startedAt, status, detail) {
 	const durationMs = Number((performance.now() - startedAt).toFixed(2));
+	const token = localStorage.getItem(TOKEN_KEY);
 	await fetch(`${API_BASE_URL}/v1/telemetry/emit`, {
 		method: "POST",
-		headers: { "Content-Type": "application/json" },
+		headers: {
+			"Content-Type": "application/json",
+			...(token ? { Authorization: `Bearer ${token}` } : {}),
+		},
 		body: JSON.stringify({
 			surface: "web",
 			name,
 			status,
 			durationMs,
-			traceId: `${TRACE_PREFIX}_${Date.now()}`,
 			detail,
 		}),
 	}).catch(() => null);
