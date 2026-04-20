@@ -1,0 +1,435 @@
+{
+	"version": "sprint-1-runtime-public-interfaces.v1",
+	"contracts": {
+		"apiEnvelope": {
+			"type": "object",
+			"required": ["status", "meta", "payload"],
+			"additionalProperties": false,
+			"properties": {
+				"status": {
+					"type": "string",
+					"enum": ["ok", "accepted", "error", "degraded", "ready", "not_ready"]
+				},
+				"meta": {
+					"type": "object",
+					"required": ["requestId", "traceId", "version", "ts"],
+					"additionalProperties": false,
+					"properties": {
+						"requestId": { "type": "string", "pattern": "^req_[a-z0-9]{12}$" },
+						"traceId": { "type": "string", "minLength": 6 },
+						"version": { "type": "string", "minLength": 3 },
+						"ts": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}T" }
+					}
+				},
+				"payload": { "type": ["object", "array"] }
+			}
+		},
+		"identityPayload": {
+			"type": "object",
+			"required": ["userId", "email", "bridgeCode", "sessionToken"],
+			"additionalProperties": false,
+			"properties": {
+				"userId": { "type": "string", "pattern": "^usr_[a-z0-9]{12}$" },
+				"email": {
+					"type": "string",
+					"pattern": "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$"
+				},
+				"bridgeCode": { "type": "string", "pattern": "^[A-F0-9]{10}$" },
+				"sessionToken": { "type": "string", "pattern": "^[A-Za-z0-9_-]{24,}$" }
+			}
+		},
+		"workspaceBootstrapPayload": {
+			"type": "object",
+			"required": ["workspace", "recentActions", "latestEval"],
+			"additionalProperties": false,
+			"properties": {
+				"workspace": {
+					"type": "object",
+					"required": [
+						"workspaceId",
+						"title",
+						"email",
+						"userId",
+						"bridgeCode",
+						"lastDigest",
+						"updatedAt"
+					],
+					"additionalProperties": false,
+					"properties": {
+						"workspaceId": {
+							"type": "string",
+							"pattern": "^wsp_[a-z0-9]{12}$"
+						},
+						"title": { "type": "string", "minLength": 1 },
+						"email": {
+							"type": "string",
+							"pattern": "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$"
+						},
+						"userId": { "type": "string", "pattern": "^usr_[a-z0-9]{12}$" },
+						"bridgeCode": { "type": "string", "pattern": "^[A-F0-9]{10}$" },
+						"lastDigest": { "type": "string" },
+						"updatedAt": {
+							"type": "string",
+							"pattern": "^\\d{4}-\\d{2}-\\d{2}T"
+						}
+					}
+				},
+				"recentActions": {
+					"type": "array",
+					"items": {
+						"type": "object",
+						"required": [
+							"action_id",
+							"workspace_id",
+							"user_id",
+							"kind",
+							"value",
+							"source",
+							"created_at"
+						],
+						"additionalProperties": false,
+						"properties": {
+							"action_id": {
+								"type": "string",
+								"pattern": "^act_[a-z0-9]{12}$"
+							},
+							"workspace_id": {
+								"type": "string",
+								"pattern": "^wsp_[a-z0-9]{12}$"
+							},
+							"user_id": { "type": "string", "pattern": "^usr_[a-z0-9]{12}$" },
+							"kind": {
+								"type": "string",
+								"enum": ["capture", "note", "digest"]
+							},
+							"value": { "type": "string", "minLength": 1 },
+							"source": { "type": "string", "enum": ["web", "extension"] },
+							"created_at": {
+								"type": "string",
+								"pattern": "^\\d{4}-\\d{2}-\\d{2}T"
+							}
+						}
+					}
+				},
+				"latestEval": {
+					"type": ["object", "null"],
+					"required": [
+						"eval_id",
+						"workspace_id",
+						"flow",
+						"score",
+						"cost_micros",
+						"label",
+						"created_at"
+					],
+					"additionalProperties": false,
+					"properties": {
+						"eval_id": { "type": "string", "pattern": "^evl_[a-z0-9]{12}$" },
+						"workspace_id": {
+							"type": "string",
+							"pattern": "^wsp_[a-z0-9]{12}$"
+						},
+						"flow": { "type": "string", "const": "workspace_digest_v1" },
+						"score": { "type": "number", "minimum": 0 },
+						"cost_micros": { "type": "integer", "minimum": 0 },
+						"label": { "type": "string", "const": "digest_density" },
+						"created_at": {
+							"type": "string",
+							"pattern": "^\\d{4}-\\d{2}-\\d{2}T"
+						}
+					}
+				}
+			}
+		},
+		"authBootstrapPayload": {
+			"type": "object",
+			"required": ["token", "identity", "workspace", "bridgeCode"],
+			"additionalProperties": false,
+			"properties": {
+				"token": { "type": "string", "pattern": "^[A-Za-z0-9_-]{24,}$" },
+				"identity": {
+					"type": "object",
+					"required": ["userId", "email", "bridgeCode", "sessionToken"],
+					"additionalProperties": false,
+					"properties": {
+						"userId": { "type": "string", "pattern": "^usr_[a-z0-9]{12}$" },
+						"email": {
+							"type": "string",
+							"pattern": "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$"
+						},
+						"bridgeCode": { "type": "string", "pattern": "^[A-F0-9]{10}$" },
+						"sessionToken": {
+							"type": "string",
+							"pattern": "^[A-Za-z0-9_-]{24,}$"
+						}
+					}
+				},
+				"workspace": {
+					"type": "object",
+					"required": ["workspace", "recentActions", "latestEval"],
+					"additionalProperties": false,
+					"properties": {
+						"workspace": {
+							"type": "object",
+							"required": [
+								"workspaceId",
+								"title",
+								"email",
+								"userId",
+								"bridgeCode",
+								"lastDigest",
+								"updatedAt"
+							],
+							"additionalProperties": false,
+							"properties": {
+								"workspaceId": {
+									"type": "string",
+									"pattern": "^wsp_[a-z0-9]{12}$"
+								},
+								"title": { "type": "string", "minLength": 1 },
+								"email": {
+									"type": "string",
+									"pattern": "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$"
+								},
+								"userId": { "type": "string", "pattern": "^usr_[a-z0-9]{12}$" },
+								"bridgeCode": { "type": "string", "pattern": "^[A-F0-9]{10}$" },
+								"lastDigest": { "type": "string" },
+								"updatedAt": {
+									"type": "string",
+									"pattern": "^\\d{4}-\\d{2}-\\d{2}T"
+								}
+							}
+						},
+						"recentActions": {
+							"type": "array",
+							"items": {
+								"type": "object",
+								"required": [
+									"action_id",
+									"workspace_id",
+									"user_id",
+									"kind",
+									"value",
+									"source",
+									"created_at"
+								],
+								"additionalProperties": false,
+								"properties": {
+									"action_id": {
+										"type": "string",
+										"pattern": "^act_[a-z0-9]{12}$"
+									},
+									"workspace_id": {
+										"type": "string",
+										"pattern": "^wsp_[a-z0-9]{12}$"
+									},
+									"user_id": {
+										"type": "string",
+										"pattern": "^usr_[a-z0-9]{12}$"
+									},
+									"kind": {
+										"type": "string",
+										"enum": ["capture", "note", "digest"]
+									},
+									"value": { "type": "string", "minLength": 1 },
+									"source": { "type": "string", "enum": ["web", "extension"] },
+									"created_at": {
+										"type": "string",
+										"pattern": "^\\d{4}-\\d{2}-\\d{2}T"
+									}
+								}
+							}
+						},
+						"latestEval": {
+							"type": ["object", "null"],
+							"required": [
+								"eval_id",
+								"workspace_id",
+								"flow",
+								"score",
+								"cost_micros",
+								"label",
+								"created_at"
+							],
+							"additionalProperties": false,
+							"properties": {
+								"eval_id": {
+									"type": "string",
+									"pattern": "^evl_[a-z0-9]{12}$"
+								},
+								"workspace_id": {
+									"type": "string",
+									"pattern": "^wsp_[a-z0-9]{12}$"
+								},
+								"flow": { "type": "string", "const": "workspace_digest_v1" },
+								"score": { "type": "number", "minimum": 0 },
+								"cost_micros": { "type": "integer", "minimum": 0 },
+								"label": { "type": "string", "const": "digest_density" },
+								"created_at": {
+									"type": "string",
+									"pattern": "^\\d{4}-\\d{2}-\\d{2}T"
+								}
+							}
+						}
+					}
+				},
+				"bridgeCode": { "type": "string", "pattern": "^[A-F0-9]{10}$" }
+			}
+		},
+		"workspaceActionRequest": {
+			"type": "object",
+			"required": ["kind", "value", "source"],
+			"additionalProperties": false,
+			"properties": {
+				"kind": { "type": "string", "enum": ["capture", "note", "digest"] },
+				"value": { "type": "string", "minLength": 1 },
+				"source": { "type": "string", "enum": ["web", "extension"] }
+			}
+		},
+		"workspaceActionPayload": {
+			"type": "object",
+			"required": [
+				"actionId",
+				"workspaceId",
+				"userId",
+				"kind",
+				"value",
+				"source",
+				"createdAt"
+			],
+			"additionalProperties": false,
+			"properties": {
+				"actionId": { "type": "string", "pattern": "^act_[a-z0-9]{12}$" },
+				"workspaceId": { "type": "string", "pattern": "^wsp_[a-z0-9]{12}$" },
+				"userId": { "type": "string", "pattern": "^usr_[a-z0-9]{12}$" },
+				"kind": { "type": "string", "enum": ["capture", "note", "digest"] },
+				"value": { "type": "string", "minLength": 1 },
+				"source": { "type": "string", "enum": ["web", "extension"] },
+				"createdAt": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}T" }
+			}
+		},
+		"jobCreatePayload": {
+			"type": "object",
+			"required": [
+				"job_id",
+				"workspace_id",
+				"user_id",
+				"state",
+				"idempotency_key",
+				"summary",
+				"created_at",
+				"finished_at",
+				"error_detail",
+				"retry_count"
+			],
+			"additionalProperties": false,
+			"properties": {
+				"job_id": { "type": "string", "pattern": "^job_[a-z0-9]{12}$" },
+				"workspace_id": { "type": "string", "pattern": "^wsp_[a-z0-9]{12}$" },
+				"user_id": { "type": "string", "pattern": "^usr_[a-z0-9]{12}$" },
+				"state": {
+					"type": "string",
+					"enum": ["queued", "running", "succeeded", "failed"]
+				},
+				"idempotency_key": { "type": "string", "minLength": 1 },
+				"summary": { "type": "string", "minLength": 1 },
+				"created_at": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}T" },
+				"finished_at": { "type": ["string", "null"] },
+				"error_detail": { "type": "string" },
+				"retry_count": { "type": "integer", "minimum": 0 }
+			}
+		},
+		"jobViewPayload": {
+			"type": "object",
+			"required": [
+				"job_id",
+				"workspace_id",
+				"user_id",
+				"state",
+				"idempotency_key",
+				"summary",
+				"created_at",
+				"finished_at",
+				"error_detail",
+				"retry_count"
+			],
+			"additionalProperties": false,
+			"properties": {
+				"job_id": { "type": "string", "pattern": "^job_[a-z0-9]{12}$" },
+				"workspace_id": { "type": "string", "pattern": "^wsp_[a-z0-9]{12}$" },
+				"user_id": { "type": "string", "pattern": "^usr_[a-z0-9]{12}$" },
+				"state": {
+					"type": "string",
+					"enum": ["queued", "running", "succeeded", "failed"]
+				},
+				"idempotency_key": { "type": "string", "minLength": 1 },
+				"summary": { "type": "string", "minLength": 1 },
+				"created_at": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}T" },
+				"finished_at": { "type": ["string", "null"] },
+				"error_detail": { "type": "string" },
+				"retry_count": { "type": "integer", "minimum": 0 }
+			}
+		},
+		"telemetryEmitRequest": {
+			"type": "object",
+			"required": ["surface", "name", "status", "durationMs", "detail"],
+			"additionalProperties": false,
+			"properties": {
+				"surface": {
+					"type": "string",
+					"enum": ["web", "extension"]
+				},
+				"name": { "type": "string", "minLength": 2 },
+				"status": { "type": "string", "enum": ["ok", "error", "degraded"] },
+				"durationMs": { "type": "number", "minimum": 0 },
+				"detail": { "type": "string" }
+			}
+		},
+		"telemetryEmitPayload": {
+			"type": "object",
+			"required": [
+				"event_id",
+				"trace_id",
+				"surface",
+				"name",
+				"status",
+				"duration_ms",
+				"cost_micros",
+				"detail",
+				"created_at"
+			],
+			"additionalProperties": false,
+			"properties": {
+				"event_id": { "type": "string", "pattern": "^evt_[a-z0-9]{12}$" },
+				"trace_id": { "type": "string", "minLength": 6 },
+				"surface": {
+					"type": "string",
+					"enum": ["web", "extension"]
+				},
+				"name": { "type": "string", "minLength": 2 },
+				"status": { "type": "string", "enum": ["ok", "error", "degraded"] },
+				"duration_ms": { "type": "number", "minimum": 0 },
+				"cost_micros": { "type": "integer", "minimum": 0 },
+				"detail": { "type": "string" },
+				"created_at": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}T" }
+			}
+		},
+		"extensionSelectionRequest": {
+			"type": "object",
+			"required": ["type"],
+			"additionalProperties": false,
+			"properties": {
+				"type": { "type": "string", "const": "selection:get" }
+			}
+		},
+		"extensionSelectionResponse": {
+			"type": "object",
+			"required": ["ok", "text"],
+			"additionalProperties": false,
+			"properties": {
+				"ok": { "type": "boolean" },
+				"text": { "type": "string" }
+			}
+		}
+	}
+}
