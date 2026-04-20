@@ -96,10 +96,11 @@ Security vulnerabilities, dependency incidents, contract breaks, and workflow-co
 
 ## Admin bypass posture
 
-Admin bypass, required checks, and branch protection are GitHub-side controls owned by the project owner and maintainers. This repository documents the expected posture, but GitHub rulesets remain the enforcement home for admin bypass decisions.
+Admin bypass, required checks, stale approvals, and CODEOWNERS review behavior are GitHub-side controls owned by the project owner and maintainers. This repository documents the expected posture, but GitHub rulesets remain the enforcement home for those merge-control decisions.
 
-Expected default-branch posture:
+Expected default-branch ruleset posture:
 
+- GitHub rulesets are the first enforcement home for pull-request requirements, required statuses, stale-approval dismissal, and any merge-blocking CODEOWNERS review requirement.
 - pull requests required for protected branches
 - direct pushes blocked for non-admin contributors
 - required checks include at least these repo-defined hosted check names when GitHub rulesets are configured to require them:
@@ -108,7 +109,7 @@ Expected default-branch posture:
   - `dependency-review / dependency-review` (the PR status stays required even when hosted review can only report that dependency graph support is unavailable)
   - `codeql / codeql-javascript-typescript`
   - `codeql / codeql-python`
-- CODEOWNERS review required for protected-path changes
+- CODEOWNERS file assigns platform-admin and core-maintainer owners for protected-path changes; merge-blocking CODEOWNERS review depends on GitHub rulesets enabling that requirement
 - stale approvals dismissed when protected-path diffs change materially
 - secret scanning and push protection enabled where the repository tier supports them
 
