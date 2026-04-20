@@ -54,11 +54,27 @@ def _dict_factory(cursor: sqlite3.Cursor, row: sqlite3.Row) -> dict[str, Any]:
 
 
 # ---------- connection context ----------
+# Keep sqlite connection setup centralized so API, ingest, and tests share one safe baseline.
+def _configure_connection(connection: sqlite3.Connection) -> sqlite3.Connection:
+    connection.row_factory = _dict_factory
+    foreign_keys_cursor = connection.execute("pragma foreign_keys = on")
+    foreign_keys_cursor.close()
+    busy_timeout_cursor = connection.execute("pragma busy_timeout = 5000")
+    busy_timeout_cursor.close()
+    journal_mode_cursor = connection.execute("pragma journal_mode = wal")
+    journal_mode_cursor.close()
+    return connection
+
+
 # Keep connection lifecycle centralized so store operations commit and close predictably.
 @contextmanager
 def _managed_connection(database_path: Path):
-    connection = sqlite3.connect(database_path)
-    connection.row_factory = _dict_factory
+    raw_connection = sqlite3.connect(database_path, timeout=5.0)
+    try:
+        connection = _configure_connection(raw_connection)
+    except Exception:
+        raw_connection.close()
+        raise
     try:
         yield connection
         connection.commit()
@@ -88,15 +104,20 @@ class RuntimeStore:
         if not self.database_path.exists():
             return
         try:
-            with sqlite3.connect(self.database_path) as connection:
+            with _managed_connection(self.database_path) as connection:
                 result = connection.execute("pragma quick_check").fetchone()
         except sqlite3.DatabaseError as exc:
             if not self._is_resettable_database_error(exc):
                 raise
             self._quarantine_database(reason=str(exc))
             return
-        if result is None or result[0] != "ok":
-            detail = "missing quick_check result" if result is None else f"quick_check={result[0]}"
+        quick_check_value = None if result is None else result.get("quick_check")
+        if quick_check_value != "ok":
+            detail = (
+                "missing quick_check result"
+                if quick_check_value is None
+                else f"quick_check={quick_check_value}"
+            )
             self._quarantine_database(reason=detail)
 
     def _is_resettable_database_error(self, exc: sqlite3.DatabaseError) -> bool:
@@ -741,16 +762,31 @@ class RuntimeStore:
             "detail": detail,
             "created_at": utc_now_iso(),
         }
-        with self._session() as connection:
-            connection.execute(
-                (
-                    "insert into telemetry "
-                    "(event_id, trace_id, surface, name, status, duration_ms, "
-                    "cost_micros, detail, created_at) "
-                    "values (?, ?, ?, ?, ?, ?, ?, ?, ?)"
-                ),
-                tuple(event.values()),
-            )
+        try:
+            with self._session() as connection:
+                connection.execute(
+                    (
+                        "insert into telemetry "
+                        "(event_id, trace_id, surface, name, status, duration_ms, "
+                        "cost_micros, detail, created_at) "
+                        "values (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+                    ),
+                    tuple(event.values()),
+                )
+        except sqlite3.OperationalError as exc:
+            if "no such table" not in str(exc).lower():
+                raise
+            self._init_db()
+            with self._session() as connection:
+                connection.execute(
+                    (
+                        "insert into telemetry "
+                        "(event_id, trace_id, surface, name, status, duration_ms, "
+                        "cost_micros, detail, created_at) "
+                        "values (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+                    ),
+                    tuple(event.values()),
+                )
         with trace_path().open("a", encoding="utf-8") as handle:
             handle.write(json.dumps(event, sort_keys=True) + "\n")
         return event
