@@ -17,6 +17,7 @@ TL;DR  -->  verify the local runtime store for shared auth workspace jobs and ba
 
 from __future__ import annotations
 
+import sqlite3
 import tempfile
 import unittest
 from pathlib import Path
@@ -49,11 +50,17 @@ class RuntimeStoreTest(unittest.TestCase):
     def test_action_write_and_job_create_digest_and_eval(self) -> None:
         store = self.make_store()
         session = store.create_session("learner@example.com", "web")
+        extension_session = store.create_session("learner@example.com", "extension")
         token = session["token"]
         workspace_id = session["workspace"]["workspace"]["workspaceId"]
 
         store.record_action(token, "note", "graph retrieval needs evidence", "web")
-        store.record_action(token, "capture", "otel collector comes later", "extension")
+        store.record_action(
+            extension_session["token"],
+            "capture",
+            "otel collector comes later",
+            "extension",
+        )
         job = store.create_job(token, workspace_id, "idem-runtime-test")
         finished = store.run_job(job["job_id"])
         bootstrap = store.workspace_bootstrap(session["identity"]["userId"])
@@ -62,6 +69,13 @@ class RuntimeStoreTest(unittest.TestCase):
         self.assertIn("note", bootstrap["workspace"]["lastDigest"])
         self.assertIsNotNone(bootstrap["latestEval"])
         self.assertGreater(bootstrap["latestEval"]["score"], 0)
+
+    def test_rejects_action_source_that_does_not_match_session_surface(self) -> None:
+        store = self.make_store()
+        session = store.create_session("learner@example.com", "web")
+
+        with self.assertRaises(PermissionError):
+            store.record_action(session["token"], "note", "cross-surface spoof", "extension")
 
     def test_rejects_cross_workspace_job_creation(self) -> None:
         store = self.make_store()
@@ -112,7 +126,50 @@ class RuntimeStoreTest(unittest.TestCase):
         self.assertEqual(snapshot["ingest_error_total"], 0)
         self.assertEqual(snapshot["degraded_event_total"], 0)
         self.assertEqual(snapshot["runtime_ready"], 1)
+        self.assertEqual(snapshot["latest_job_id"], job["job_id"])
+        self.assertEqual(snapshot["latest_job_trace_id"], f"trc_{job['job_id']}")
         self.assertNotIn("side_panel_open_timing_ms", snapshot)
+
+    def test_store_recovers_from_generated_malformed_runtime_database(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir_name:
+            database_path = Path(temp_dir_name) / "runtime.sqlite3"
+            database_path.write_text("not sqlite\n", encoding="utf-8")
+
+            store = RuntimeStore(database_path)
+            session = store.create_session("recover@example.com", "web")
+            quarantine_dir = Path(temp_dir_name) / "quarantine"
+            quarantine_paths = list(quarantine_dir.glob("runtime.sqlite3.corrupt-*"))
+            recovery_rows = [
+                line
+                for line in (Path(temp_dir_name) / "runtime-db-recovery.jsonl")
+                .read_text(encoding="utf-8")
+                .splitlines()
+                if line.strip()
+            ]
+
+        self.assertEqual(session["identity"]["email"], "recover@example.com")
+        self.assertTrue(quarantine_paths)
+        self.assertEqual(len(recovery_rows), 1)
+        self.assertIn("not a database", recovery_rows[0])
+
+    def test_store_recreates_missing_telemetry_table_after_runtime_schema_drift(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir_name:
+            database_path = Path(temp_dir_name) / "runtime.sqlite3"
+            store = RuntimeStore(database_path)
+
+            with sqlite3.connect(database_path) as connection:
+                connection.execute("drop table telemetry")
+
+            event = store.emit_telemetry(
+                surface="web",
+                name="web_workspace_bootstrap",
+                status="ok",
+                duration_ms=12.5,
+                trace_id="trace_schema_recovery",
+            )
+
+        self.assertEqual(event["surface"], "web")
+        self.assertEqual(event["name"], "web_workspace_bootstrap")
 
     def test_job_failure_persists_error_detail_and_allows_retry(self) -> None:
         store = self.make_store()
