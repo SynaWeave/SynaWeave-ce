@@ -14,6 +14,7 @@ TL;DR  -->  wire the bounded OpenTelemetry trace path for the Sprint 1 API and i
     --> `extract_trace_context()`
     --> `init_tracing()`
     --> `inject_current_trace_headers()`
+    --> `flush_tracing()`
 
 - Consumed By:
     --> API middleware ingest execution and local observability evidence scripts
@@ -52,6 +53,14 @@ def _traces_endpoint() -> str:
     return f"{base}/v1/traces"
 
 
+def _batch_delay_millis() -> int:
+    raw_value = os.getenv("SYNAWEAVE_OTEL_BATCH_DELAY_MS", "250").strip()
+    try:
+        return max(1, int(raw_value))
+    except ValueError:
+        return 250
+
+
 # ---------- provider bootstrap ----------
 # Keep one provider per process because API and ingest run as separate runtime processes.
 def init_tracing(service_name: str):
@@ -66,7 +75,12 @@ def init_tracing(service_name: str):
             }
         )
     )
-    provider.add_span_processor(BatchSpanProcessor(OTLPSpanExporter(endpoint=_traces_endpoint())))
+    provider.add_span_processor(
+        BatchSpanProcessor(
+            OTLPSpanExporter(endpoint=_traces_endpoint()),
+            schedule_delay_millis=_batch_delay_millis(),
+        )
+    )
     trace.set_tracer_provider(provider)
     atexit.register(provider.shutdown)
     _TRACING_READY = True
@@ -83,6 +97,13 @@ def inject_current_trace_headers() -> dict[str, str]:
     carrier: dict[str, str] = {}
     propagate.inject(carrier)
     return carrier
+
+
+def flush_tracing() -> None:
+    provider = trace.get_tracer_provider()
+    force_flush = getattr(provider, "force_flush", None)
+    if callable(force_flush):
+        force_flush()
 
 
 # ---------- trace identity helper ----------
