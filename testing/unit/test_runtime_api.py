@@ -277,6 +277,44 @@ class RuntimeApiTest(unittest.TestCase):
         self.assertEqual(response.status_code, 403)
         self.assertEqual(response.json()["detail"], "telemetry surface does not match session")
 
+    def test_auth_bootstrap_rejects_non_loopback_host(
+        self,
+    ) -> None:
+        guarded_client = TestClient(app, base_url="https://api.synaweave.example")
+
+        with patch("apps.api.main.LOCAL_PROOF_ONLY_AUTH", True):
+            response = guarded_client.post(
+                "/v1/auth/link",
+                json={"email": "guarded@example.com", "surface": "web"},
+            )
+
+        self.assertEqual(response.status_code, 403)
+        self.assertIn("loopback hosts", response.json()["detail"])
+
+    def test_waited_job_subprocess_receives_explicit_runtime_store_handoff(self) -> None:
+        auth = client.post(
+            "/v1/auth/link",
+            json={"email": "handoff@example.com", "surface": "web"},
+        )
+        token = auth.json()["payload"]["token"]
+        workspace_id = auth.json()["payload"]["workspace"]["workspace"]["workspaceId"]
+
+        with patch("apps.api.main.subprocess.run") as subprocess_run:
+            response = client.post(
+                "/v1/jobs/workspace",
+                headers={
+                    "Authorization": f"Bearer {token}",
+                    "Idempotency-Key": "api-runtime-handoff",
+                },
+                json={"workspaceId": workspace_id, "waitForFinish": True},
+            )
+
+        self.assertEqual(response.status_code, 200)
+        subprocess_env = subprocess_run.call_args.kwargs["env"]
+        self.assertIn("SYNAWEAVE_RUNTIME_DIR", subprocess_env)
+        self.assertIn("SYNAWEAVE_RUNTIME_DB_PATH", subprocess_env)
+        self.assertTrue(subprocess_env["SYNAWEAVE_RUNTIME_DB_PATH"].endswith(".sqlite3"))
+
     def test_waited_job_returns_failed_truth_when_ingest_subprocess_fails(self) -> None:
         auth = client.post(
             "/v1/auth/link",
