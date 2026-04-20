@@ -21,14 +21,24 @@ TL;DR  -->  share the minimal Chromium extension helpers used by bounded Playwri
 import type { BrowserContext, Page } from "@playwright/test";
 import { chromium } from "@playwright/test";
 
+const CHROMIUM_EXECUTABLE_PATH =
+	process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH || process.env.CHROMIUM_BIN;
+const PLAYWRIGHT_HEADLESS = process.env.PLAYWRIGHT_HEADLESS !== "false";
+
 export async function launchExtensionContext(userDataDir: string) {
+	const args = [
+		"--disable-extensions-except=build/extension",
+		"--load-extension=build/extension",
+	];
+	if (process.platform === "linux") {
+		args.push("--no-sandbox", "--disable-dev-shm-usage");
+	}
 	return chromium.launchPersistentContext(userDataDir, {
-		channel: "chromium",
-		headless: true,
-		args: [
-			"--disable-extensions-except=build/extension",
-			"--load-extension=build/extension",
-		],
+		...(CHROMIUM_EXECUTABLE_PATH
+			? { executablePath: CHROMIUM_EXECUTABLE_PATH }
+			: { channel: "chromium" }),
+		headless: PLAYWRIGHT_HEADLESS,
+		args,
 	});
 }
 
