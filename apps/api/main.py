@@ -38,10 +38,13 @@ from python.common.observability import (
     init_tracing,
     inject_current_trace_headers,
 )
+from python.common.runtime_paths import db_path, runtime_dir
 from python.common.runtime_store import RuntimeStore
 from python.common.runtime_time import utc_now_iso
 
 JOB_WAIT_TIMEOUT_SECONDS = float(os.getenv("SYNAWEAVE_JOB_WAIT_TIMEOUT_SECONDS", "15"))
+LOCAL_PROOF_ONLY_AUTH = os.getenv("SYNAWEAVE_LOCAL_PROOF_AUTH", "1") == "1"
+LOCAL_PROOF_HOSTS = {"127.0.0.1", "localhost", "testserver"}
 MAX_BROWSER_TELEMETRY_DURATION_MS = 300000.0
 MAX_BROWSER_TELEMETRY_DETAIL_LENGTH = 160
 BROWSER_TELEMETRY_NAMES = {
@@ -66,13 +69,15 @@ store = RuntimeStore()
 tracer = init_tracing("synaweave-api")
 app = FastAPI(title="SynaWeave Sprint 1 API", version="0.1.0")
 
-# Keep browser access open for the local proof path across web and extension shells.
+# Keep browser access narrow so the local proof path stays bounded.
+# Avoid silently turning local proof into a broad deploy default.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["http://127.0.0.1:3000", "http://localhost:3000"],
+    allow_origin_regex=r"^chrome-extension://[a-z]{32}$",
     allow_credentials=False,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "Idempotency-Key", "traceparent", "tracestate"],
 )
 
 
@@ -283,6 +288,20 @@ def require_browser_telemetry_surface(authorization: str | None) -> str:
         raise HTTPException(status_code=401, detail=str(exc)) from exc
 
 
+def require_local_proof_request(request: Request) -> None:
+    if not LOCAL_PROOF_ONLY_AUTH:
+        return
+    if request.url.hostname in LOCAL_PROOF_HOSTS:
+        return
+    raise HTTPException(
+        status_code=403,
+        detail=(
+            "local proof auth bootstrap is restricted to loopback hosts "
+            "until a real provider-backed auth boundary is configured"
+        ),
+    )
+
+
 # ---------- telemetry middleware ----------
 # Measure every API request so D3 baselines begin at the request-serving boundary itself.
 @app.middleware("http")
@@ -404,6 +423,7 @@ def ready(request: Request) -> JSONResponse:
 # Keep sign-in email-shaped because Sprint 1 only needs one browser-safe identity proof.
 @app.post("/v1/auth/link")
 def auth_link(request: Request, body: AuthLinkBody) -> dict[str, Any]:
+    require_local_proof_request(request)
     session = store.create_session(body.email, body.surface)
     return ok(
         request,
@@ -502,6 +522,8 @@ def workspace_job(
                         **os.environ,
                         "TRACEPARENT": carrier.get("traceparent", ""),
                         "TRACESTATE": carrier.get("tracestate", ""),
+                        "SYNAWEAVE_RUNTIME_DIR": str(runtime_dir()),
+                        "SYNAWEAVE_RUNTIME_DB_PATH": str(db_path()),
                     },
                 )
             except subprocess.TimeoutExpired as exc:
