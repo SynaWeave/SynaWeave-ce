@@ -103,12 +103,17 @@ Expected default-branch ruleset posture:
 - GitHub rulesets are the first enforcement home for pull-request requirements, required statuses, stale-approval dismissal, and any merge-blocking CODEOWNERS review requirement.
 - pull requests required for protected branches
 - direct pushes blocked for non-admin contributors
-- required checks include at least these repo-defined hosted check names when GitHub rulesets are configured to require them:
+- required checks should include at least these repo-defined hosted check names when GitHub rulesets are configured to require them:
   - `repo-verify / repo-verify` (from `.github/workflows/repo-verify.yml`; runs `bun run verify`, which includes ADR validation in the repo-level verification script)
   - `dependency-installability / dependency-installability` (from `.github/workflows/dependency-installability.yml`; proves clean Bun installs and direct Python dev-tool pins stay installable without mutating the checked-out repository)
   - `dependency-review / dependency-review` (the PR status stays required even when hosted review can only report that dependency graph support is unavailable)
   - `codeql / codeql-javascript-typescript`
   - `codeql / codeql-python`
+  - `CodeQL` when GitHub also reports the aggregate summary status alongside the per-language lanes
+  - `secret-scan-fast`
+  - `secret-scan-deep`
+  - `cla-check`
+  - `pr-quality`
 - CODEOWNERS file assigns platform-admin and core-maintainer owners for protected-path changes; merge-blocking CODEOWNERS review depends on GitHub rulesets enabling that requirement
 - stale approvals dismissed when protected-path diffs change materially
 - secret scanning and push protection enabled where the repository tier supports them
