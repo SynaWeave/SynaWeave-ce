@@ -282,6 +282,7 @@ def run_local_eval_fixture(
             for index, case in enumerate(cases, start=1):
                 session = store.create_session(case["email"], case["surface"])
                 token = session["token"]
+                tokens_by_surface = {case["surface"]: token}
                 workspace_id = session["workspace"]["workspace"]["workspaceId"]
 
                 for event in case.get("telemetry", []):
@@ -296,7 +297,19 @@ def run_local_eval_fixture(
                     )
 
                 for action in case.get("actions", []):
-                    store.record_action(token, action["kind"], action["value"], action["source"])
+                    action_token = tokens_by_surface.get(action["source"])
+                    if action_token is None:
+                        action_token = store.create_session(
+                            case["email"],
+                            action["source"],
+                        )["token"]
+                        tokens_by_surface[action["source"]] = action_token
+                    store.record_action(
+                        action_token,
+                        action["kind"],
+                        action["value"],
+                        action["source"],
+                    )
 
                 job = store.create_job(
                     token,
