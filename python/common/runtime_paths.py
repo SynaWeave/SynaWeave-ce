@@ -56,7 +56,8 @@ def observability_dir() -> Path:
 # ---------- durable state files ----------
 # Keep filenames semantic so operators can inspect the proof baseline without a legend lookup.
 def db_path() -> Path:
-    return runtime_dir() / "synaweave.sqlite3"
+    override = os.environ.get("SYNAWEAVE_RUNTIME_DB_PATH", "").strip()
+    return Path(override) if override else runtime_dir() / "synaweave.sqlite3"
 
 
 def trace_path() -> Path:
