@@ -22,6 +22,7 @@ import subprocess
 import sys
 import time
 import uuid
+from math import isfinite
 from typing import Any
 
 from fastapi import FastAPI, Header, HTTPException, Request
@@ -41,6 +42,23 @@ from python.common.runtime_store import RuntimeStore
 from python.common.runtime_time import utc_now_iso
 
 JOB_WAIT_TIMEOUT_SECONDS = float(os.getenv("SYNAWEAVE_JOB_WAIT_TIMEOUT_SECONDS", "15"))
+MAX_BROWSER_TELEMETRY_DURATION_MS = 300000.0
+MAX_BROWSER_TELEMETRY_DETAIL_LENGTH = 160
+BROWSER_TELEMETRY_NAMES = {
+    "web": {
+        "web_action_write",
+        "web_digest_run",
+        "web_sign_in",
+        "web_workspace_bootstrap",
+    },
+    "extension": {
+        "extension_action_write",
+        "extension_digest_run",
+        "extension_selection_pull",
+        "extension_sign_in",
+        "extension_workspace_bootstrap",
+    },
+}
 
 # ---------- app bootstrap ----------
 # Keep one store per process because the local proof path only needs one sqlite boundary.
@@ -77,13 +95,42 @@ class JobBody(BaseModel):
 
 
 class TelemetryBody(BaseModel):
-    surface: str = Field(pattern="^(web|extension|api|ingest)$")
+    surface: str = Field(pattern="^(web|extension)$")
     name: str = Field(min_length=2)
     status: str = Field(pattern="^(ok|error|degraded)$")
     durationMs: float = Field(ge=0)
-    traceId: str = Field(min_length=6)
-    costMicros: int = Field(default=0, ge=0)
     detail: str = ""
+
+
+def _sanitize_browser_telemetry_text(value: str, *, max_length: int) -> str:
+    compact = " ".join("".join(ch if ch.isprintable() else " " for ch in value).split())
+    return compact[:max_length]
+
+
+def normalize_browser_telemetry(
+    body: TelemetryBody,
+    *,
+    session_surface: str,
+    request_trace_id: str,
+) -> dict[str, Any]:
+    if body.name not in BROWSER_TELEMETRY_NAMES[body.surface]:
+        raise HTTPException(status_code=422, detail="telemetry name does not match surface")
+    if not isfinite(body.durationMs):
+        raise HTTPException(status_code=422, detail="telemetry duration must be finite")
+    if session_surface != body.surface:
+        raise HTTPException(status_code=403, detail="telemetry surface does not match session")
+    return {
+        "surface": body.surface,
+        "name": body.name,
+        "status": body.status,
+        "duration_ms": round(min(body.durationMs, MAX_BROWSER_TELEMETRY_DURATION_MS), 2),
+        "trace_id": request_trace_id,
+        "cost_micros": 0,
+        "detail": _sanitize_browser_telemetry_text(
+            body.detail,
+            max_length=MAX_BROWSER_TELEMETRY_DETAIL_LENGTH,
+        ),
+    }
 
 
 # ---------- envelope helpers ----------
@@ -169,6 +216,38 @@ def retryable_job_response(
     )
 
 
+def succeeded_job_response(
+    request: Request,
+    *,
+    job: dict[str, Any],
+    user_id: str,
+) -> dict[str, Any]:
+    store.record_backend_event(
+        component="api",
+        event="workspace_job.completed",
+        trace_id=request.state.trace_id,
+        request_id=request.state.request_id,
+        job_id=job["job_id"],
+        workspace_id=job["workspace_id"],
+        user_id=user_id,
+        status=job["state"],
+        detail="job finished before response",
+    )
+    return ok(request, job, status="ok")
+
+
+def durable_waited_job_response(
+    request: Request,
+    *,
+    job_id: str,
+    user_id: str,
+) -> dict[str, Any] | JSONResponse:
+    job = store.job_view(job_id, user_id=user_id)
+    if job["state"] == "failed":
+        return JSONResponse(status_code=502, content=ok(request, job, status="error"))
+    return succeeded_job_response(request, job=job, user_id=user_id)
+
+
 # ---------- auth helpers ----------
 # Keep bearer parsing centralized so route handlers stay focused on runtime behavior.
 def require_token(authorization: str | None) -> str:
@@ -192,6 +271,14 @@ def require_authenticated_token(authorization: str | None) -> tuple[str, str]:
     token = require_token(authorization)
     try:
         return token, store.user_id_for_token(token)
+    except KeyError as exc:
+        raise HTTPException(status_code=401, detail=str(exc)) from exc
+
+
+def require_browser_telemetry_surface(authorization: str | None) -> str:
+    token = require_token(authorization)
+    try:
+        return store.session_surface_for_token(token)
     except KeyError as exc:
         raise HTTPException(status_code=401, detail=str(exc)) from exc
 
@@ -366,6 +453,8 @@ def workspace_action(
         action = store.record_action(token, body.kind, body.value, body.source)
     except KeyError as exc:
         raise HTTPException(status_code=401, detail=str(exc)) from exc
+    except PermissionError as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
     return ok(request, action)
 
 
@@ -428,6 +517,9 @@ def workspace_job(
                     retry_after_seconds=JOB_WAIT_TIMEOUT_SECONDS,
                 )
             except subprocess.CalledProcessError as exc:
+                job = store.job_view(job["job_id"], user_id=user_id)
+                if job["state"] == "succeeded":
+                    return succeeded_job_response(request, job=job, user_id=user_id)
                 return failed_job_response(
                     request,
                     job_id=job["job_id"],
@@ -439,6 +531,9 @@ def workspace_job(
                     error_detail=f"{type(exc).__name__}: {exc}",
                 )
             except OSError as exc:
+                job = store.job_view(job["job_id"], user_id=user_id)
+                if job["state"] == "succeeded":
+                    return succeeded_job_response(request, job=job, user_id=user_id)
                 return failed_job_response(
                     request,
                     job_id=job["job_id"],
@@ -449,21 +544,7 @@ def workspace_job(
                     ),
                     error_detail=f"{type(exc).__name__}: {exc}",
                 )
-        job = store.job_view(job["job_id"], user_id=user_id)
-        if job["state"] == "failed":
-            return JSONResponse(status_code=502, content=ok(request, job, status="error"))
-        store.record_backend_event(
-            component="api",
-            event="workspace_job.completed",
-            trace_id=request.state.trace_id,
-            request_id=request.state.request_id,
-            job_id=job["job_id"],
-            workspace_id=job["workspace_id"],
-            user_id=user_id,
-            status=job["state"],
-            detail="job finished before response",
-        )
-        return ok(request, job, status="ok")
+        return durable_waited_job_response(request, job_id=job["job_id"], user_id=user_id)
     return ok(request, job, status="accepted")
 
 
@@ -484,17 +565,19 @@ def job_view(
 
 
 # ---------- telemetry route ----------
-# Keep client telemetry explicit so web and extension surfaces can contribute now.
+# Keep browser telemetry explicit while reserving API and ingest surfaces for server-owned truth.
 @app.post("/v1/telemetry/emit")
-def telemetry_emit(request: Request, body: TelemetryBody) -> dict[str, Any]:
+def telemetry_emit(
+    request: Request,
+    body: TelemetryBody,
+    authorization: str | None = Header(default=None),
+) -> dict[str, Any]:
     event = store.emit_telemetry(
-        surface=body.surface,
-        name=body.name,
-        status=body.status,
-        duration_ms=body.durationMs,
-        trace_id=body.traceId,
-        cost_micros=body.costMicros,
-        detail=body.detail,
+        **normalize_browser_telemetry(
+            body,
+            session_surface=require_browser_telemetry_surface(authorization),
+            request_trace_id=request.state.trace_id,
+        )
     )
     return ok(request, event, status="accepted")
 
