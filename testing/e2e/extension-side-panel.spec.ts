@@ -17,7 +17,9 @@ TL;DR  -->  prove the closest real Chromium side-panel path by opening the brows
 
 import { writeFile } from "node:fs/promises";
 
-import { chromium, expect, test } from "@playwright/test";
+import { expect, test } from "@playwright/test";
+
+import { launchExtensionContext, readExtensionId } from "./extension.helpers";
 
 type PanelEvidence = {
 	href: string;
@@ -34,25 +36,12 @@ test("extension harness opens the browser-owned side panel and records runtime t
 }, testInfo) => {
 	expect(browserName).toBe("chromium");
 
-	const context = await chromium.launchPersistentContext(
+	const context = await launchExtensionContext(
 		testInfo.outputPath("extension-profile"),
-		{
-			channel: "chromium",
-			headless: true,
-			args: [
-				"--disable-extensions-except=build/extension",
-				"--load-extension=build/extension",
-			],
-		},
 	);
 
 	try {
-		let [worker] = context.serviceWorkers();
-		if (!worker) {
-			worker = await context.waitForEvent("serviceworker");
-		}
-
-		const extensionId = new URL(worker.url()).host;
+		const extensionId = await readExtensionId(context);
 		const page = await context.newPage();
 
 		await page.goto(`chrome-extension://${extensionId}/options.html`);
