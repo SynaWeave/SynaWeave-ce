@@ -171,6 +171,33 @@ class RuntimeStoreTest(unittest.TestCase):
         self.assertEqual(event["surface"], "web")
         self.assertEqual(event["name"], "web_workspace_bootstrap")
 
+    def test_store_recreates_missing_sessions_table_before_token_lookup(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir_name:
+            database_path = Path(temp_dir_name) / "runtime.sqlite3"
+            store = RuntimeStore(database_path)
+            session = store.create_session("recover-session@example.com", "web")
+
+            with sqlite3.connect(database_path) as connection:
+                connection.execute("drop table sessions")
+
+            with self.assertRaises(KeyError):
+                store.identity_for_token(session["token"])
+
+    def test_store_ignores_malformed_recovery_log_rows_when_reading_latest_recovery(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir_name:
+            database_path = Path(temp_dir_name) / "runtime.sqlite3"
+            store = RuntimeStore(database_path)
+            recovery_log = Path(temp_dir_name) / "runtime-db-recovery.jsonl"
+            recovery_log.write_text(
+                "not-json\n"
+                '{"database_path": "runtime.sqlite3", "reason": "malformed"}\n',
+                encoding="utf-8",
+            )
+
+            latest_recovery = store.readiness_status()["latestRecovery"]
+
+        self.assertEqual(latest_recovery["reason"], "malformed")
+
     def test_job_failure_persists_error_detail_and_allows_retry(self) -> None:
         store = self.make_store()
         session = store.create_session("failure@example.com", "web")
