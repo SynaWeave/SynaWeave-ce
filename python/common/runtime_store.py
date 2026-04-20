@@ -134,7 +134,10 @@ class RuntimeStore:
         for line in recovery_log.read_text(encoding="utf-8").splitlines():
             if not line.strip():
                 continue
-            latest = json.loads(line)
+            try:
+                latest = json.loads(line)
+            except json.JSONDecodeError:
+                continue
         return latest
 
     def _recovery_event_total(self) -> int:
@@ -331,14 +334,29 @@ class RuntimeStore:
 
     # ---------- identity ----------
     # Keep identity lookup token-based so browser surfaces never need server-only lookup shortcuts.
+    def _session_row_for_token(self, token: str) -> dict[str, Any]:
+        try:
+            with self._session() as connection:
+                session = connection.execute(
+                    "select * from sessions where token = ?",
+                    (token,),
+                ).fetchone()
+        except sqlite3.OperationalError as exc:
+            if "no such table" not in str(exc).lower():
+                raise
+            self._init_db()
+            with self._session() as connection:
+                session = connection.execute(
+                    "select * from sessions where token = ?",
+                    (token,),
+                ).fetchone()
+        if session is None:
+            raise KeyError("unknown session token")
+        return session
+
     def identity_for_token(self, token: str) -> dict[str, Any]:
+        session = self._session_row_for_token(token)
         with self._session() as connection:
-            session = connection.execute(
-                "select * from sessions where token = ?",
-                (token,),
-            ).fetchone()
-            if session is None:
-                raise KeyError("unknown session token")
             user = connection.execute(
                 "select * from users where user_id = ?",
                 (session["user_id"],),
@@ -411,13 +429,7 @@ class RuntimeStore:
         return self.identity_for_token(token)["userId"]
 
     def session_surface_for_token(self, token: str) -> str:
-        with self._session() as connection:
-            session = connection.execute(
-                "select surface from sessions where token = ?",
-                (token,),
-            ).fetchone()
-        if session is None:
-            raise KeyError("unknown session token")
+        session = self._session_row_for_token(token)
         return str(session["surface"])
 
     # ---------- durable action ----------
