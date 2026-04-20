@@ -72,14 +72,76 @@ class RuntimeStore:
     def __init__(self, database_path: Path | None = None) -> None:
         self.database_path = database_path or db_path()
         self.database_path.parent.mkdir(parents=True, exist_ok=True)
+        self._recover_database_if_needed()
         self._init_db()
 
     # ---------- managed session ----------
     # Keep one helper for commit-and-close behavior across store methods.
     @contextmanager
     def _session(self):
+        self._recover_database_if_needed()
+        self._init_db()
         with _managed_connection(self.database_path) as connection:
             yield connection
+
+    def _recover_database_if_needed(self) -> None:
+        if not self.database_path.exists():
+            return
+        try:
+            with sqlite3.connect(self.database_path) as connection:
+                result = connection.execute("pragma quick_check").fetchone()
+        except sqlite3.DatabaseError as exc:
+            if not self._is_resettable_database_error(exc):
+                raise
+            self._quarantine_database(reason=str(exc))
+            return
+        if result is None or result[0] != "ok":
+            detail = "missing quick_check result" if result is None else f"quick_check={result[0]}"
+            self._quarantine_database(reason=detail)
+
+    def _is_resettable_database_error(self, exc: sqlite3.DatabaseError) -> bool:
+        detail = str(exc).lower()
+        return "malformed" in detail or "not a database" in detail
+
+    def _quarantine_dir(self) -> Path:
+        path = self.database_path.parent / "quarantine"
+        path.mkdir(parents=True, exist_ok=True)
+        return path
+
+    def _recovery_log_path(self) -> Path:
+        return self.database_path.parent / "runtime-db-recovery.jsonl"
+
+    def _quarantine_database(self, *, reason: str) -> dict[str, Any]:
+        recovery = {
+            "ts": utc_now_iso(),
+            "database_path": str(self.database_path),
+            "reason": reason,
+        }
+        quarantined_path = self._quarantine_dir() / (
+            f"{self.database_path.name}.corrupt-{uuid.uuid4().hex[:12]}"
+        )
+        self.database_path.replace(quarantined_path)
+        recovery["quarantined_path"] = str(quarantined_path)
+        with self._recovery_log_path().open("a", encoding="utf-8") as handle:
+            handle.write(json.dumps(recovery, sort_keys=True) + "\n")
+        return recovery
+
+    def _latest_recovery(self) -> dict[str, Any] | None:
+        recovery_log = self._recovery_log_path()
+        if not recovery_log.exists():
+            return None
+        latest: dict[str, Any] | None = None
+        for line in recovery_log.read_text(encoding="utf-8").splitlines():
+            if not line.strip():
+                continue
+            latest = json.loads(line)
+        return latest
+
+    def _recovery_event_total(self) -> int:
+        recovery_log = self._recovery_log_path()
+        if not recovery_log.exists():
+            return 0
+        return len([line for line in recovery_log.read_text(encoding="utf-8").splitlines() if line])
 
     # ---------- schema ----------
     # Keep schema creation idempotent so local boot and tests can initialize safely.
@@ -160,7 +222,7 @@ class RuntimeStore:
                 ");",
             ]
         )
-        with self._session() as connection:
+        with _managed_connection(self.database_path) as connection:
             connection.executescript(schema_text)
             self._ensure_column(connection, "jobs", "error_detail", "text not null default ''")
             self._ensure_column(connection, "jobs", "retry_count", "integer not null default 0")
@@ -184,6 +246,7 @@ class RuntimeStore:
         db_ready = False
         telemetry_ready = False
         state_dir = runtime_dir()
+        latest_recovery = self._latest_recovery()
 
         try:
             with self._session() as connection:
@@ -205,6 +268,9 @@ class RuntimeStore:
             "telemetryReady": telemetry_ready,
             "runtimeDir": str(state_dir),
             "errors": errors,
+            "recoveryEventTotal": self._recovery_event_total(),
+            "recoveryLog": str(self._recovery_log_path()),
+            "latestRecovery": latest_recovery,
         }
 
     # ---------- auth ----------
@@ -344,11 +410,24 @@ class RuntimeStore:
     def user_id_for_token(self, token: str) -> str:
         return self.identity_for_token(token)["userId"]
 
+    def session_surface_for_token(self, token: str) -> str:
+        with self._session() as connection:
+            session = connection.execute(
+                "select surface from sessions where token = ?",
+                (token,),
+            ).fetchone()
+        if session is None:
+            raise KeyError("unknown session token")
+        return str(session["surface"])
+
     # ---------- durable action ----------
     # Keep action writes explicit and server-owned so browser-local state
     # never masquerades as truth.
     def record_action(self, token: str, kind: str, value: str, source: str) -> dict[str, Any]:
         user_id = self.user_id_for_token(token)
+        session_surface = self.session_surface_for_token(token)
+        if session_surface != source:
+            raise PermissionError("workspace action source does not match session")
         created_at = utc_now_iso()
         action_id = f"act_{uuid.uuid4().hex[:12]}"
         with self._session() as connection:
@@ -696,6 +775,9 @@ class RuntimeStore:
             telemetry_rows = connection.execute(
                 "select * from telemetry order by created_at asc"
             ).fetchall()
+            latest_job = connection.execute(
+                "select * from jobs order by coalesce(finished_at, created_at) desc limit 1"
+            ).fetchone()
             auth_success_total = connection.execute(
                 "select count(*) as count from sessions"
             ).fetchone()["count"]
@@ -739,6 +821,8 @@ class RuntimeStore:
         degraded_event_total = len(
             [row for row in telemetry_rows if row["status"] == "degraded"]
         )
+        latest_job_id = "" if latest_job is None else latest_job["job_id"]
+        latest_job_trace_id = "" if latest_job is None else f"trc_{latest_job_id}"
         return {
             "captured_at": utc_now_iso(),
             "auth_success_total": auth_success_total,
@@ -760,6 +844,9 @@ class RuntimeStore:
             "degraded_event_total": degraded_event_total,
             "runtime_ready": 1 if readiness["dbReady"] and readiness["telemetryReady"] else 0,
             "runtime_readiness_error_total": len(readiness["errors"]),
+            "latest_job_id": latest_job_id,
+            "latest_job_state": "" if latest_job is None else latest_job["state"],
+            "latest_job_trace_id": latest_job_trace_id,
             "api_hotspots": self._operation_hotspots(telemetry_rows, surface="api"),
             "ingest_hotspots": self._operation_hotspots(telemetry_rows, surface="ingest"),
         }
