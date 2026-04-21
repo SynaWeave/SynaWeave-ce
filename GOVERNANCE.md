@@ -104,7 +104,7 @@ Expected default-branch ruleset posture:
 - pull requests required for protected branches
 - direct pushes blocked for non-admin contributors
 - required checks should include at least these repo-defined hosted check names when GitHub rulesets are configured to require them:
-  - `repo-verify / repo-verify` (from `.github/workflows/repo-verify.yml`; runs `bun run verify`, which includes ADR validation in the repo-level verification script)
+  - `repo-verify / repo-verify` (from `.github/workflows/repo-verify.yml`; runs `bun run verify:push` on pushes and `bun run verify` on pull requests, with ADR validation staying in the pull-request lane)
   - `dependency-installability / dependency-installability` (from `.github/workflows/dependency-installability.yml`; proves clean Bun installs and direct Python dev-tool pins stay installable without mutating the checked-out repository)
   - `dependency-review / dependency-review` (the PR status stays required even when hosted review can only report that dependency graph support is unavailable)
   - `codeql / codeql-javascript-typescript`

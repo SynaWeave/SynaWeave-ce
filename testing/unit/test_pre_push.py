@@ -51,7 +51,7 @@ class TestPrePush(unittest.TestCase):
                 ("betterleaks", "compact"),
                 ("environment-sync", "compact"),
                 ("environment-check", "compact"),
-                ("verify", "compact"),
+                ("verify-push", "compact"),
             ],
         )
 
@@ -74,9 +74,30 @@ class TestPrePush(unittest.TestCase):
                 ("betterleaks", "full"),
                 ("environment-sync", "full"),
                 ("environment-check", "full"),
-                ("verify", "full"),
+                ("verify-push", "full"),
             ],
         )
+
+    def test_git_supplied_remote_args_are_accepted(self):
+        phases: list[tuple[str, str]] = []
+
+        def fake_run_gated_phase(*, phase, repo_root, output_mode):
+            phases.append((phase.label, output_mode))
+            return PhaseResult(phase=phase, returncode=0)
+
+        with tempfile.TemporaryDirectory() as raw_tmp:
+            with patch("tools.dev.pre_push._run_gated_phase", side_effect=fake_run_gated_phase):
+                exit_code = pre_push.main(
+                    [
+                        "--root",
+                        str(Path(raw_tmp)),
+                        "origin",
+                        "https://github.com/SynaWave/SynaWave-ce.git",
+                    ]
+                )
+
+        self.assertEqual(exit_code, 0)
+        self.assertEqual(phases[-1][0], "verify-push")
 
     def test_sync_failure_keeps_existing_guidance(self):
         stream = io.StringIO()

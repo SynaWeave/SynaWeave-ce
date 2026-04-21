@@ -1,14 +1,14 @@
 """  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-TL;DR  -->  run the governed pre-push gates with compact phase labels by
-            default while keeping a raw-output escape hatch
+TL;DR  -->  run the governed pre-push gates with quiet compact phase labels
+            by default while keeping a raw-output escape hatch
 
 - Later Extension Points:
     --> add more push-time phases only when they become durable default gates
 
 - Role:
-    --> preserves existing pre-push verification order and blocking semantics
-    --> switches default operator output from raw command noise to compact
-        phase summaries
+    --> preserves push-time leak and environment guard semantics
+    --> keeps default operator output quiet and phase-oriented
+    --> runs only the push-safe verification lane instead of the full PR lane
 
 - Exports:
     --> `main()`
@@ -44,7 +44,18 @@ def _parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         default=str(REPO_ROOT),
         help="Repository root path",
     )
-    return parser.parse_args(argv)
+    parser.add_argument(
+        "remote_name",
+        nargs="?",
+        help="Git-supplied remote name for pre-push hook compatibility",
+    )
+    parser.add_argument(
+        "remote_url",
+        nargs="?",
+        help="Git-supplied remote URL for pre-push hook compatibility",
+    )
+    args, _unknown = parser.parse_known_args(argv)
+    return args
 
 
 def _resolve_output_mode(explicit_mode: str | None) -> OutputMode:
@@ -147,9 +158,9 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     verify_result = _run_gated_phase(
         phase=Phase(
-            label="verify",
-            command=("bun", "run", "verify"),
-            success_summary="full verification lane passed",
+            label="verify-push",
+            command=("bun", "run", "verify:push"),
+            success_summary="push verification lane passed",
         ),
         repo_root=repo_root,
         output_mode=output_mode,

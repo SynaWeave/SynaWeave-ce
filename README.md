@@ -77,7 +77,7 @@ python3 -m tools.verify.main
 PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium bun run verify
 ```
 
-After the one-time `bun run hooks:install` wrapper install, the local `.git/hooks/*` scripts exec the current repo-owned hooks in `tools/hooks/`, so content updates to existing repo hook files are picked up automatically without recopying old bodies into `.git/hooks`. Re-run `bun run hooks:install` when repo hook filenames are added, removed, or renamed, or when local wrappers are missing or damaged, so the local wrapper set stays aligned. Those repo-owned hooks auto-run environment sync after dependency-changing checkout, merge, and rewrite flows. On push, `pre-push` still runs tracked Betterleaks first, then retries environment sync, then runs `bun run verify`. Hook-triggered Python sync prefers the repo-owned `.venv` when present and otherwise falls back to `python3 -m pip` automatically. Git does not provide a pre-pull hook here, so checkout, merge, and rewrite flows remain the pull-adjacent automation path. Use `bun run sync` only when a hook reports a real sync failure and you need to rerun it directly.
+After the one-time `bun run hooks:install` wrapper install, the local `.git/hooks/*` scripts exec the current repo-owned hooks in `tools/hooks/`, so content updates to existing repo hook files are picked up automatically without recopying old bodies into `.git/hooks`. Re-run `bun run hooks:install` when repo hook filenames are added, removed, or renamed, or when local wrappers are missing or damaged, so the local wrapper set stays aligned. Those repo-owned hooks auto-run environment sync after dependency-changing checkout, merge, and rewrite flows. On push, `pre-push` still runs tracked Betterleaks first, then retries environment sync, then runs `bun run verify:push`. Hook-triggered Python sync prefers the repo-owned `.venv` when present and otherwise falls back to `python3 -m pip` automatically. Git does not provide a pre-pull hook here, so checkout, merge, and rewrite flows remain the pull-adjacent automation path. Use `bun run sync` only when a hook reports a real sync failure and you need to rerun it directly.
 
 ## Local runtime commands
 
@@ -159,4 +159,4 @@ Use the lightest command that matches the work you are doing.
 ### Push-ready flow
 - `bun run ready:push`
 
-`ready:push` is the safest single local command before push because it runs the full verify lane and refreshes the environment sync stamp required by the pre-push hook.
+`ready:push` is the safest single local command before push because it runs the push-safe verification lane and refreshes the environment sync stamp required by the pre-push hook.

@@ -462,7 +462,7 @@ It does not automatically refresh the local environment sync stamp.
 
 `python3 -m tools.dev.sync_environment sync` refreshes the git-local environment stamp used by hooks.
 
-`git push` keeps the same governed pre-push gates, but only the default hook presentation is compact and phase-labeled. Use either `bun run prepush:full` or `SYNAWAVE_PRE_PUSH_OUTPUT=full git push` when you want the full raw pre-push output instead.
+`git push` keeps the same governed pre-push gates, but that hook now runs the push-safe verification lane rather than the full local verification lane. Only the default hook presentation is compact and phase-labeled. Use either `bun run prepush:full` or `SYNAWAVE_PRE_PUSH_OUTPUT=full git push` when you want the full raw pre-push output instead.
 
 ### Recommended operator workflow
 - docs-only or governance-only work:
@@ -479,4 +479,4 @@ It does not automatically refresh the local environment sync stamp.
   - `bun run ready:push`
 
 ### Why `ready:push` exists
-The pre-push hook blocks when watched dependency files changed but the local environment stamp was not refreshed. This is intentional. The stamp is a separate guardrail from code verification.
+The pre-push hook blocks when watched dependency files changed but the local environment stamp was not refreshed. This is intentional. `ready:push` pairs that stamp refresh with the same push-safe verification lane used by the hook, while `bun run verify` remains the full local verification command.

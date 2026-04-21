@@ -88,7 +88,7 @@ Before opening PR:
 - expect `commit-msg` to enforce the commit subject contract before commits land
 - expect `post-checkout`, `post-merge`, and `post-rewrite` to auto-run environment sync when `package.json`, `bun.lock`, or `requirements-dev.txt` change; they prefer the repo-owned `.venv/bin/python3` and otherwise fall back to the system `python3 -m pip` command automatically
 - expect `pre-commit` to warn on stale local environment state before staged Betterleaks scanning plus `bun run verify:protected`
-- expect `pre-push` to run tracked-file Betterleaks first, then retry hook-safe environment sync, then run `bun run verify`, and to fail if local tooling still cannot be synced safely
+- expect `pre-push` to run tracked-file Betterleaks first, then retry hook-safe environment sync, then run `bun run verify:push`, and to fail if local tooling still cannot be synced safely
 - treat the hook set as local churn reduction: it catches commit, secret, and repo-control issues before PR review
 - run `python3 -m tools.verify.main`
 - run `bun run verify` when code, hooks, workflows, or repo controls changed
@@ -139,4 +139,4 @@ Run:
 bun run ready:push
 ```
 
-This runs the full verify flow and refreshes the local environment sync stamp so the pre-push hook does not reject an otherwise green change after `package.json`, `bun.lock`, or `requirements-dev.txt` edits.
+This runs the push-safe verification lane and refreshes the local environment sync stamp so the pre-push hook does not reject an otherwise green change after `package.json`, `bun.lock`, or `requirements-dev.txt` edits.

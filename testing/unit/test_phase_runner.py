@@ -55,9 +55,9 @@ class TestPhaseRunner(unittest.TestCase):
 
         output = stream.getvalue()
         self.assertTrue(result.succeeded)
-        self.assertIn("[demo] python3 -m example", output)
-        self.assertIn("[demo] ok  compact summary", output)
-        self.assertNotIn("[demo] ok  hidden success detail", output)
+        self.assertIn("[demo] starting", output)
+        self.assertIn("[demo] done compact summary", output)
+        self.assertNotIn("hidden success detail", output)
 
     def test_compact_mode_prints_buffered_output_on_failure(self):
         phase = Phase(label="demo", command=("python3", "-m", "example"), success_summary="unused")
@@ -104,7 +104,7 @@ class TestPhaseRunner(unittest.TestCase):
 
         output = stream.getvalue()
         self.assertTrue(result.succeeded)
-        self.assertIn("[demo] ok  demo passed", output)
+        self.assertIn("[demo] done demo passed", output)
         self.assertEqual(mock_run.call_args.kwargs["cwd"], Path(raw_tmp))
         self.assertFalse(mock_run.call_args.kwargs.get("capture_output", False))
         self.assertNotIn("text", mock_run.call_args.kwargs)
