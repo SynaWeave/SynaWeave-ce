@@ -42,8 +42,8 @@ from python.common.runtime_paths import db_path, runtime_dir
 from python.common.runtime_store import RuntimeStore
 from python.common.runtime_time import utc_now_iso
 
-JOB_WAIT_TIMEOUT_SECONDS = float(os.getenv("SYNAWEAVE_JOB_WAIT_TIMEOUT_SECONDS", "15"))
-LOCAL_PROOF_ONLY_AUTH = os.getenv("SYNAWEAVE_LOCAL_PROOF_AUTH", "1") == "1"
+JOB_WAIT_TIMEOUT_SECONDS = float(os.getenv("SYNAWAVE_JOB_WAIT_TIMEOUT_SECONDS", "15"))
+LOCAL_PROOF_ONLY_AUTH = os.getenv("SYNAWAVE_LOCAL_PROOF_AUTH", "1") == "1"
 LOCAL_PROOF_HOSTS = {"127.0.0.1", "localhost", "testserver"}
 MAX_BROWSER_TELEMETRY_DURATION_MS = 300000.0
 MAX_BROWSER_TELEMETRY_DETAIL_LENGTH = 160
@@ -66,8 +66,8 @@ BROWSER_TELEMETRY_NAMES = {
 # ---------- app bootstrap ----------
 # Keep one store per process because the local proof path only needs one sqlite boundary.
 store = RuntimeStore()
-tracer = init_tracing("synaweave-api")
-app = FastAPI(title="SynaWeave Sprint 1 API", version="0.1.0")
+tracer = init_tracing("synawave-api")
+app = FastAPI(title="SynaWave Sprint 1 API", version="0.1.0")
 
 # Keep browser access narrow so the local proof path stays bounded.
 # Avoid silently turning local proof into a broad deploy default.
@@ -318,7 +318,7 @@ async def runtime_probe(request: Request, call_next):
     ) as span:
         span.set_attribute("http.method", request.method)
         span.set_attribute("http.route", request.url.path)
-        span.set_attribute("synaweave.request_id", request_id)
+        span.set_attribute("synawave.request_id", request_id)
         request.state.trace_id = current_trace_id()
         try:
             response = await call_next(request)
@@ -522,8 +522,8 @@ def workspace_job(
                         **os.environ,
                         "TRACEPARENT": carrier.get("traceparent", ""),
                         "TRACESTATE": carrier.get("tracestate", ""),
-                        "SYNAWEAVE_RUNTIME_DIR": str(runtime_dir()),
-                        "SYNAWEAVE_RUNTIME_DB_PATH": str(db_path()),
+                        "SYNAWAVE_RUNTIME_DIR": str(runtime_dir()),
+                        "SYNAWAVE_RUNTIME_DB_PATH": str(db_path()),
                     },
                 )
             except subprocess.TimeoutExpired as exc:

@@ -76,7 +76,7 @@ class RuntimeEvalTest(unittest.TestCase):
     def test_read_runtime_baseline_is_empty_without_generated_snapshot(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir_name:
             runtime_dir = Path(temp_dir_name)
-            with patch.dict("os.environ", {"SYNAWEAVE_RUNTIME_DIR": str(runtime_dir)}):
+            with patch.dict("os.environ", {"SYNAWAVE_RUNTIME_DIR": str(runtime_dir)}):
                 self.assertEqual(read_runtime_baseline(), {})
             self.assertFalse((runtime_dir / "baseline.json").exists())
 

@@ -73,7 +73,7 @@ class RuntimeApiTest(unittest.TestCase):
 
         metrics = client.get("/metrics")
         self.assertEqual(metrics.status_code, 200)
-        self.assertIn("synaweave_auth_success_total", metrics.text)
+        self.assertIn("synawave_auth_success_total", metrics.text)
 
     def test_job_route_rejects_foreign_workspace(self) -> None:
         first = client.post(
@@ -280,7 +280,7 @@ class RuntimeApiTest(unittest.TestCase):
     def test_auth_bootstrap_rejects_non_loopback_host(
         self,
     ) -> None:
-        guarded_client = TestClient(app, base_url="https://api.synaweave.example")
+        guarded_client = TestClient(app, base_url="https://api.synawave.example")
 
         with patch("apps.api.main.LOCAL_PROOF_ONLY_AUTH", True):
             response = guarded_client.post(
@@ -311,9 +311,9 @@ class RuntimeApiTest(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
         subprocess_env = subprocess_run.call_args.kwargs["env"]
-        self.assertIn("SYNAWEAVE_RUNTIME_DIR", subprocess_env)
-        self.assertIn("SYNAWEAVE_RUNTIME_DB_PATH", subprocess_env)
-        self.assertTrue(subprocess_env["SYNAWEAVE_RUNTIME_DB_PATH"].endswith(".sqlite3"))
+        self.assertIn("SYNAWAVE_RUNTIME_DIR", subprocess_env)
+        self.assertIn("SYNAWAVE_RUNTIME_DB_PATH", subprocess_env)
+        self.assertTrue(subprocess_env["SYNAWAVE_RUNTIME_DB_PATH"].endswith(".sqlite3"))
 
     def test_waited_job_returns_failed_truth_when_ingest_subprocess_fails(self) -> None:
         auth = client.post(

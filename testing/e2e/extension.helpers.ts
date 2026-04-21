@@ -60,7 +60,7 @@ export async function readExtensionToken(page: Page) {
 					};
 				};
 			}
-		).chrome.storage.local.get("synaweave.extensionToken");
-		return data["synaweave.extensionToken"] || null;
+		).chrome.storage.local.get("synawave.extensionToken");
+		return data["synawave.extensionToken"] || null;
 	});
 }

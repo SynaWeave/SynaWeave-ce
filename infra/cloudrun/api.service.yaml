@@ -12,11 +12,11 @@
 apiVersion: serving.knative.dev/v1
 kind: Service
 metadata:
-  name: synaweave-api
+  name: synawave-api
 spec:
   template:
     spec:
       containers:
-        - image: gcr.io/PROJECT_ID/synaweave-api:latest
+        - image: gcr.io/PROJECT_ID/synawave-api:latest
           ports:
             - containerPort: 8000

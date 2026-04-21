@@ -10,7 +10,7 @@ Use this legend before adding new abbreviations.
 
 ## 🏷️ Top-level terms
 
-- **SW** — SynaWeave, used only where the shorter form materially improves readability
+- **SW** — SynaWave, used only where the shorter form materially improves readability
 - **ADR** — Architectural Decision Record, stored in `docs/adrs/`
 - **D1 / D2 / D3** — Foundation, Runtime, and Quality deliverables in a sprint
 - **SLO** — Service-level objective

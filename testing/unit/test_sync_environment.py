@@ -92,7 +92,7 @@ class TestSyncEnvironment(unittest.TestCase):
                 mock_run.call_args_list[1].args[0], sync_environment.PYTHON_SYNC_COMMAND
             )
 
-            stamp_path = repo_root / ".git" / "synaweave" / "environment-sync.json"
+            stamp_path = repo_root / ".git" / "synawave" / "environment-sync.json"
             stamp_payload = json.loads(stamp_path.read_text(encoding="utf-8"))
             self.assertEqual(stamp_payload["version"], sync_environment.STAMP_VERSION)
             self.assertEqual(
@@ -242,14 +242,14 @@ class TestSyncEnvironment(unittest.TestCase):
             self.assertEqual(exit_code, sync_environment.EXIT_SYNC_FAILED)
             self.assertIn("Command failed with exit code 9", output)
             self.assertFalse(
-                (repo_root / ".git" / "synaweave" / "environment-sync.json").exists()
+                (repo_root / ".git" / "synawave" / "environment-sync.json").exists()
             )
 
     def test_check_recovers_from_invalid_stamp_as_sync_needed(self):
         with tempfile.TemporaryDirectory() as raw_tmp:
             repo_root = Path(raw_tmp)
             self.make_repo(repo_root)
-            stamp_path = repo_root / ".git" / "synaweave"
+            stamp_path = repo_root / ".git" / "synawave"
             stamp_path.mkdir(parents=True)
             (stamp_path / "environment-sync.json").write_text("not json\n", encoding="utf-8")
 

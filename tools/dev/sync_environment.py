@@ -33,7 +33,7 @@ EXIT_SYNC_NEEDED = 1
 EXIT_USAGE_ERROR = 2
 EXIT_SYNC_FAILED = 3
 
-STAMP_RELATIVE_PATH = Path("synaweave") / "environment-sync.json"
+STAMP_RELATIVE_PATH = Path("synawave") / "environment-sync.json"
 JS_SYNC_COMMAND = ("bun", "install", "--frozen-lockfile")
 PYTHON_SYNC_COMMAND = ("python3", "-m", "pip", "install", "-r", "requirements-dev.txt")
 LOCAL_VENV_PYTHON = Path(".venv") / "bin" / "python3"

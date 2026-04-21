@@ -39,7 +39,7 @@ def repo_root() -> Path:
 # ---------- runtime dir ----------
 # Keep local durable state under build so tracked source paths stay clean and gitignored by default.
 def runtime_dir() -> Path:
-    override = os.environ.get("SYNAWEAVE_RUNTIME_DIR", "").strip()
+    override = os.environ.get("SYNAWAVE_RUNTIME_DIR", "").strip()
     path = Path(override) if override else repo_root() / "build" / "runtime"
     path.mkdir(parents=True, exist_ok=True)
     return path
@@ -56,8 +56,8 @@ def observability_dir() -> Path:
 # ---------- durable state files ----------
 # Keep filenames semantic so operators can inspect the proof baseline without a legend lookup.
 def db_path() -> Path:
-    override = os.environ.get("SYNAWEAVE_RUNTIME_DB_PATH", "").strip()
-    return Path(override) if override else runtime_dir() / "synaweave.sqlite3"
+    override = os.environ.get("SYNAWAVE_RUNTIME_DB_PATH", "").strip()
+    return Path(override) if override else runtime_dir() / "synawave.sqlite3"
 
 
 def trace_path() -> Path:

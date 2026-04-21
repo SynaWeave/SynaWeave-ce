@@ -154,7 +154,7 @@ Operational notes:
 * the repo already contains governance docs, workflows, hooks, and verifier code
 * runtime-focused unit tests now cover the API path and sqlite-backed runtime store
 * local git hooks exist under `tools/hooks/` and can be installed manually with `bun run hooks:install` for each clone
-* local environment sync is tracked by a git-local stamp under `.git/synaweave/environment-sync.json`
+* local environment sync is tracked by a git-local stamp under `.git/synawave/environment-sync.json`
 * `post-checkout`, `post-merge`, and `post-rewrite` auto-sync Bun tooling when `package.json`, `bun.lock`, or `requirements-dev.txt` change, but they only auto-install Python dependencies when the repo owns `.venv/bin/python3`; otherwise they warn operators to run the canonical sync command manually
 * `pre-commit` warns when the local environment stamp is stale, while `pre-push` blocks stale state before the full verification lane runs
 * `python3 -m tools.verify.main` is the repo-contained proof point for the D1 control baseline, so this section should not stay at **scaffolded** once those controls are aligned and passing locally
@@ -198,7 +198,7 @@ Current status: **integrated**
 Operational notes:
 
 * local sqlite stores users, sessions, workspaces, actions, jobs, evals, and telemetry
-* the durable local state lives under `build/runtime/synaweave.sqlite3`
+* the durable local state lives under `build/runtime/synawave.sqlite3`
 
 ### 🪣 Artifact storage
 

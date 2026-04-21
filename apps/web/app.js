@@ -16,8 +16,8 @@ TL;DR  -->  drive the first authenticated web control-plane shell for sign-in wo
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  */
 
 const API_BASE_URL =
-	localStorage.getItem("synaweave.apiBaseUrl") || "http://127.0.0.1:8000";
-const TOKEN_KEY = "synaweave.webToken";
+	localStorage.getItem("synawave.apiBaseUrl") || "http://127.0.0.1:8000";
+const TOKEN_KEY = "synawave.webToken";
 const TRANSIENT_ERROR_MESSAGE =
 	"Temporary API or provider failure. Session kept so you can retry.";
 

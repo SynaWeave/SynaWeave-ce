@@ -60,9 +60,9 @@
       "runtime-eval/performance.json",
       "runtime-eval/report.json"
     ],
-    "artifactUri": "file:///Users/elijah/computing-local/SynaWeave-ce/build/mlflow/artifacts/9e867d0fa40341deafed8d0b5e03bf73/artifacts",
+    "artifactUri": "file:///Users/elijah/computing-local/SynaWave-ce/build/mlflow/artifacts/9e867d0fa40341deafed8d0b5e03bf73/artifacts",
     "experimentId": "1",
-    "experimentName": "synaweave-sprint1-runtime-eval-local",
+    "experimentName": "synawave-sprint1-runtime-eval-local",
     "runId": "9e867d0fa40341deafed8d0b5e03bf73",
     "runName": "runtime-digest-density-v1",
     "runStatus": "FINISHED",

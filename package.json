@@ -1,8 +1,8 @@
 {
-	"name": "synaweave-ce",
+	"name": "synawave-ce",
 	"version": "0.1.0",
 	"private": true,
-	"description": "Governed monorepo scaffold for SynaWeave",
+	"description": "Governed monorepo scaffold for SynaWave",
 	"packageManager": "bun@1.2.0",
 	"devDependencies": {
 		"@axe-core/playwright": "4.11.2",

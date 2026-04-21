@@ -79,15 +79,15 @@ def default_mlflow_tracking_uri() -> str:
 
 def default_mlflow_experiment_name() -> str:
     return os.environ.get(
-        "SYNAWEAVE_MLFLOW_EXPERIMENT",
-        "synaweave-sprint1-runtime-eval-local",
+        "SYNAWAVE_MLFLOW_EXPERIMENT",
+        "synawave-sprint1-runtime-eval-local",
     )
 
 
 # ---------- baseline reader ----------
 # Keep the reader defensive so early tests can call it before the first baseline is written.
 def read_runtime_baseline() -> dict[str, Any]:
-    path = Path(os.environ.get("SYNAWEAVE_RUNTIME_DIR", "")).expanduser()
+    path = Path(os.environ.get("SYNAWAVE_RUNTIME_DIR", "")).expanduser()
     baseline = (
         path / "baseline.json"
         if str(path)
@@ -102,15 +102,15 @@ def read_runtime_baseline() -> dict[str, Any]:
 # Keep proof runs isolated so tracked fixture generation does not depend on shared local state.
 @contextmanager
 def _runtime_dir_override(runtime_dir: Path):
-    previous = os.environ.get("SYNAWEAVE_RUNTIME_DIR")
-    os.environ["SYNAWEAVE_RUNTIME_DIR"] = str(runtime_dir)
+    previous = os.environ.get("SYNAWAVE_RUNTIME_DIR")
+    os.environ["SYNAWAVE_RUNTIME_DIR"] = str(runtime_dir)
     try:
         yield
     finally:
         if previous is None:
-            os.environ.pop("SYNAWEAVE_RUNTIME_DIR", None)
+            os.environ.pop("SYNAWAVE_RUNTIME_DIR", None)
         else:
-            os.environ["SYNAWEAVE_RUNTIME_DIR"] = previous
+            os.environ["SYNAWAVE_RUNTIME_DIR"] = previous
 
 
 # ---------- fixture loading ----------

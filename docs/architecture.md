@@ -22,7 +22,7 @@ This file does **not** define:
 
 ## 🧭 Architecture thesis
 
-SynaWeave is a shallow, multi-surface architecture with one shared contract layer.
+SynaWave is a shallow, multi-surface architecture with one shared contract layer.
 
 The platform shape is intentionally strict:
 

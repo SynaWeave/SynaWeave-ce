@@ -29,7 +29,7 @@ chrome.runtime.onInstalled.addListener(() => {
 	void enableSidePanel();
 	chrome.contextMenus.create({
 		id: "capture-selection",
-		title: "Open SynaWeave side panel",
+		title: "Open SynaWave side panel",
 		contexts: ["selection"],
 	});
 });

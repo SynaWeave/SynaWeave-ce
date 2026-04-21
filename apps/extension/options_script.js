@@ -16,8 +16,8 @@ TL;DR  -->  keep the extension options route as a bounded operator harness for t
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  */
 
 // ---------- dom and storage keys ----------
-const PANEL_OPEN_REQUEST_KEY = "synaweave.sidePanelOpenRequestedAt";
-const PANEL_RUNTIME_EVIDENCE_KEY = "synaweave.sidePanelRuntimeEvidence";
+const PANEL_OPEN_REQUEST_KEY = "synawave.sidePanelOpenRequestedAt";
+const PANEL_RUNTIME_EVIDENCE_KEY = "synawave.sidePanelRuntimeEvidence";
 
 const els = {
 	openSidePanelButton: document.getElementById("open-side-panel-button"),
@@ -57,7 +57,7 @@ async function openSidePanelFromHarness() {
 
 	const evidence = await waitForPanelEvidence(requestedAt);
 	if (!evidence) {
-		window.__synaweaveOptionsPanelEvidence = null;
+		window.__synawaveOptionsPanelEvidence = null;
 		setStatus(
 			"Side panel open request reached Chromium, but this harness did not observe a matching panel document boot.",
 		);
@@ -65,7 +65,7 @@ async function openSidePanelFromHarness() {
 	}
 
 	const openToBootMs = evidence.bootedAt - requestedAt;
-	window.__synaweaveOptionsPanelEvidence = {
+	window.__synawaveOptionsPanelEvidence = {
 		...evidence,
 		openToBootMs,
 		requestedAt,

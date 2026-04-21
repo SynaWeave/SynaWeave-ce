@@ -421,7 +421,7 @@ class TestVerifyCommit(unittest.TestCase):
                 "--no-ff",
                 "base-line",
                 "-m",
-                "Merge pull request #42 from synaweave/base-line",
+                "Merge pull request #42 from synawave/base-line",
             )
 
             with _patched_env(VERIFY_COMMIT_BASE=base_sha, VERIFY_COMMIT_HEAD=None):
@@ -464,7 +464,7 @@ class TestVerifyCommit(unittest.TestCase):
                 "--no-ff",
                 "base-line",
                 "-m",
-                "Merge pull request #42 from synaweave/base-line",
+                "Merge pull request #42 from synawave/base-line",
             )
 
             with _patched_env(VERIFY_COMMIT_BASE=base_sha, VERIFY_COMMIT_HEAD=None):
@@ -473,7 +473,7 @@ class TestVerifyCommit(unittest.TestCase):
             self.assertTrue(any("must use format" in issue for issue in issues))
             self.assertEqual(sum("must use format" in issue for issue in issues), 1)
             self.assertFalse(
-                any("Merge pull request #42 from synaweave/base-line" in issue for issue in issues)
+                any("Merge pull request #42 from synawave/base-line" in issue for issue in issues)
             )
 
     def test_commit_range_skips_merge_commits_in_duplicate_subject_checks(self):

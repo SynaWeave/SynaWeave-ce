@@ -235,7 +235,7 @@ class RuntimeStoreTest(unittest.TestCase):
     def test_metrics_text_appends_measurement_history_with_hotspots(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir_name:
             runtime_dir = Path(temp_dir_name)
-            with patch.dict("os.environ", {"SYNAWEAVE_RUNTIME_DIR": str(runtime_dir)}):
+            with patch.dict("os.environ", {"SYNAWAVE_RUNTIME_DIR": str(runtime_dir)}):
                 store = RuntimeStore(runtime_dir / "runtime.sqlite3")
                 store.emit_telemetry(
                     surface="api",

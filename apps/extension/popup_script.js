@@ -18,9 +18,9 @@ TL;DR  -->  drive the first authenticated extension side-panel shell for shared 
 // ---------- runtime config ----------
 // Keep local API targeting explicit so the side-panel proof works without a bundler.
 const API_BASE_URL = "http://127.0.0.1:8000";
-const TOKEN_KEY = "synaweave.extensionToken";
-const PANEL_OPEN_REQUEST_KEY = "synaweave.sidePanelOpenRequestedAt";
-const PANEL_RUNTIME_EVIDENCE_KEY = "synaweave.sidePanelRuntimeEvidence";
+const TOKEN_KEY = "synawave.extensionToken";
+const PANEL_OPEN_REQUEST_KEY = "synawave.sidePanelOpenRequestedAt";
+const PANEL_RUNTIME_EVIDENCE_KEY = "synawave.sidePanelRuntimeEvidence";
 const TRANSIENT_ERROR_MESSAGE =
 	"Temporary API or provider failure. Session kept so you can retry.";
 

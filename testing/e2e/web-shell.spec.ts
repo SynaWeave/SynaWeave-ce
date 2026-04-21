@@ -129,9 +129,9 @@ test("web shell signs in writes a durable action and runs a digest", async ({
 
 		(
 			globalThis as typeof globalThis & {
-				__synaweaveWebVitals?: BrowserWebVitalsState;
+				__synawaveWebVitals?: BrowserWebVitalsState;
 			}
-		).__synaweaveWebVitals = vitalsState;
+		).__synawaveWebVitals = vitalsState;
 	});
 
 	await page.goto("/");
@@ -147,7 +147,7 @@ test("web shell signs in writes a durable action and runs a digest", async ({
 	});
 
 	await expect(
-		page.getByRole("heading", { name: "SynaWeave Workspace" }),
+		page.getByRole("heading", { name: "SynaWave Workspace" }),
 	).toBeVisible();
 	await page.getByLabel("Email").fill(email);
 	const signInStartedAt = await page.evaluate(() => performance.now());
@@ -183,9 +183,9 @@ test("web shell signs in writes a durable action and runs a digest", async ({
 		() =>
 			(
 				globalThis as typeof globalThis & {
-					__synaweaveWebVitals?: WebVitalsEvidence;
+					__synawaveWebVitals?: WebVitalsEvidence;
 				}
-			).__synaweaveWebVitals,
+			).__synawaveWebVitals,
 	);
 
 	const timing = {

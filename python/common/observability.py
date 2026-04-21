@@ -42,7 +42,7 @@ def _env_flag(name: str) -> bool:
 
 
 def tracing_enabled() -> bool:
-    return _env_flag("SYNAWEAVE_OTEL_ENABLED")
+    return _env_flag("SYNAWAVE_OTEL_ENABLED")
 
 
 def _traces_endpoint() -> str:
@@ -54,7 +54,7 @@ def _traces_endpoint() -> str:
 
 
 def _batch_delay_millis() -> int:
-    raw_value = os.getenv("SYNAWEAVE_OTEL_BATCH_DELAY_MS", "250").strip()
+    raw_value = os.getenv("SYNAWAVE_OTEL_BATCH_DELAY_MS", "250").strip()
     try:
         return max(1, int(raw_value))
     except ValueError:
@@ -71,7 +71,7 @@ def init_tracing(service_name: str):
         resource=Resource.create(
             {
                 "service.name": service_name,
-                "deployment.environment": os.getenv("SYNAWEAVE_RUNTIME_ENV", "local"),
+                "deployment.environment": os.getenv("SYNAWAVE_RUNTIME_ENV", "local"),
             }
         )
     )

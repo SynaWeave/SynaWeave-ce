@@ -9,7 +9,7 @@
 #   --> gives the team one simple local stack for demo preparation baseline capture and offline eval tracking
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-name: synaweave-observability
+name: synawave-observability
 
 services:
   mlflow:
@@ -32,8 +32,8 @@ services:
     working_dir: /repo
     command: bash -lc "python3 -m pip install -r requirements-app.txt && python3 -m uvicorn apps.api.main:app --host 0.0.0.0 --port 8000"
     environment:
-      - SYNAWEAVE_OTEL_ENABLED=true
-      - SYNAWEAVE_RUNTIME_ENV=local
+      - SYNAWAVE_OTEL_ENABLED=true
+      - SYNAWAVE_RUNTIME_ENV=local
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318
     volumes:
       - ../../:/repo

@@ -34,11 +34,11 @@ def default_langfuse_base_url() -> str:
 
 
 def default_langfuse_public_key() -> str:
-    return os.environ.get("LANGFUSE_PUBLIC_KEY", "synaweave-local-public-key")
+    return os.environ.get("LANGFUSE_PUBLIC_KEY", "synawave-local-public-key")
 
 
 def default_langfuse_secret_key() -> str:
-    return os.environ.get("LANGFUSE_SECRET_KEY", "synaweave-local-secret-key")
+    return os.environ.get("LANGFUSE_SECRET_KEY", "synawave-local-secret-key")
 
 
 def default_langfuse_output_path() -> Path:

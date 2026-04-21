@@ -328,7 +328,7 @@ class RuntimeStore:
                         "(workspace_id, user_id, title, last_digest, updated_at) "
                         "values (?, ?, ?, ?, ?)"
                     ),
-                    (workspace_id, user_id, "SynaWeave Workspace", "", created_at),
+                    (workspace_id, user_id, "SynaWave Workspace", "", created_at),
                 )
                 current_user = connection.execute(
                     "select * from users where user_id = ?",
@@ -796,21 +796,21 @@ class RuntimeStore:
     def metrics_text(self) -> str:
         snapshot = self.metrics_snapshot()
         lines = [
-            f'synaweave_auth_success_total {snapshot["auth_success_total"]}',
-            f'synaweave_workspace_action_total {snapshot["workspace_action_total"]}',
-            f'synaweave_job_success_total {snapshot["job_success_total"]}',
-            f'synaweave_job_failure_total {snapshot["job_failure_total"]}',
-            f'synaweave_degraded_event_total {snapshot["degraded_event_total"]}',
-            f'synaweave_trace_event_total {snapshot["trace_event_total"]}',
-            f'synaweave_api_latency_p95_ms {snapshot["api_latency_p95_ms"]}',
-            f'synaweave_job_duration_p95_ms {snapshot["job_duration_p95_ms"]}',
-            f'synaweave_workspace_entry_timing_ms {snapshot["workspace_entry_timing_ms"]}',
-            f'synaweave_ai_ready_trace_coverage {snapshot["ai_ready_trace_coverage"]}',
-            f'synaweave_api_error_total {snapshot["api_error_total"]}',
-            f'synaweave_ingest_error_total {snapshot["ingest_error_total"]}',
-            f'synaweave_runtime_ready {snapshot["runtime_ready"]}',
+            f'synawave_auth_success_total {snapshot["auth_success_total"]}',
+            f'synawave_workspace_action_total {snapshot["workspace_action_total"]}',
+            f'synawave_job_success_total {snapshot["job_success_total"]}',
+            f'synawave_job_failure_total {snapshot["job_failure_total"]}',
+            f'synawave_degraded_event_total {snapshot["degraded_event_total"]}',
+            f'synawave_trace_event_total {snapshot["trace_event_total"]}',
+            f'synawave_api_latency_p95_ms {snapshot["api_latency_p95_ms"]}',
+            f'synawave_job_duration_p95_ms {snapshot["job_duration_p95_ms"]}',
+            f'synawave_workspace_entry_timing_ms {snapshot["workspace_entry_timing_ms"]}',
+            f'synawave_ai_ready_trace_coverage {snapshot["ai_ready_trace_coverage"]}',
+            f'synawave_api_error_total {snapshot["api_error_total"]}',
+            f'synawave_ingest_error_total {snapshot["ingest_error_total"]}',
+            f'synawave_runtime_ready {snapshot["runtime_ready"]}',
             (
-                "synaweave_runtime_readiness_error_total "
+                "synawave_runtime_readiness_error_total "
                 f'{snapshot["runtime_readiness_error_total"]}'
             ),
         ]

@@ -8,72 +8,72 @@
   "liveNow": false,
   "panels": [
     {
-      "datasource": {"type": "prometheus", "uid": "synaweave-prometheus"},
+      "datasource": {"type": "prometheus", "uid": "synawave-prometheus"},
       "fieldConfig": {"defaults": {"unit": "ms"}, "overrides": []},
       "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
       "id": 1,
       "options": {"reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "showThresholdLabels": false, "showThresholdMarkers": true},
-      "targets": [{"expr": "synaweave_api_latency_p95_ms", "legendFormat": "API p95", "refId": "A"}],
+      "targets": [{"expr": "synawave_api_latency_p95_ms", "legendFormat": "API p95", "refId": "A"}],
       "title": "API critical-path latency p95",
       "type": "gauge"
     },
     {
-      "datasource": {"type": "prometheus", "uid": "synaweave-prometheus"},
+      "datasource": {"type": "prometheus", "uid": "synawave-prometheus"},
       "fieldConfig": {"defaults": {"unit": "ms"}, "overrides": []},
       "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
       "id": 2,
       "options": {"reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "showThresholdLabels": false, "showThresholdMarkers": true},
-      "targets": [{"expr": "synaweave_job_duration_p95_ms", "legendFormat": "Ingest p95", "refId": "A"}],
+      "targets": [{"expr": "synawave_job_duration_p95_ms", "legendFormat": "Ingest p95", "refId": "A"}],
       "title": "Ingest critical-path duration p95",
       "type": "gauge"
     },
     {
-      "datasource": {"type": "prometheus", "uid": "synaweave-prometheus"},
+      "datasource": {"type": "prometheus", "uid": "synawave-prometheus"},
       "fieldConfig": {"defaults": {"unit": "percentunit"}, "overrides": []},
       "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
       "id": 3,
       "options": {"reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "showThresholdLabels": false, "showThresholdMarkers": true},
-      "targets": [{"expr": "synaweave_ai_ready_trace_coverage", "legendFormat": "Trace coverage", "refId": "A"}],
+      "targets": [{"expr": "synawave_ai_ready_trace_coverage", "legendFormat": "Trace coverage", "refId": "A"}],
       "title": "Critical-path trace coverage",
       "type": "gauge"
     },
     {
-      "datasource": {"type": "prometheus", "uid": "synaweave-prometheus"},
+      "datasource": {"type": "prometheus", "uid": "synawave-prometheus"},
       "fieldConfig": {"defaults": {"unit": "short"}, "overrides": []},
       "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
       "id": 4,
       "options": {"legend": {"displayMode": "table", "placement": "bottom"}, "tooltip": {"mode": "single", "sort": "none"}},
       "targets": [
-        {"expr": "synaweave_auth_success_total", "legendFormat": "Auth success", "refId": "A"},
-        {"expr": "synaweave_workspace_action_total", "legendFormat": "Workspace actions", "refId": "B"},
-        {"expr": "synaweave_job_success_total", "legendFormat": "Succeeded jobs", "refId": "C"},
-        {"expr": "synaweave_trace_event_total", "legendFormat": "Telemetry events", "refId": "D"}
+        {"expr": "synawave_auth_success_total", "legendFormat": "Auth success", "refId": "A"},
+        {"expr": "synawave_workspace_action_total", "legendFormat": "Workspace actions", "refId": "B"},
+        {"expr": "synawave_job_success_total", "legendFormat": "Succeeded jobs", "refId": "C"},
+        {"expr": "synawave_trace_event_total", "legendFormat": "Telemetry events", "refId": "D"}
       ],
       "title": "Critical-path volume snapshot",
       "type": "timeseries"
     },
     {
-      "datasource": {"type": "prometheus", "uid": "synaweave-prometheus"},
+      "datasource": {"type": "prometheus", "uid": "synawave-prometheus"},
       "fieldConfig": {"defaults": {"unit": "short"}, "overrides": []},
       "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16},
       "id": 5,
       "options": {"legend": {"displayMode": "table", "placement": "bottom"}, "tooltip": {"mode": "single", "sort": "none"}},
       "targets": [
-        {"expr": "synaweave_api_error_total", "legendFormat": "API errors", "refId": "A"},
-        {"expr": "synaweave_ingest_error_total", "legendFormat": "Ingest errors", "refId": "B"},
-        {"expr": "synaweave_job_failure_total", "legendFormat": "Failed jobs", "refId": "C"},
-        {"expr": "synaweave_runtime_readiness_error_total", "legendFormat": "Readiness errors", "refId": "D"}
+        {"expr": "synawave_api_error_total", "legendFormat": "API errors", "refId": "A"},
+        {"expr": "synawave_ingest_error_total", "legendFormat": "Ingest errors", "refId": "B"},
+        {"expr": "synawave_job_failure_total", "legendFormat": "Failed jobs", "refId": "C"},
+        {"expr": "synawave_runtime_readiness_error_total", "legendFormat": "Readiness errors", "refId": "D"}
       ],
       "title": "Failure and degraded-state snapshot",
       "type": "timeseries"
     },
     {
-      "datasource": {"type": "prometheus", "uid": "synaweave-prometheus"},
+      "datasource": {"type": "prometheus", "uid": "synawave-prometheus"},
       "fieldConfig": {"defaults": {"mappings": [], "thresholds": {"mode": "absolute", "steps": [{"color": "red", "value": null}, {"color": "green", "value": 1}]}, "unit": "short"}, "overrides": []},
       "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16},
       "id": 6,
       "options": {"reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "showThresholdLabels": false, "showThresholdMarkers": true},
-      "targets": [{"expr": "synaweave_runtime_ready", "legendFormat": "Runtime ready", "refId": "A"}],
+      "targets": [{"expr": "synawave_runtime_ready", "legendFormat": "Runtime ready", "refId": "A"}],
       "title": "Runtime readiness state",
       "type": "gauge"
     }
@@ -87,7 +87,7 @@
   "timepicker": {},
   "timezone": "browser",
   "title": "Sprint 1 Critical Path",
-  "uid": "synaweave-sprint1-critical-path",
+  "uid": "synawave-sprint1-critical-path",
   "version": 2,
   "weekStart": ""
 }

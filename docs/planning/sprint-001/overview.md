@@ -64,7 +64,7 @@ The historical repository baseline proved the original product concept as a brow
 * stylesheets
 * assets
 * one `README.md`
-* one license file. ([github.com](https://github.com/SynaWeave/SynaWeave-ce))
+* one license file. ([github.com](https://github.com/SynaWave/SynaWave-ce))
 
 The old README proved:
 
@@ -72,7 +72,7 @@ The old README proved:
 * side-panel review
 * spaced repetition
 * TSV export
-* the original MVP framing plus later stretch-goal ideas. ([github.com](https://github.com/SynaWeave/SynaWeave-ce))
+* the original MVP framing plus later stretch-goal ideas. ([github.com](https://github.com/SynaWave/SynaWave-ce))
 
 ### 3.2 ✅ What this branch now proves at Sprint 1 closeout
 

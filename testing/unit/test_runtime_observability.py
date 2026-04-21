@@ -58,11 +58,11 @@ class RuntimeObservabilityTest(unittest.TestCase):
         store.run_job(job["job_id"])
         metrics_text = store.metrics_text()
 
-        self.assertIn("synaweave_workspace_entry_timing_ms", metrics_text)
-        self.assertIn("synaweave_ai_ready_trace_coverage", metrics_text)
-        self.assertIn("synaweave_job_failure_total", metrics_text)
-        self.assertIn("synaweave_degraded_event_total", metrics_text)
-        self.assertIn("synaweave_runtime_ready", metrics_text)
+        self.assertIn("synawave_workspace_entry_timing_ms", metrics_text)
+        self.assertIn("synawave_ai_ready_trace_coverage", metrics_text)
+        self.assertIn("synawave_job_failure_total", metrics_text)
+        self.assertIn("synawave_degraded_event_total", metrics_text)
+        self.assertIn("synawave_runtime_ready", metrics_text)
 
     def test_job_route_forwards_traceparent_to_ingest_subprocess(self) -> None:
         auth = client.post(
@@ -95,7 +95,7 @@ class RuntimeObservabilityTest(unittest.TestCase):
             runtime_dir = Path(temp_dir_name)
             isolated_store = RuntimeStore(runtime_dir / "runtime.sqlite3")
             with (
-                patch.dict("os.environ", {"SYNAWEAVE_RUNTIME_DIR": str(runtime_dir)}),
+                patch.dict("os.environ", {"SYNAWAVE_RUNTIME_DIR": str(runtime_dir)}),
                 patch("apps.api.main.store", isolated_store),
             ):
                 auth = client.post(
@@ -160,7 +160,7 @@ class RuntimeObservabilityTest(unittest.TestCase):
             runtime_dir = Path(temp_dir_name)
             isolated_store = RuntimeStore(runtime_dir / "runtime.sqlite3")
             with (
-                patch.dict("os.environ", {"SYNAWEAVE_RUNTIME_DIR": str(runtime_dir)}),
+                patch.dict("os.environ", {"SYNAWAVE_RUNTIME_DIR": str(runtime_dir)}),
                 patch("apps.api.main.store", isolated_store),
             ):
                 auth = client.post(

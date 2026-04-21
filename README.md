@@ -1,6 +1,6 @@
-# SynaWeave
+# SynaWave
 
-SynaWeave is a governed, multi-surface repository for a knowledge-weaving learning platform. The current repo now includes a bounded Sprint 1 runtime slice across:
+SynaWave is a governed, multi-surface repository for a knowledge-weaving learning platform. The current repo now includes a bounded Sprint 1 runtime slice across:
 - browser extension capture and workspace bridge
 - a web control plane shell
 - a FastAPI request boundary

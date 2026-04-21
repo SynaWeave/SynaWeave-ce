@@ -35,7 +35,7 @@ from python.common.runtime_store import JobExecutionError, RuntimeStore
 # ---------- worker bootstrap ----------
 # Keep one shared store instance because each CLI invocation only needs bounded local work.
 store = RuntimeStore()
-tracer = init_tracing("synaweave-ingest")
+tracer = init_tracing("synawave-ingest")
 
 
 # ---------- job execution ----------
@@ -51,8 +51,8 @@ def run_job(job_id: str) -> dict[str, object]:
         kind=trace.SpanKind.CONSUMER,
     ) as span:
         trace_id = current_trace_id()
-        span.set_attribute("synaweave.job_id", job_id)
-        span.set_attribute("synaweave.runtime", "ingest")
+        span.set_attribute("synawave.job_id", job_id)
+        span.set_attribute("synawave.runtime", "ingest")
         store.record_backend_event(
             component="ingest",
             event="workspace_job.started",
@@ -88,7 +88,7 @@ def run_job(job_id: str) -> dict[str, object]:
 # ---------- cli parsing ----------
 # Keep the CLI narrow because Sprint 1 only needs one explicit job execution path.
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Run one SynaWeave ingest job")
+    parser = argparse.ArgumentParser(description="Run one SynaWave ingest job")
     parser.add_argument("--job-id", required=True, help="Queued job identifier")
     return parser.parse_args()
 

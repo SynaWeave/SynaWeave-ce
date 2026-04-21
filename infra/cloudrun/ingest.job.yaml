@@ -12,10 +12,10 @@
 apiVersion: run.googleapis.com/v1
 kind: Job
 metadata:
-  name: synaweave-ingest
+  name: synawave-ingest
 spec:
   template:
     template:
       spec:
         containers:
-          - image: gcr.io/PROJECT_ID/synaweave-ingest:latest
+          - image: gcr.io/PROJECT_ID/synawave-ingest:latest

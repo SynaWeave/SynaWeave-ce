@@ -195,11 +195,11 @@ These are implementation choices, not domain concepts. The core architecture mus
 
 ## 🧭 1. Overview
 
-This part defines the permanent product direction of SynaWeave.
+This part defines the permanent product direction of SynaWave.
 
 It answers five questions:
 
-* What class of product is SynaWeave?
+* What class of product is SynaWave?
 * What learning outcomes is it designed to create?
 * What systems must exist for the product to work as intended?
 * What architectural and product truths are non-negotiable?
@@ -266,7 +266,7 @@ Use this emoji system consistently across the packet for fast skimming and stabl
 
 ### 🎯 3.1 Product class
 
-SynaWeave is a **knowledge-weaving learning operating system**.
+SynaWave is a **knowledge-weaving learning operating system**.
 
 It is not defined primarily as:
 
@@ -281,7 +281,7 @@ Those are possible feature surfaces, but they are not the product class.
 
 The product class is defined by one core promise:
 
-> SynaWeave should help a learner transform raw source material into structured knowledge, convert that knowledge into adaptive practice, and improve long-term retention through grounded, measurable learning loops.
+> SynaWave should help a learner transform raw source material into structured knowledge, convert that knowledge into adaptive practice, and improve long-term retention through grounded, measurable learning loops.
 
 ### 🎯 3.2 Product objective
 
@@ -391,9 +391,9 @@ That means every major product milestone must make visible progress on at least 
 
 ### 🧠 4.1 Learning model
 
-SynaWeave is built on the assumption that durable learning requires more than passive exposure. Educational psychology literature has repeatedly found that practice testing and distributed practice are among the highest-utility broadly applicable learning techniques, while self-explanation and interleaving remain valuable supporting methods. ([Sage Journals][1])
+SynaWave is built on the assumption that durable learning requires more than passive exposure. Educational psychology literature has repeatedly found that practice testing and distributed practice are among the highest-utility broadly applicable learning techniques, while self-explanation and interleaving remain valuable supporting methods. ([Sage Journals][1])
 
-Therefore, SynaWeave must treat:
+Therefore, SynaWave must treat:
 
 * retrieval
 * spacing
@@ -492,11 +492,11 @@ These modes must exist because different knowledge types and learner states requ
 
 ### 🧪 4.8 Technical learning contract
 
-For SWE, ML, and AI learners, SynaWeave must support programming-specific and systems-specific practice structures rather than forcing all learning into generic question types.
+For SWE, ML, and AI learners, SynaWave must support programming-specific and systems-specific practice structures rather than forcing all learning into generic question types.
 
 Research on Parsons problems and related programming-learning methods continues to support their use for engagement, learning efficiency, and programming pattern recognition. ([Falmouth University Research Repository][3])
 
-That means SynaWeave must support:
+That means SynaWave must support:
 
 * code ordering
 * code tracing
@@ -649,7 +649,7 @@ These are non-negotiable truths unless explicitly changed by a later architectur
 
 ### 📏 6.1 Product invariants
 
-* SynaWeave is a learning operating system, not a generic AI utility.
+* SynaWave is a learning operating system, not a generic AI utility.
 * The workspace is a learning workspace, not a generic document surface.
 * The tutor is an adaptive orchestrator, not a generic chatbot.
 * Provenance is a permanent product requirement, not an optional enhancement.
@@ -764,7 +764,7 @@ Interpretation:
 
 Part 1 is correct only if a reader can answer all of these without consulting lower-level docs:
 
-* What kind of product is SynaWeave?
+* What kind of product is SynaWave?
 * What learning methods is it built around?
 * What systems must permanently exist?
 * What truths are non-negotiable?
@@ -780,7 +780,7 @@ If those answers are not clear after reading this section, this part is incomple
 
 ## 🧭 9. Overview
 
-This part defines the technical contract for how SynaWeave will be built and judged.
+This part defines the technical contract for how SynaWave will be built and judged.
 
 It answers these questions:
 
@@ -851,7 +851,7 @@ Bun supports monorepo workspaces directly, which keeps the workspace model simpl
 * the editor foundation is Tiptap
 
 **Why this is locked**
-Tiptap is a headless editor framework built on ProseMirror and is designed to support custom editor behavior through extensions, nodes, and marks. It is therefore a better fit for a block-first learning workspace than a generic rich-text field. Its headless model also supports strong product control rather than forcing SynaWeave into a pre-shaped document UI. ([Tiptap][2])
+Tiptap is a headless editor framework built on ProseMirror and is designed to support custom editor behavior through extensions, nodes, and marks. It is therefore a better fit for a block-first learning workspace than a generic rich-text field. Its headless model also supports strong product control rather than forcing SynaWave into a pre-shaped document UI. ([Tiptap][2])
 
 **Spec requirements**
 
@@ -1112,7 +1112,7 @@ These metrics are not optional because ingestion quality is one of the easiest w
 
 ### 🎯 12.1 Intelligence philosophy
 
-AI and ML in SynaWeave exist to improve:
+AI and ML in SynaWave exist to improve:
 
 * learning quality
 * adaptation quality
@@ -1151,7 +1151,7 @@ It must be able to combine:
 * retrieval must support citation generation
 * retrieval must support graceful degradation when some evidence layers are unavailable
 
-Industry-standard RAG evaluation guidance now commonly distinguishes retrieve-only and retrieve-and-generate evaluation and includes metrics such as context relevance, context coverage, correctness, completeness, faithfulness, citation precision, and citation coverage. SynaWeave should align its retrieval and answer evaluation with that separation. ([AWS Documentation][9])
+Industry-standard RAG evaluation guidance now commonly distinguishes retrieve-only and retrieve-and-generate evaluation and includes metrics such as context relevance, context coverage, correctness, completeness, faithfulness, citation precision, and citation coverage. SynaWave should align its retrieval and answer evaluation with that separation. ([AWS Documentation][9])
 
 ### 🤖 12.3 Tutor contract
 
@@ -1295,7 +1295,7 @@ These metric families are aligned with current RAG evaluation practice and gener
 
 ### 🎯 13.1 Proof philosophy
 
-SynaWeave must be able to answer, from evidence rather than opinion:
+SynaWave must be able to answer, from evidence rather than opinion:
 
 * Is the product working?
 * Is the AI working?
@@ -1413,7 +1413,7 @@ MLflow is part of the proof contract because it supports experiment tracking and
 
 ### 🎯 14.1 Trust philosophy
 
-Trust in SynaWeave must be designed, not implied.
+Trust in SynaWave must be designed, not implied.
 
 The product must be able to explain:
 
@@ -1427,7 +1427,7 @@ NIST’s AI Risk Management Framework and its generative AI profile make clear t
 
 ### 🛡️ 14.2 Trust requirements
 
-SynaWeave must support:
+SynaWave must support:
 
 * visible provenance
 * visible uncertainty where relevant
@@ -1457,7 +1457,7 @@ The platform must assume that generative and adaptive systems can fail in ways t
 
 ### 📏 14.4 Quality contract
 
-Quality in SynaWeave is multi-dimensional.
+Quality in SynaWave is multi-dimensional.
 
 It includes:
 
@@ -1530,7 +1530,7 @@ The following metric families must exist by the time the corresponding surfaces 
 
 ### 📏 14.7 Standard for claims
 
-SynaWeave may only claim a quality attribute publicly when the proof layer supports it.
+SynaWave may only claim a quality attribute publicly when the proof layer supports it.
 
 Examples:
 
@@ -1563,7 +1563,7 @@ If those answers are not clear after reading this section, Part 2 is incomplete.
 
 ## 🧭 16. Overview
 
-This part defines the roadmap contract for SynaWeave.
+This part defines the roadmap contract for SynaWave.
 
 It answers these questions:
 
@@ -1808,7 +1808,7 @@ Sprint 2 is the first sprint in which the product must behave like a real learni
 
 Purpose:
 
-* establish SynaWeave as a serious “learn from real sources” product
+* establish SynaWave as a serious “learn from real sources” product
 
 Must prove:
 
@@ -1925,7 +1925,7 @@ Sprint 2 is complete only when:
 
 ### 🎯 Goal
 
-Turn SynaWeave from a strong workspace into a strong learning experience.
+Turn SynaWave from a strong workspace into a strong learning experience.
 
 Sprint 3 is the pedagogy sprint. It must make the product visibly better at producing learning, not just organization.
 
@@ -2144,7 +2144,7 @@ Investor-visible outcome:
 
 Purpose:
 
-* establish SynaWeave as a serious applied-AI and machine-learning system
+* establish SynaWave as a serious applied-AI and machine-learning system
 
 Must prove:
 

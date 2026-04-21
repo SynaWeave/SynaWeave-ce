@@ -1,4 +1,4 @@
-# Contributing to SynaWeave
+# Contributing to SynaWave
 
 ## Quick start
 

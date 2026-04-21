@@ -27,7 +27,7 @@ from tools.verify.shape import check_shape
 
 def write_package_json(path: Path) -> None:
     package = {
-        "name": "synaweave-ce",
+        "name": "synawave-ce",
         "private": True,
         "workspaces": [
             "apps/*",
