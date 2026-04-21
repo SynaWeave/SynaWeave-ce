@@ -35,7 +35,16 @@ EXIT_SYNC_FAILED = 3
 
 STAMP_RELATIVE_PATH = Path("synawave") / "environment-sync.json"
 JS_SYNC_COMMAND = ("bun", "install", "--frozen-lockfile")
-PYTHON_SYNC_COMMAND = ("python3", "-m", "pip", "install", "-r", "requirements-dev.txt")
+PYTHON_SYNC_COMMAND = (
+    "python3",
+    "-m",
+    "pip",
+    "install",
+    "--user",
+    "--break-system-packages",
+    "-r",
+    "requirements-dev.txt",
+)
 LOCAL_VENV_PYTHON = Path(".venv") / "bin" / "python3"
 REQUIRED_WATCH_FILES = ("package.json", "requirements-dev.txt")
 OPTIONAL_WATCH_FILES = ("bun.lock",)

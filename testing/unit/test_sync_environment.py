@@ -30,6 +30,16 @@ from unittest.mock import patch
 from tools.dev import sync_environment
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
+SYSTEM_PYTHON_SYNC_COMMAND = (
+    "python3",
+    "-m",
+    "pip",
+    "install",
+    "--user",
+    "--break-system-packages",
+    "-r",
+    "requirements-dev.txt",
+)
 
 
 def read_canonical_requirements_dev() -> str:
@@ -88,9 +98,7 @@ class TestSyncEnvironment(unittest.TestCase):
             self.assertEqual(
                 mock_run.call_args_list[0].args[0], sync_environment.JS_SYNC_COMMAND
             )
-            self.assertEqual(
-                mock_run.call_args_list[1].args[0], sync_environment.PYTHON_SYNC_COMMAND
-            )
+            self.assertEqual(mock_run.call_args_list[1].args[0], SYSTEM_PYTHON_SYNC_COMMAND)
 
             stamp_path = repo_root / ".git" / "synawave" / "environment-sync.json"
             stamp_payload = json.loads(stamp_path.read_text(encoding="utf-8"))
@@ -122,7 +130,7 @@ class TestSyncEnvironment(unittest.TestCase):
             self.assertEqual(exit_code, sync_environment.EXIT_OK)
             self.assertIn("Environment sync complete", output)
             self.assertEqual(mock_run.call_count, 1)
-            self.assertEqual(mock_run.call_args.args[0], sync_environment.PYTHON_SYNC_COMMAND)
+            self.assertEqual(mock_run.call_args.args[0], SYSTEM_PYTHON_SYNC_COMMAND)
 
     def test_manual_sync_prefers_repo_owned_python_environment(self):
         with tempfile.TemporaryDirectory() as raw_tmp:
@@ -191,7 +199,7 @@ class TestSyncEnvironment(unittest.TestCase):
             self.assertIn("Python dependency sync using system python", output)
             self.assertIn("Environment sync complete", output)
             self.assertEqual(mock_run.call_count, 1)
-            self.assertEqual(mock_run.call_args.args[0], sync_environment.PYTHON_SYNC_COMMAND)
+            self.assertEqual(mock_run.call_args.args[0], SYSTEM_PYTHON_SYNC_COMMAND)
 
             exit_code, check_output = self.capture_main(["check", "--root", str(repo_root)])
             self.assertEqual(exit_code, sync_environment.EXIT_OK)
