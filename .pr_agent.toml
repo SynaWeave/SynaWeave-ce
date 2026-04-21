@@ -1,0 +1,11 @@
+[github_app]
+pr_commands = [
+    "/agentic_describe",
+    "/agentic_review"
+]
+
+[review_agent]
+comments_location_policy = "both"
+inline_comments_severity_threshold = 3
+issues_user_guidelines = "Use the repo's canonical rules from AGENTS.md, GOVERNANCE.md, CONTRIBUTING.md, docs/workflow.md, docs/onboarding.md, docs/architecture.md, docs/operations.md, docs/planning/**, and docs/adrs/**. Prioritize meaningful findings about risky logic, missing tests, contract drift, architecture drift, browser-versus-server boundary violations, provider-specific leakage into domain contracts, and behavior changes that do not update docs or ADRs. De-prioritize cosmetic comments already handled by deterministic linting and repo controls."
+compliance_user_guidelines = "Review this repo as a governed monorepo. Root docs live only under docs/. Durable writes go through apps/api. Reusable TypeScript logic belongs in packages/* and reusable Python logic belongs in python/*. Apps/* are runtime homes, not library homes. Browser surfaces must never consume server-only credentials. If a PR changes contracts, runtime behavior, or architecture boundaries, expect matching tests and matching docs or ADR updates."
