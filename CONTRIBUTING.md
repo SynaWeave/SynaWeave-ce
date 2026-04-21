@@ -116,3 +116,27 @@ Before opening PR:
 - never commit `.env` or secrets
 - classify new config in `docs/infra.md`
 - route schema and dependency changes through required checks in PR review
+
+## Local verification workflow
+
+Choose the narrowest command that still proves your change.
+
+### Fast local commands
+- `python3 -m tools.verify.main`
+- `bun run check:py:fast`
+- `bun run check:browser`
+- `bun run check:fast`
+
+### Browser triage helpers
+- `bun run triage:ports`
+- `bun run triage:browser`
+- `bun run triage:browser:repeat`
+
+### Before push
+Run:
+
+```bash
+bun run ready:push
+```
+
+This runs the full verify flow and refreshes the local environment sync stamp so the pre-push hook does not reject an otherwise green change after `package.json`, `bun.lock`, or `requirements-dev.txt` edits.

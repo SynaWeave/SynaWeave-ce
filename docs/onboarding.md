@@ -363,3 +363,24 @@ A developer is fully ramped when they can:
 - take a Sprint 2 task without violating repo governance
 
 That is the onboarding standard for this repo.
+
+## Local commands new developers should learn first
+
+### Core commands
+- `python3 -m tools.verify.main`
+- `bun run verify`
+- `bun run ready:push`
+
+### Fast day-to-day commands
+- `bun run check:py:fast`
+- `bun run check:browser`
+- `bun run check:fast`
+
+### Browser triage commands
+- `bun run triage:ports`
+- `bun run triage:browser`
+- `bun run triage:browser:repeat`
+
+A new developer should understand that `verify` and `sync_environment` are separate concerns:
+- `verify` proves code and repo correctness
+- `sync_environment` refreshes the local tool stamp used by hooks

@@ -407,3 +407,39 @@ This file works with:
 * sprint planning files for deliverable-specific status transitions
 
 This file should stay focused on **current operational truth**, not future design.
+
+## Browser verification triage
+
+When browser verification fails or appears flaky, do this in order:
+
+1. `bun run triage:ports`
+2. `bun run triage:browser`
+3. `bun run triage:browser:repeat`
+
+Interpretation:
+- repeated pass: likely startup timing or transient local state
+- repeated failure at same point: likely real regression
+- occupied ports before triage: likely process reuse or stale local runtime
+
+## Push-blocker triage
+
+If push fails with:
+
+`pre-push: environment sync required; run python3 -m tools.dev.sync_environment sync`
+
+then a watched environment file changed:
+- `package.json`
+- `bun.lock`
+- `requirements-dev.txt`
+
+Run:
+
+```bash
+python3 -m tools.dev.sync_environment sync
+```
+
+Or use:
+
+```bash
+bun run ready:push
+```

@@ -137,3 +137,26 @@ The full license text is in `LICENSE`.
 - `CLA.md`
 - `NOTICE`
 - `TRADEMARKS.md`
+
+## Local workflow shortcuts
+
+Use the lightest command that matches the work you are doing.
+
+### Deterministic repo checks
+- `python3 -m tools.verify.main`
+- `bun run verify`
+
+### Faster local Python lane
+- `bun run check:py:deps`
+- `bun run check:py:fast`
+
+### Browser verification and triage
+- `bun run check:browser`
+- `bun run triage:ports`
+- `bun run triage:browser`
+- `bun run triage:browser:repeat`
+
+### Push-ready flow
+- `bun run ready:push`
+
+`ready:push` is the safest single local command before push because it runs the full verify lane and refreshes the environment sync stamp required by the pre-push hook.

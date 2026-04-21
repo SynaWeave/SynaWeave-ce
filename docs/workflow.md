@@ -450,3 +450,31 @@ A contributor using this repo correctly should be able to:
 - use AI review as extra signal without letting it replace repo discipline
 
 That is the workflow standard for SynaWave.
+
+## Verification speed and triage
+
+This repo distinguishes between:
+- code verification
+- local environment sync state
+
+`bun run verify` proves the repo passes the full local verification lane.
+It does not automatically refresh the local environment sync stamp.
+
+`python3 -m tools.dev.sync_environment sync` refreshes the git-local environment stamp used by hooks.
+
+### Recommended operator workflow
+- docs-only or governance-only work:
+  - `python3 -m tools.verify.main`
+- Python-focused work:
+  - `bun run check:py:fast`
+- browser-focused work:
+  - `bun run check:browser`
+- flaky browser diagnosis:
+  - `bun run triage:ports`
+  - `bun run triage:browser`
+  - `bun run triage:browser:repeat`
+- final pre-push confidence:
+  - `bun run ready:push`
+
+### Why `ready:push` exists
+The pre-push hook blocks when watched dependency files changed but the local environment stamp was not refreshed. This is intentional. The stamp is a separate guardrail from code verification.
