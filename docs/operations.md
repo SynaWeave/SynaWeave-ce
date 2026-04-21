@@ -154,6 +154,8 @@ Operational notes:
 * the repo already contains governance docs, workflows, hooks, and verifier code
 * runtime-focused unit tests now cover the API path and sqlite-backed runtime store
 * local git hooks exist under `tools/hooks/` and can be installed manually with `bun run hooks:install` for each clone
+* after the one-time `bun run hooks:install` wrapper install, the installed `.git/hooks/*` files delegate to `tools/hooks/*`, so content updates to existing repo hook files are picked up automatically without copying stale hook bodies forward
+* rerunning `bun run hooks:install` is only needed when repo hook filenames are added, removed, or renamed, or when local wrappers are missing or damaged for that clone; that reinstall also removes stale repo-managed hook names from older clones, including legacy copied hook bodies that predate the wrapper upgrade, without touching unrelated local custom hooks
 * local environment sync is tracked by a git-local stamp under `.git/synawave/environment-sync.json`
 * `post-checkout`, `post-merge`, and `post-rewrite` auto-run environment sync when `package.json`, `bun.lock`, or `requirements-dev.txt` change; hook-triggered Python sync prefers `.venv/bin/python3` when the repo owns it and otherwise falls back to the system `python3 -m pip` command automatically
 * Git does not provide a pre-pull hook here; the automatic pull-like sync behavior comes from those existing post-checkout, post-merge, and post-rewrite hooks after branch-changing operations complete

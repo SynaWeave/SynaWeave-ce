@@ -186,7 +186,7 @@ bun run deps:app
 bun run deps:browser
 ```
 
-After `bun run hooks:install`, the repo-owned hooks own the normal environment-sync path for dependency-changing checkout, merge, rewrite, and push flows. Use `bun run sync` only when a hook reports a real sync failure and you need to rerun the sync command directly.
+After the one-time `bun run hooks:install` wrapper install, the local `.git/hooks/*` entries become wrappers that delegate to the current repo-owned files in `tools/hooks/`, so content updates to existing repo hook files are picked up automatically without recopying old hook bodies into `.git/hooks`. Re-run `bun run hooks:install` when repo hook filenames are added, removed, or renamed, or when local wrappers are missing or damaged, so the local wrapper set stays aligned. That reinstall also removes stale repo-managed hook names from older clones, including legacy copied hook bodies that predate the wrapper upgrade, while leaving unrelated local custom hooks alone. Those repo-owned hooks own the normal environment-sync path for dependency-changing checkout, merge, rewrite, and push flows. Use `bun run sync` only when a hook reports a real sync failure and you need to rerun the sync command directly.
 
 ### Core verification commands
 

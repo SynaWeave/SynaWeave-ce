@@ -13,7 +13,7 @@ bun run hooks:install
 
 This step is manual. The repository does not auto-install hooks for contributors or AI-agent operators.
 
-After installation, the repo-owned hooks handle the normal environment-sync path for dependency-changing checkout, merge, rewrite, and push flows. Hook-triggered Python sync prefers the repo-owned `.venv` when present and otherwise falls back to `python3 -m pip` automatically. Run `bun run sync` only when a hook reports a real sync failure and you need to rerun it directly.
+After the one-time `bun run hooks:install` wrapper install, the local `.git/hooks/*` entries are thin wrappers that delegate to the current repo-owned files under `tools/hooks/`, so content updates to existing repo hook files are picked up automatically without reinstalling copied hook bodies. Re-run `bun run hooks:install` when repo hook filenames are added, removed, or renamed, or when local wrappers are missing or damaged, so the local wrapper set stays aligned. Hook-triggered Python sync prefers the repo-owned `.venv` when present and otherwise falls back to `python3 -m pip` automatically. Run `bun run sync` only when a hook reports a real sync failure and you need to rerun it directly.
 
 5. Make targeted edits and keep architecture changes ADR-backed.
 6. Run local verification:
@@ -82,7 +82,7 @@ Use `docs/legend.md` as the only shared abbreviation registry for reused short f
 
 Before opening PR:
 
-- run `bun run hooks:install` after cloning and rerun it if repo-owned hook files change
+- run `bun run hooks:install` after cloning; after that one-time wrapper install, content updates to existing repo hook files apply automatically, and you only need to rerun it when repo hook filenames are added, removed, or renamed, or when local `.git/hooks` wrappers are missing or damaged
 - expect local hooks to stay manual until an owner doc says otherwise
 - run `bun run sync` only when hooks report a real sync failure or when you want to rerun the sync command directly
 - expect `commit-msg` to enforce the commit subject contract before commits land
