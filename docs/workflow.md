@@ -457,10 +457,12 @@ This repo distinguishes between:
 - code verification
 - local environment sync state
 
-`bun run verify` proves the repo passes the full local verification lane.
+`bun run verify` proves the repo passes the full local verification lane and remains verbose by design.
 It does not automatically refresh the local environment sync stamp.
 
 `python3 -m tools.dev.sync_environment sync` refreshes the git-local environment stamp used by hooks.
+
+`git push` keeps the same governed pre-push gates, but only the default hook presentation is compact and phase-labeled. Use either `bun run prepush:full` or `SYNAWAVE_PRE_PUSH_OUTPUT=full git push` when you want the full raw pre-push output instead.
 
 ### Recommended operator workflow
 - docs-only or governance-only work:

@@ -159,7 +159,7 @@ Operational notes:
 * local environment sync is tracked by a git-local stamp under `.git/synawave/environment-sync.json`
 * `post-checkout`, `post-merge`, and `post-rewrite` auto-run environment sync when `package.json`, `bun.lock`, or `requirements-dev.txt` change; hook-triggered Python sync prefers `.venv/bin/python3` when the repo owns it and otherwise falls back to the system `python3 -m pip` command automatically
 * Git does not provide a pre-pull hook here; the automatic pull-like sync behavior comes from those existing post-checkout, post-merge, and post-rewrite hooks after branch-changing operations complete
-* `pre-commit` warns when the local environment stamp is stale before staged Betterleaks and protected verification run, while `pre-push` still runs tracked Betterleaks first, then retries automatic environment sync, then blocks if local tooling still remains incomplete before the full verification lane runs
+* `pre-commit` warns when the local environment stamp is stale before staged Betterleaks and protected verification run, while `pre-push` still runs tracked Betterleaks first, then retries automatic environment sync, then blocks if local tooling still remains incomplete before the full verification lane runs; only the default `git push` hook presentation is compact and phase-labeled, while `bun run verify` itself remains verbose and the raw pre-push hook logs stay available through either `bun run prepush:full` or `SYNAWAVE_PRE_PUSH_OUTPUT=full git push`
 * short root aliases exist for common local commands, including `bun run api`, `bun run web`, `bun run ext`, `bun run browser:install`, `bun run check`, `bun run hooks`, and `bun run sync`
 * `python3 -m tools.verify.main` is the repo-contained proof point for the D1 control baseline, so this section should not stay at **scaffolded** once those controls are aligned and passing locally
 * the hosted `repo-verify` workflow runs `bun run verify`, and that root script now includes ADR validation alongside the other repo-level checks
@@ -427,7 +427,7 @@ Interpretation:
 
 If push fails with:
 
-`pre-push: environment sync required; run python3 -m tools.dev.sync_environment sync`
+`pre-push: automatic retry left local tooling incomplete; rerun python3 -m tools.dev.sync_environment sync to inspect the remaining issue before push`
 
 then a watched environment file changed:
 - `package.json`
@@ -444,4 +444,14 @@ Or use:
 
 ```bash
 bun run ready:push
+```
+
+To inspect the full raw pre-push logs without changing the default compact `git push` workflow, use either escape hatch:
+
+```bash
+bun run prepush:full
+```
+
+```bash
+SYNAWAVE_PRE_PUSH_OUTPUT=full git push
 ```

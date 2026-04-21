@@ -65,7 +65,8 @@
 		"contracts": "bun run test:contract",
 		"browser:test": "bun run test:browser",
 		"hooks": "bun run hooks:install",
-		"sync": "python3 -m tools.dev.sync_environment sync"
+		"sync": "python3 -m tools.dev.sync_environment sync",
+		"prepush:full": "env SYNAWAVE_PRE_PUSH_OUTPUT=full tools/hooks/pre-push"
 	},
 	"workspaces": [
 		"apps/*",

@@ -19,42 +19,5 @@
 use strict;
 use warnings;
 
-sub run_or_exit {
-    my (@command) = @_;
-    system @command;
-    my $exit_code = $? >> 8;
-    exit $exit_code if $exit_code != 0;
-}
-
-run_or_exit('python3', '-m', 'tools.security.betterleaks', '--mode', 'tracked', '--include-built-extension');
-
-my $sync_output = qx{python3 -m tools.dev.sync_environment sync --mode hook 2>&1};
-my $sync_exit = $? >> 8;
-
-if ($sync_output ne q{} && $sync_output !~ /^Environment already synced\n\z/s) {
-    print $sync_output;
-}
-
-if ($sync_exit != 0) {
-    print "pre-push: hook-safe environment sync failed; resolve the error above before push\n";
-    exit 1;
-}
-
-my $check_output = qx{python3 -m tools.dev.sync_environment check 2>&1};
-my $check_exit = $? >> 8;
-
-if ($check_exit == 1) {
-    print $check_output if $check_output ne q{};
-    print "pre-push: automatic retry left local tooling incomplete; rerun python3 -m tools.dev.sync_environment sync to inspect the remaining issue before push\n";
-    exit 1;
-}
-
-if ($check_exit == 2) {
-    print $check_output if $check_output ne q{};
-    print "pre-push: environment check failed; fix repo state before push\n";
-    exit 1;
-}
-
-exit $check_exit if $check_exit != 0;
-
-run_or_exit('bun', 'run', 'verify');
+exec 'python3', '-m', 'tools.dev.pre_push', @ARGV
+  or die "failed to launch tools.dev.pre_push: $!\n";
