@@ -48,7 +48,8 @@ jobs:
 
       - name: Create Python CodeQL workspace alias
         if: matrix.language == 'python'
-        run: perl -MCwd=realpath -MFile::Basename=dirname -e 'my $real = realpath($ENV{RUNNER_WORKSPACE} // q{}); die "RUNNER_WORKSPACE missing\n" unless defined $real; my $alias = dirname($real) . "/SynaWeave-ce"; exit 0 if $alias eq $real || -e $alias; symlink($real, $alias) or die "symlink $alias -> $real failed: $!\n";'
+        run: |
+          perl -MCwd=realpath -MFile::Basename=dirname -e 'my $real = realpath($ENV{RUNNER_WORKSPACE} // q{}); die "RUNNER_WORKSPACE missing\n" unless defined $real; my $alias = dirname($real) . "/SynaWeave-ce"; exit 0 if $alias eq $real || -e $alias; symlink($real, $alias) or die "symlink $alias -> $real failed: $!\n";'
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
