@@ -219,10 +219,20 @@ def make_workflow_tree(repo_root: Path) -> None:
             "  analyze:\n"
             "    name: codeql-${{ matrix.language }}\n"
             "    runs-on: ubuntu-latest\n"
+            "    strategy:\n"
+            "      fail-fast: false\n"
+            "      matrix:\n"
+            "        include:\n"
+            "          - language: javascript-typescript\n"
+            "            build-mode: none\n"
+            "          - language: python\n"
+            "            build-mode: none\n"
             "    steps:\n"
             "      - uses: actions/checkout@v4\n"
             "      - uses: github/codeql-action/init@v3\n"
-            "      - uses: github/codeql-action/autobuild@v3\n"
+            "        with:\n"
+            "          languages: \"${{ matrix.language }}\"\n"
+            "          build-mode: \"${{ matrix.build-mode }}\"\n"
             "      - uses: github/codeql-action/analyze@v3\n"
         ),
         "dependency-review.yml": (
@@ -383,10 +393,19 @@ class TestVerifyMainAndWorkflows(unittest.TestCase):
                 "jobs:\n"
                 "  analyze:\n"
                 "    runs-on: ubuntu-latest\n"
+                "    strategy:\n"
+                "      matrix:\n"
+                "        include:\n"
+                "          - language: javascript-typescript\n"
+                "            build-mode: none\n"
+                "          - language: python\n"
+                "            build-mode: none\n"
                 "    steps:\n"
                 "      - uses: actions/checkout@v4\n"
                 "      - uses: github/codeql-action/init@v3\n"
-                "      - uses: github/codeql-action/autobuild@v3\n"
+                "        with:\n"
+                "          languages: \"${{ matrix.language }}\"\n"
+                "          build-mode: \"${{ matrix.build-mode }}\"\n"
                 "      - uses: github/codeql-action/analyze@v3\n"
             )
             issues = check_workflows(repo_root)
@@ -464,10 +483,19 @@ class TestVerifyMainAndWorkflows(unittest.TestCase):
                 "  analyze:\n"
                 "    name: Analyze\n"
                 "    runs-on: ubuntu-latest\n"
+                "    strategy:\n"
+                "      matrix:\n"
+                "        include:\n"
+                "          - language: javascript-typescript\n"
+                "            build-mode: none\n"
+                "          - language: python\n"
+                "            build-mode: none\n"
                 "    steps:\n"
                 "      - uses: actions/checkout@v4\n"
                 "      - uses: github/codeql-action/init@v3\n"
-                "      - uses: github/codeql-action/autobuild@v3\n"
+                "        with:\n"
+                "          languages: \"${{ matrix.language }}\"\n"
+                "          build-mode: \"${{ matrix.build-mode }}\"\n"
                 "      - uses: github/codeql-action/analyze@v3\n"
             )
             issues = check_workflows(repo_root)
@@ -477,6 +505,77 @@ class TestVerifyMainAndWorkflows(unittest.TestCase):
                     for issue in issues
                 )
             )
+
+    def test_workflows_reject_codeql_autobuild_usage(self):
+        with tempfile.TemporaryDirectory() as raw_tmp:
+            repo_root = Path(raw_tmp)
+            make_workflow_tree(repo_root)
+            (repo_root / ".github" / "workflows" / "codeql.yml").write_text(
+                "name: codeql\n"
+                "on:\n"
+                "  push:\n"
+                "    branches:\n"
+                "      - main\n"
+                "  pull_request:\n"
+                "permissions:\n"
+                "  contents: read\n"
+                "jobs:\n"
+                "  analyze:\n"
+                "    name: codeql-${{ matrix.language }}\n"
+                "    runs-on: ubuntu-latest\n"
+                "    strategy:\n"
+                "      matrix:\n"
+                "        include:\n"
+                "          - language: javascript-typescript\n"
+                "            build-mode: none\n"
+                "          - language: python\n"
+                "            build-mode: none\n"
+                "    steps:\n"
+                "      - uses: actions/checkout@v4\n"
+                "      - uses: github/codeql-action/init@v3\n"
+                "        with:\n"
+                "          languages: \"${{ matrix.language }}\"\n"
+                "          build-mode: \"${{ matrix.build-mode }}\"\n"
+                "      - uses: github/codeql-action/autobuild@v3\n"
+                "      - uses: github/codeql-action/analyze@v3\n"
+            )
+            issues = check_workflows(repo_root)
+            self.assertTrue(any("must not use CodeQL autobuild" in issue for issue in issues))
+
+    def test_workflows_require_codeql_none_build_matrix(self):
+        with tempfile.TemporaryDirectory() as raw_tmp:
+            repo_root = Path(raw_tmp)
+            make_workflow_tree(repo_root)
+            (repo_root / ".github" / "workflows" / "codeql.yml").write_text(
+                "name: codeql\n"
+                "on:\n"
+                "  push:\n"
+                "    branches:\n"
+                "      - main\n"
+                "  pull_request:\n"
+                "permissions:\n"
+                "  contents: read\n"
+                "jobs:\n"
+                "  analyze:\n"
+                "    name: codeql-${{ matrix.language }}\n"
+                "    runs-on: ubuntu-latest\n"
+                "    strategy:\n"
+                "      matrix:\n"
+                "        include:\n"
+                "          - language: javascript-typescript\n"
+                "            build-mode: autobuild\n"
+                "          - language: python\n"
+                "            build-mode: none\n"
+                "    steps:\n"
+                "      - uses: actions/checkout@v4\n"
+                "      - uses: github/codeql-action/init@v3\n"
+                "        with:\n"
+                "          languages: \"${{ matrix.language }}\"\n"
+                "          build-mode: \"${{ matrix.build-mode }}\"\n"
+                "      - uses: github/codeql-action/analyze@v3\n"
+            )
+            issues = check_workflows(repo_root)
+            self.assertTrue(any("build-mode none" in issue for issue in issues))
 
     def test_workflows_reject_push_trigger_on_docs_guard(self):
         with tempfile.TemporaryDirectory() as raw_tmp:

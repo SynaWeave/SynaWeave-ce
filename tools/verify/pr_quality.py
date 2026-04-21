@@ -5,7 +5,7 @@ TL;DR  -->  validate governed pull-request titles and bodies through one shared 
     --> add more PR-quality checks only when shared review policy expands later
 
 - Role:
-    --> validates PR titles against the governed change grammar with the optional sprint prefix
+    --> validates PR titles against the governed change grammar without sprint-style prefixes
     --> checks PR bodies for the required review and CLA content without duplicating CI YAML logic
 
 - Exports:

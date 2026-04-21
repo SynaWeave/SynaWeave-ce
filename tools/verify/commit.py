@@ -43,8 +43,7 @@ COMMIT_PATTERN = re.compile(
     r"^(?P<type>[a-z]+)\((?P<scope>[a-z]+)\):\s+(?P<subject>.+)$"
 )
 PR_TITLE_PATTERN = re.compile(
-    r"^(?:S\d{3}/d\d+(?: [a-z0-9 -]+)? --> )?"
-    r"(?P<type>[a-z]+)\((?P<scope>[a-z]+)\):\s+(?P<subject>.+)$",
+    r"^(?P<type>[a-z]+)\((?P<scope>[a-z]+)\):\s+(?P<subject>.+)$",
     re.IGNORECASE,
 )
 RAW_IDENTIFIER_RE = re.compile(r"\b[a-z]+_[a-z0-9_]+\b|\b[a-z]+[A-Z][A-Za-z0-9]*\b")

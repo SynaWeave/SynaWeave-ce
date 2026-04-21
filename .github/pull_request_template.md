@@ -13,7 +13,7 @@
 
 ### Why this change
 
-- Sprint / Deliverable / Task:
+- Change scope:
 - Runtime or boundary rationale:
 - Business logic alignment note:
 
