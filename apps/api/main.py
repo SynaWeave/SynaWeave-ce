@@ -24,6 +24,7 @@ import time
 import uuid
 from math import isfinite
 from typing import Any
+from urllib.parse import urlparse
 
 from fastapi import FastAPI, Header, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -69,11 +70,25 @@ store = RuntimeStore()
 tracer = init_tracing("synawave-api")
 app = FastAPI(title="SynaWave Sprint 1 API", version="0.1.0")
 
+
+def _browser_allow_origins() -> list[str]:
+    allow_origins = ["http://127.0.0.1:3000", "http://localhost:3000"]
+    configured_origin = os.getenv("SYNAWAVE_WEB_BASE_URL", "").strip()
+
+    if not configured_origin:
+        return allow_origins
+
+    parsed = urlparse(configured_origin)
+    if parsed.scheme == "http" and parsed.hostname in {"127.0.0.1", "localhost"}:
+        allow_origins.append(f"{parsed.scheme}://{parsed.netloc}")
+
+    return allow_origins
+
 # Keep browser access narrow so the local proof path stays bounded.
 # Avoid silently turning local proof into a broad deploy default.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://127.0.0.1:3000", "http://localhost:3000"],
+    allow_origins=_browser_allow_origins(),
     allow_origin_regex=r"^chrome-extension://[a-z]{32}$",
     allow_credentials=False,
     allow_methods=["GET", "POST", "OPTIONS"],

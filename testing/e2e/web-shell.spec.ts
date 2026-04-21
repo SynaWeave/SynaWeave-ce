@@ -19,7 +19,12 @@ import { writeFile } from "node:fs/promises";
 
 import { type Page, expect, test } from "@playwright/test";
 
-import { launchExtensionContext, readExtensionId } from "./extension.helpers";
+import {
+	launchExtensionContext,
+	prepareExtensionApiBase,
+	prepareWebApiBase,
+	readExtensionId,
+} from "./extension.helpers";
 
 type WebVitalsEvidence = {
 	cls: number;
@@ -134,6 +139,7 @@ test("web shell signs in writes a durable action and runs a digest", async ({
 		).__synawaveWebVitals = vitalsState;
 	});
 
+	await prepareWebApiBase(page);
 	await page.goto("/");
 	const navigationTiming = await page.evaluate(() => {
 		const entry = performance.getEntriesByType("navigation")[0];
@@ -238,8 +244,10 @@ test("web and extension resolve one live user workspace and bridge identity", as
 		const extensionId = await readExtensionId(context);
 		const extensionPage = await context.newPage();
 
+		await prepareWebApiBase(page);
 		await page.goto("/");
 		await extensionPage.goto(`chrome-extension://${extensionId}/popup.html`);
+		await prepareExtensionApiBase(extensionPage);
 
 		await page.getByLabel("Email").fill(email);
 		await page.getByRole("button", { name: "Start workspace session" }).click();

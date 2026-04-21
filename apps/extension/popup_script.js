@@ -17,7 +17,8 @@ TL;DR  -->  drive the first authenticated extension side-panel shell for shared 
 
 // ---------- runtime config ----------
 // Keep local API targeting explicit so the side-panel proof works without a bundler.
-const API_BASE_URL = "http://127.0.0.1:8000";
+const DEFAULT_API_BASE_URL = "http://127.0.0.1:8000";
+const API_BASE_URL_KEY = "synawave.apiBaseUrl";
 const TOKEN_KEY = "synawave.extensionToken";
 const PANEL_OPEN_REQUEST_KEY = "synawave.sidePanelOpenRequestedAt";
 const PANEL_RUNTIME_EVIDENCE_KEY = "synawave.sidePanelRuntimeEvidence";
@@ -245,6 +246,13 @@ async function readToken() {
 	return data[TOKEN_KEY] || "";
 }
 
+async function readApiBaseUrl() {
+	const data = await chrome.storage.local
+		.get(API_BASE_URL_KEY)
+		.catch(() => ({}));
+	return data[API_BASE_URL_KEY] || DEFAULT_API_BASE_URL;
+}
+
 // ---------- view rendering ----------
 // Keep the signed-in and signed-out render paths small so panel state stays obvious.
 function showSignedIn(identity, workspacePayload) {
@@ -289,9 +297,10 @@ function renderActions(actions) {
 // ---------- fetch helpers ----------
 // Keep public and authed fetch paths aligned with the web shell contract.
 async function fetchJson(path, init) {
+	const apiBaseUrl = await readApiBaseUrl();
 	let response;
 	try {
-		response = await fetch(`${API_BASE_URL}${path}`, {
+		response = await fetch(`${apiBaseUrl}${path}`, {
 			...init,
 			headers: {
 				...(init?.headers || {}),
@@ -333,8 +342,9 @@ async function authedFetchJson(path, init) {
 // Emit lightweight proof telemetry without blocking the panel interaction path.
 async function emitTelemetry(name, startedAt, status, detail) {
 	const durationMs = Number((performance.now() - startedAt).toFixed(2));
+	const apiBaseUrl = await readApiBaseUrl();
 	const token = await readToken();
-	await fetch(`${API_BASE_URL}/v1/telemetry/emit`, {
+	await fetch(`${apiBaseUrl}/v1/telemetry/emit`, {
 		method: "POST",
 		headers: {
 			"Content-Type": "application/json",

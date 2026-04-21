@@ -18,12 +18,15 @@ TL;DR  -->  prove degraded-mode browser behavior keeps retryable sessions alive 
 import { type BrowserContext, type Page, expect, test } from "@playwright/test";
 
 import {
+	PLAYWRIGHT_API_BASE_URL,
 	launchExtensionContext,
+	prepareExtensionApiBase,
+	prepareWebApiBase,
 	readExtensionId,
 	readExtensionToken,
 } from "./extension.helpers";
 
-const API_BASE_URL = "http://127.0.0.1:8000";
+const API_BASE_URL = PLAYWRIGHT_API_BASE_URL;
 const TRANSIENT_ERROR_MESSAGE =
 	"Temporary API or provider failure. Session kept so you can retry.";
 
@@ -41,6 +44,7 @@ test("web shell keeps the session through transient bootstrap failures and clear
 	const stamp = Date.now();
 	const email = `playwright-web-degraded-${stamp}@example.com`;
 
+	await prepareWebApiBase(page);
 	await page.goto("/");
 	await page.getByLabel("Email").fill(email);
 	await page.getByRole("button", { name: "Start workspace session" }).click();
@@ -122,6 +126,7 @@ test("web shell retries action and digest requests after transient failures", as
 	const email = `playwright-web-retry-${stamp}@example.com`;
 	const durableNote = `Playwright retry note ${stamp}`;
 
+	await prepareWebApiBase(page);
 	await page.goto("/");
 	await page.getByLabel("Email").fill(email);
 	await page.getByRole("button", { name: "Start workspace session" }).click();
@@ -220,6 +225,7 @@ test("extension popup keeps the stored session through transient bootstrap failu
 		const email = `playwright-extension-degraded-${Date.now()}@example.com`;
 
 		await page.goto(`chrome-extension://${extensionId}/popup.html`);
+		await prepareExtensionApiBase(page);
 		await page.getByLabel("Email").fill(email);
 		await page.getByRole("button", { name: "Connect panel session" }).click();
 		await expect(page.locator("#ext-identity-email")).toHaveText(email);

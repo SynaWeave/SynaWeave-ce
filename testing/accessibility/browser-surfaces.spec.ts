@@ -20,6 +20,8 @@ import { expect, test } from "@playwright/test";
 
 import {
 	launchExtensionContext,
+	prepareExtensionApiBase,
+	prepareWebApiBase,
 	readExtensionId,
 } from "../e2e/extension.helpers";
 
@@ -28,6 +30,7 @@ test("signed-in web shell has no automated accessibility violations", async ({
 }) => {
 	const email = `playwright-a11y-web-${Date.now()}@example.com`;
 
+	await prepareWebApiBase(page);
 	await page.goto("/");
 	await page.getByLabel("Email").fill(email);
 	await page.getByRole("button", { name: "Start workspace session" }).click();
@@ -53,6 +56,7 @@ test("packaged extension panel document has no automated accessibility violation
 		const email = `playwright-a11y-ext-${Date.now()}@example.com`;
 
 		await page.goto(`chrome-extension://${extensionId}/popup.html`);
+		await prepareExtensionApiBase(page);
 		await page.getByLabel("Email").fill(email);
 		await page.getByRole("button", { name: "Connect panel session" }).click();
 		await expect(

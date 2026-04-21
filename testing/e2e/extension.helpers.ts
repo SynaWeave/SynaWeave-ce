@@ -24,6 +24,30 @@ import { chromium } from "@playwright/test";
 const CHROMIUM_EXECUTABLE_PATH =
 	process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH || process.env.CHROMIUM_BIN;
 const PLAYWRIGHT_HEADLESS = process.env.PLAYWRIGHT_HEADLESS !== "false";
+export const PLAYWRIGHT_API_BASE_URL =
+	process.env.PLAYWRIGHT_API_BASE_URL || "http://127.0.0.1:8000";
+
+export async function prepareWebApiBase(page: Page) {
+	await page.addInitScript((apiBaseUrl: string) => {
+		localStorage.setItem("synawave.apiBaseUrl", apiBaseUrl);
+	}, PLAYWRIGHT_API_BASE_URL);
+}
+
+export async function prepareExtensionApiBase(page: Page) {
+	await page.evaluate(async (apiBaseUrl: string) => {
+		await (
+			window as unknown as Window & {
+				chrome: {
+					storage: {
+						local: { set: (items: Record<string, string>) => Promise<void> };
+					};
+				};
+			}
+		).chrome.storage.local.set({
+			"synawave.apiBaseUrl": apiBaseUrl,
+		});
+	}, PLAYWRIGHT_API_BASE_URL);
+}
 
 export async function launchExtensionContext(userDataDir: string) {
 	const args = [

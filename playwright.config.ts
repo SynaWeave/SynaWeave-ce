@@ -21,6 +21,15 @@ import { defineConfig } from "@playwright/test";
 const CHROMIUM_EXECUTABLE_PATH =
 	process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH || process.env.CHROMIUM_BIN;
 const PLAYWRIGHT_HEADLESS = process.env.PLAYWRIGHT_HEADLESS !== "false";
+const PLAYWRIGHT_MANAGED_SERVERS =
+	process.env.PLAYWRIGHT_MANAGED_SERVERS === "1";
+const PLAYWRIGHT_API_PORT = process.env.PLAYWRIGHT_API_PORT || "8000";
+const PLAYWRIGHT_WEB_PORT = process.env.PLAYWRIGHT_WEB_PORT || "3000";
+const PLAYWRIGHT_API_BASE_URL =
+	process.env.PLAYWRIGHT_API_BASE_URL ||
+	`http://127.0.0.1:${PLAYWRIGHT_API_PORT}`;
+const PLAYWRIGHT_BASE_URL =
+	process.env.PLAYWRIGHT_BASE_URL || `http://127.0.0.1:${PLAYWRIGHT_WEB_PORT}`;
 const CHROMIUM_LAUNCH_ARGS =
 	process.platform === "linux"
 		? ["--no-sandbox", "--disable-dev-shm-usage"]
@@ -37,7 +46,7 @@ export default defineConfig({
 	},
 	reporter: [["list"]],
 	use: {
-		baseURL: "http://127.0.0.1:3000",
+		baseURL: PLAYWRIGHT_BASE_URL,
 		headless: PLAYWRIGHT_HEADLESS,
 		launchOptions: {
 			...(CHROMIUM_EXECUTABLE_PATH
@@ -49,19 +58,20 @@ export default defineConfig({
 		trace: "retain-on-failure",
 		video: "off",
 	},
-	webServer: [
-		{
-			command:
-				"python3 -m uvicorn apps.api.main:app --host 127.0.0.1 --port 8000",
-			url: "http://127.0.0.1:8000/health/ready",
-			reuseExistingServer: true,
-			timeout: 120_000,
-		},
-		{
-			command: "python3 -m http.server 3000 --directory apps/web",
-			url: "http://127.0.0.1:3000",
-			reuseExistingServer: true,
-			timeout: 120_000,
-		},
-	],
+	webServer: PLAYWRIGHT_MANAGED_SERVERS
+		? undefined
+		: [
+				{
+					command: `SYNAWAVE_WEB_BASE_URL=${PLAYWRIGHT_BASE_URL} python3 -m uvicorn apps.api.main:app --host 127.0.0.1 --port ${PLAYWRIGHT_API_PORT}`,
+					url: `${PLAYWRIGHT_API_BASE_URL}/health/ready`,
+					reuseExistingServer: false,
+					timeout: 120_000,
+				},
+				{
+					command: `python3 -m http.server ${PLAYWRIGHT_WEB_PORT} --directory apps/web`,
+					url: PLAYWRIGHT_BASE_URL,
+					reuseExistingServer: false,
+					timeout: 120_000,
+				},
+			],
 });
