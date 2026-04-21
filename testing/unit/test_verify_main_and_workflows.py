@@ -24,7 +24,12 @@ from pathlib import Path
 
 from tools.verify.main import _parse_check_names, run_verification
 from tools.verify.policy import PROTECTED_WORKFLOW_PATHS
-from tools.verify.workflows import REPO_VERIFY_COMMIT_BASE, REPO_VERIFY_COMMIT_HEAD, check_workflows
+from tools.verify.workflows import (
+    CODEQL_PYTHON_WORKSPACE_ALIAS_COMMAND,
+    REPO_VERIFY_COMMIT_BASE,
+    REPO_VERIFY_COMMIT_HEAD,
+    check_workflows,
+)
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
@@ -229,6 +234,8 @@ def make_workflow_tree(repo_root: Path) -> None:
             "            build-mode: none\n"
             "    steps:\n"
             "      - uses: actions/checkout@v4\n"
+            "      - if: matrix.language == 'python'\n"
+            f"        run: {CODEQL_PYTHON_WORKSPACE_ALIAS_COMMAND}\n"
             "      - uses: github/codeql-action/init@v3\n"
             "        with:\n"
             "          languages: \"${{ matrix.language }}\"\n"

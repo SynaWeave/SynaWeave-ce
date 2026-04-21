@@ -70,6 +70,14 @@ DEPENDENCY_INSTALL_CLEAN_CHECK_COMMAND = (
     "perl -e 'my @lines = qx/git status --porcelain/; if (@lines) { print STDERR @lines; "
     'exit 1; } print "Repository checkout remained clean.\\n";\''
 )
+CODEQL_PYTHON_WORKSPACE_ALIAS_COMMAND = (
+    "perl -MCwd=realpath -MFile::Basename=dirname -e "
+    "'my $real = realpath($ENV{RUNNER_WORKSPACE} // q{}); "
+    'die "RUNNER_WORKSPACE missing\\n" unless defined $real; '
+    'my $alias = dirname($real) . "/SynaWeave-ce"; '
+    'exit 0 if $alias eq $real || -e $alias; '
+    'symlink($real, $alias) or die "symlink $alias -> $real failed: $!\\n";\''
+)
 
 WORKFLOW_RUN_COMMANDS = {
     "dependency-installability.yml": (
@@ -116,6 +124,7 @@ WORKFLOW_RUN_COMMANDS = {
         "docker run --rm -v \"$PWD:/repo\" trufflesecurity/trufflehog:latest filesystem "
         "/repo/build/extension --results=verified,unknown --fail",
     ),
+    "codeql.yml": (CODEQL_PYTHON_WORKSPACE_ALIAS_COMMAND,),
 }
 
 WORKFLOW_USES = {
