@@ -8,7 +8,7 @@ This document defines how repository authority, review posture, merge control, a
 
 - Root `docs/` is the only canonical technical documentation surface.
 - Planning intent is governed by `docs/planning/MASTER.md`, sprint planning files, and `docs/adrs/`.
-- Repository controls are implemented through `tools/verify/main.py`, `tools/hooks/`, `.github/workflows/`, `.github/pull_request_template.md`, `docs/templates/`, and protected-path ownership.
+- Repository controls are implemented through `tools/verify/main.py`, `tools/hooks/`, `.github/workflows/`, `.github/pull_request_template.md`, `docs/templates/`, `docs/workflow.md`, and protected-path ownership.
 
 ## Project roles
 

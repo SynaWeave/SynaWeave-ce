@@ -53,6 +53,8 @@ This is a D2 runtime proof with bounded repo-local D3 closeout evidence. It now 
 
 - [Architecture](docs/architecture.md)
 - [Apps](docs/apps.md)
+- [Workflow](docs/workflow.md)
+- [Onboarding](docs/onboarding.md)
 - [Infra](docs/infra.md)
 - [Templates](docs/templates.md)
 - [Planning](docs/planning/MASTER.md)
@@ -66,7 +68,6 @@ This is a D2 runtime proof with bounded repo-local D3 closeout evidence. It now 
 ```bash
 cp .env.example .env
 bun run hooks:install
-python3 -m tools.dev.sync_environment sync
 bun run deps:app
 python3 -m python.evaluation.runtime_eval
 docker compose -f infra/docker/langfuse-compose.yml up -d
@@ -75,6 +76,8 @@ python3 -m python.evaluation.verify_mlflow_run
 python3 -m tools.verify.main
 PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium bun run verify
 ```
+
+After `bun run hooks:install`, the repo-owned hooks auto-run environment sync after dependency-changing checkout, merge, and rewrite flows. On push, `pre-push` still runs tracked Betterleaks first, then retries environment sync, then runs `bun run verify`. Hook-triggered Python sync prefers the repo-owned `.venv` when present and otherwise falls back to `python3 -m pip` automatically. Git does not provide a pre-pull hook here, so checkout, merge, and rewrite flows remain the pull-adjacent automation path. Use `bun run sync` only when a hook reports a real sync failure and you need to rerun it directly.
 
 ## Local runtime commands
 
@@ -85,6 +88,8 @@ bun run build:extension
 bun run deps:browser
 bun run verify:browser
 ```
+
+Short root aliases are available for the common runtime and verification commands: `bun run api`, `bun run web`, `bun run ext`, `bun run browser:install`, and `bun run check`.
 
 Open:
 - API: `http://127.0.0.1:8000`

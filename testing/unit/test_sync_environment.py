@@ -170,7 +170,7 @@ class TestSyncEnvironment(unittest.TestCase):
             self.assertEqual(mock_run.call_count, 1)
             self.assertEqual(mock_run.call_args.args[0], sync_environment.JS_SYNC_COMMAND)
 
-    def test_hook_mode_skips_python_install_without_repo_owned_environment(self):
+    def test_hook_mode_falls_back_to_system_python_without_repo_owned_environment(self):
         with tempfile.TemporaryDirectory() as raw_tmp:
             repo_root = Path(raw_tmp)
             self.make_repo(repo_root)
@@ -188,13 +188,14 @@ class TestSyncEnvironment(unittest.TestCase):
                 )
 
             self.assertEqual(exit_code, sync_environment.EXIT_OK)
-            self.assertIn("hook auto-install stays disabled outside a repo-owned .venv", output)
-            self.assertEqual(mock_run.call_count, 0)
+            self.assertIn("Python dependency sync using system python", output)
+            self.assertIn("Environment sync complete", output)
+            self.assertEqual(mock_run.call_count, 1)
+            self.assertEqual(mock_run.call_args.args[0], sync_environment.PYTHON_SYNC_COMMAND)
 
             exit_code, check_output = self.capture_main(["check", "--root", str(repo_root)])
-            self.assertEqual(exit_code, sync_environment.EXIT_SYNC_NEEDED)
-            self.assertIn("python: requirements-dev.txt", check_output)
-            self.assertNotIn("js:", check_output)
+            self.assertEqual(exit_code, sync_environment.EXIT_OK)
+            self.assertIn("Environment sync not needed", check_output)
 
     def test_hook_mode_installs_python_into_repo_owned_environment(self):
         with tempfile.TemporaryDirectory() as raw_tmp:
@@ -215,6 +216,7 @@ class TestSyncEnvironment(unittest.TestCase):
                 )
 
             self.assertEqual(exit_code, sync_environment.EXIT_OK)
+            self.assertIn("Python dependency sync using repo-owned .venv", output)
             self.assertIn("Environment sync complete", output)
             self.assertEqual(mock_run.call_count, 1)
             self.assertEqual(

@@ -155,8 +155,10 @@ Operational notes:
 * runtime-focused unit tests now cover the API path and sqlite-backed runtime store
 * local git hooks exist under `tools/hooks/` and can be installed manually with `bun run hooks:install` for each clone
 * local environment sync is tracked by a git-local stamp under `.git/synawave/environment-sync.json`
-* `post-checkout`, `post-merge`, and `post-rewrite` auto-sync Bun tooling when `package.json`, `bun.lock`, or `requirements-dev.txt` change, but they only auto-install Python dependencies when the repo owns `.venv/bin/python3`; otherwise they warn operators to run the canonical sync command manually
-* `pre-commit` warns when the local environment stamp is stale, while `pre-push` blocks stale state before the full verification lane runs
+* `post-checkout`, `post-merge`, and `post-rewrite` auto-run environment sync when `package.json`, `bun.lock`, or `requirements-dev.txt` change; hook-triggered Python sync prefers `.venv/bin/python3` when the repo owns it and otherwise falls back to the system `python3 -m pip` command automatically
+* Git does not provide a pre-pull hook here; the automatic pull-like sync behavior comes from those existing post-checkout, post-merge, and post-rewrite hooks after branch-changing operations complete
+* `pre-commit` warns when the local environment stamp is stale before staged Betterleaks and protected verification run, while `pre-push` still runs tracked Betterleaks first, then retries automatic environment sync, then blocks if local tooling still remains incomplete before the full verification lane runs
+* short root aliases exist for common local commands, including `bun run api`, `bun run web`, `bun run ext`, `bun run browser:install`, `bun run check`, `bun run hooks`, and `bun run sync`
 * `python3 -m tools.verify.main` is the repo-contained proof point for the D1 control baseline, so this section should not stay at **scaffolded** once those controls are aligned and passing locally
 * the hosted `repo-verify` workflow runs `bun run verify`, and that root script now includes ADR validation alongside the other repo-level checks
 * the hosted `dependency-installability` workflow verifies clean Bun installs and direct Python dev-tool pins from the checked-in manifests without mutating the checked-out repository

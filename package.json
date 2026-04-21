@@ -43,7 +43,22 @@
 		"dev:ingest": "python3 -m apps.ingest.main --job-id REPLACE_ME",
 		"test:e2e:prepared": "playwright test --config playwright.config.ts testing/e2e",
 		"test:accessibility:prepared": "playwright test --config playwright.config.ts testing/accessibility",
-		"verify:python": "bun run deps:app && python3 -m ruff check apps/api apps/ingest python/common python/evaluation tools testing && python3 -m pyright apps/api apps/ingest python/common python/evaluation tools testing && python3 -m unittest discover -s testing/unit -p 'test_*.py' -t . && python3 -m unittest discover -s testing/contract -p 'test_*.py' -t ."
+		"verify:python": "bun run deps:app && python3 -m ruff check apps/api apps/ingest python/common python/evaluation tools testing && python3 -m pyright apps/api apps/ingest python/common python/evaluation tools testing && python3 -m unittest discover -s testing/unit -p 'test_*.py' -t . && python3 -m unittest discover -s testing/contract -p 'test_*.py' -t .",
+		"api": "bun run dev:api",
+		"web": "bun run dev:web",
+		"ingest": "bun run dev:ingest",
+		"ext": "bun run build:extension",
+		"browser:install": "bun run deps:browser",
+		"check": "bun run verify",
+		"check:py": "bun run verify:python",
+		"check:browser": "bun run verify:browser",
+		"lint:all": "bun run lint",
+		"types": "bun run typecheck",
+		"unit": "bun run test:unit",
+		"contracts": "bun run test:contract",
+		"browser:test": "bun run test:browser",
+		"hooks": "bun run hooks:install",
+		"sync": "python3 -m tools.dev.sync_environment sync"
 	},
 	"workspaces": [
 		"apps/*",

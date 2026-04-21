@@ -59,6 +59,8 @@ ROOT_DOC_FILES = (
     "infra.md",
     "testing.md",
     "operations.md",
+    "workflow.md",
+    "onboarding.md",
     "design-system.md",
     "legend.md",
     "adrs.md",

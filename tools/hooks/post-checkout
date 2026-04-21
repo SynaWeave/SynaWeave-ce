@@ -29,11 +29,11 @@ $old_ref = $empty_tree if !defined $old_ref || $old_ref =~ /^0+$/;
 my $changed = qx{git diff --name-only $old_ref $new_ref -- package.json bun.lock requirements-dev.txt 2>/dev/null};
 exit 0 if $changed eq q{};
 
-print "post-checkout: syncing local environment\n";
+print "post-checkout: auto-syncing local environment after branch checkout\n";
 my $sync_exit = system('python3', '-m', 'tools.dev.sync_environment', 'sync', '--mode', 'hook') >> 8;
 
 if ($sync_exit != 0) {
-    print "post-checkout: environment sync failed; run python3 -m tools.dev.sync_environment sync\n";
+    print "post-checkout: automatic environment sync failed; checkout finished, but rerun python3 -m tools.dev.sync_environment sync to inspect or complete setup\n";
 }
 
 exit 0;

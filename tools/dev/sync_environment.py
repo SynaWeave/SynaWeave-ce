@@ -56,8 +56,8 @@ class SyncPlan:
 
 @dataclass(frozen=True)
 class PythonSyncDecision:
-    command: tuple[str, ...] | None
-    warning: str | None
+    command: tuple[str, ...]
+    source: str
 
 
 def _parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
@@ -189,21 +189,12 @@ def _local_python_sync_command(repo_root: Path) -> tuple[str, ...] | None:
     return None
 
 
-def _resolve_python_sync(mode: str, repo_root: Path) -> PythonSyncDecision:
+def _resolve_python_sync(repo_root: Path) -> PythonSyncDecision:
     local_command = _local_python_sync_command(repo_root)
     if local_command is not None:
-        return PythonSyncDecision(command=local_command, warning=None)
+        return PythonSyncDecision(command=local_command, source="repo-owned .venv")
 
-    if mode == "hook":
-        return PythonSyncDecision(
-            command=None,
-            warning=(
-                "Python dependency changes detected, but hook auto-install stays disabled outside "
-                "a repo-owned .venv; run python3 -m tools.dev.sync_environment sync"
-            ),
-        )
-
-    return PythonSyncDecision(command=PYTHON_SYNC_COMMAND, warning=None)
+    return PythonSyncDecision(command=PYTHON_SYNC_COMMAND, source="system python")
 
 
 def _describe_group(name: str, changed_files: tuple[str, ...]) -> str:
@@ -255,16 +246,14 @@ def _run_sync(
                 synced_hashes[relative_path] = current_hashes[relative_path]
 
     if plan.python_changed:
-        python_sync = _resolve_python_sync(mode, repo_root)
-        if python_sync.command is None:
-            if python_sync.warning is not None:
-                print(python_sync.warning)
-        else:
-            if _run_command(python_sync.command, repo_root) != 0:
-                return EXIT_SYNC_FAILED
-            for relative_path in PYTHON_WATCH_FILES:
-                if relative_path in current_hashes:
-                    synced_hashes[relative_path] = current_hashes[relative_path]
+        python_sync = _resolve_python_sync(repo_root)
+        if mode == "hook":
+            print(f"Python dependency sync using {python_sync.source}")
+        if _run_command(python_sync.command, repo_root) != 0:
+            return EXIT_SYNC_FAILED
+        for relative_path in PYTHON_WATCH_FILES:
+            if relative_path in current_hashes:
+                synced_hashes[relative_path] = current_hashes[relative_path]
 
     _write_stamp(repo_root, synced_hashes)
     print("Environment sync complete")
