@@ -24,8 +24,9 @@ import argparse
 import subprocess
 from typing import Sequence
 
+from tools.dev import js_run
+
 DEFAULT_RUNS = 3
-BROWSER_COMMAND = ("bun", "run", "verify:browser")
 
 
 def _parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
@@ -42,9 +43,15 @@ def _parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
 def main(argv: Sequence[str] | None = None) -> int:
     args = _parse_args(argv)
 
+    browser_command = js_run.build_command(
+        "verify:browser",
+        (),
+        runner=js_run.resolve_runner(),
+    )
+
     for index in range(1, args.runs + 1):
         print(f"triage browser repeat run {index}/{args.runs}")
-        result = subprocess.run(BROWSER_COMMAND, check=False)
+        result = subprocess.run(browser_command, check=False)
 
         if result.returncode != 0:
             print(f"browser triage failed on run {index}/{args.runs}")

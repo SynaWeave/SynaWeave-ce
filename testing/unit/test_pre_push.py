@@ -92,7 +92,7 @@ class TestPrePush(unittest.TestCase):
                         "--root",
                         str(Path(raw_tmp)),
                         "origin",
-                        "https://github.com/SynaWave/SynaWave-ce.git",
+                        "https://github.com/SynaWeave/SynaWeave-ce.git",
                     ]
                 )
 

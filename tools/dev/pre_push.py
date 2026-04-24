@@ -29,7 +29,8 @@ from tools.dev.phase_runner import OutputMode, Phase, PhaseResult, run_phase
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_OUTPUT_MODE: OutputMode = "compact"
-FULL_OUTPUT_ENV_VAR = "SYNAWAVE_PRE_PUSH_OUTPUT"
+FULL_OUTPUT_ENV_VARS = ("SW_PRE_PUSH_OUTPUT", "SYNAWAVE_PRE_PUSH_OUTPUT")
+FULL_OUTPUT_ENV_VAR = FULL_OUTPUT_ENV_VARS[0]
 
 
 def _parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
@@ -61,7 +62,7 @@ def _parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
 def _resolve_output_mode(explicit_mode: str | None) -> OutputMode:
     if explicit_mode is not None:
         return cast(OutputMode, explicit_mode)
-    if os.environ.get(FULL_OUTPUT_ENV_VAR) == "full":
+    if any(os.environ.get(env_var) == "full" for env_var in FULL_OUTPUT_ENV_VARS):
         return "full"
     return DEFAULT_OUTPUT_MODE
 
