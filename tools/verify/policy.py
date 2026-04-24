@@ -32,6 +32,7 @@ REQUIRED_GOVERNANCE_FILES = {
     "LICENSE",
     ".env.example",
     ".betterleaks.toml",
+    ".basedpyright-baseline.json",
     ".github/CODEOWNERS",
 }
 
@@ -140,36 +141,36 @@ PROTECTED_WORKFLOW_PATHS = (
 )
 
 CODEOWNERS_REQUIRED_LINES = (
-    "* @SynaWave/core-maintainers",
-    ".github/ @SynaWave/core-maintainers",
-    "apps/ @SynaWave/core-maintainers",
-    "docs/ @SynaWave/core-maintainers",
-    "tools/ @SynaWave/core-maintainers",
-    "packages/ @SynaWave/core-maintainers",
-    "python/ @SynaWave/core-maintainers",
-    "infra/ @SynaWave/core-maintainers",
-    "infra/docker/ @SynaWave/platform-admins @SynaWave/core-maintainers",
-    "infra/github/ @SynaWave/platform-admins @SynaWave/core-maintainers",
-    "infra/policies/ @SynaWave/platform-admins @SynaWave/core-maintainers",
-    "testing/ @SynaWave/core-maintainers",
-    "AGENTS.md @SynaWave/platform-admins",
-    "GOVERNANCE.md @SynaWave/platform-admins",
-    "CONTRIBUTING.md @SynaWave/platform-admins",
-    "CODE_OF_CONDUCT.md @SynaWave/platform-admins",
-    "SECURITY.md @SynaWave/platform-admins",
-    "CLA.md @SynaWave/platform-admins",
-    "NOTICE @SynaWave/platform-admins",
-    "TRADEMARKS.md @SynaWave/platform-admins",
-    ".env.example @SynaWave/platform-admins",
-    ".github/CODEOWNERS @SynaWave/platform-admins",
-    ".github/pull_request_template.md @SynaWave/platform-admins",
-    ".github/workflows/ @SynaWave/platform-admins",
-    "tools/verify/ @SynaWave/platform-admins",
-    "tools/hooks/ @SynaWave/platform-admins",
-    "docs/planning/ @SynaWave/platform-admins @SynaWave/core-maintainers",
-    "docs/adrs/ @SynaWave/platform-admins @SynaWave/core-maintainers",
-    "docs/templates/ @SynaWave/platform-admins @SynaWave/core-maintainers",
-    "docs/*.md @SynaWave/core-maintainers",
+    "* @SynaWeave/core-maintainers",
+    ".github/ @SynaWeave/core-maintainers",
+    "apps/ @SynaWeave/core-maintainers",
+    "docs/ @SynaWeave/core-maintainers",
+    "tools/ @SynaWeave/core-maintainers",
+    "packages/ @SynaWeave/core-maintainers",
+    "python/ @SynaWeave/core-maintainers",
+    "infra/ @SynaWeave/core-maintainers",
+    "infra/docker/ @SynaWeave/platform-admins @SynaWeave/core-maintainers",
+    "infra/github/ @SynaWeave/platform-admins @SynaWeave/core-maintainers",
+    "infra/policies/ @SynaWeave/platform-admins @SynaWeave/core-maintainers",
+    "testing/ @SynaWeave/core-maintainers",
+    "AGENTS.md @SynaWeave/platform-admins",
+    "GOVERNANCE.md @SynaWeave/platform-admins",
+    "CONTRIBUTING.md @SynaWeave/platform-admins",
+    "CODE_OF_CONDUCT.md @SynaWeave/platform-admins",
+    "SECURITY.md @SynaWeave/platform-admins",
+    "CLA.md @SynaWeave/platform-admins",
+    "NOTICE @SynaWeave/platform-admins",
+    "TRADEMARKS.md @SynaWeave/platform-admins",
+    ".env.example @SynaWeave/platform-admins",
+    ".github/CODEOWNERS @SynaWeave/platform-admins",
+    ".github/pull_request_template.md @SynaWeave/platform-admins",
+    ".github/workflows/ @SynaWeave/platform-admins",
+    "tools/verify/ @SynaWeave/platform-admins",
+    "tools/hooks/ @SynaWeave/platform-admins",
+    "docs/planning/ @SynaWeave/platform-admins @SynaWeave/core-maintainers",
+    "docs/adrs/ @SynaWeave/platform-admins @SynaWeave/core-maintainers",
+    "docs/templates/ @SynaWeave/platform-admins @SynaWeave/core-maintainers",
+    "docs/*.md @SynaWeave/core-maintainers",
 )
 
 PR_TEMPLATE_REQUIRED_FIELDS = (
@@ -275,24 +276,34 @@ SHARED_BANNED_PREFIXES = (
 
 REQUIRED_PACKAGE_SCRIPTS = {
     "deps:browser": "playwright install chromium",
+    "build:web": "python3 -m tools.web.build",
     "build:extension": "python3 -m tools.extension.build",
     "security:betterleaks:staged": "python3 -m tools.security.betterleaks --mode staged",
     "security:betterleaks:tracked": (
         "python3 -m tools.security.betterleaks --mode tracked --include-built-extension"
     ),
-    "test:browser": "bun run test:e2e && bun run test:accessibility",
+    "test:browser": (
+        "python3 tools/dev/js_run.py verify:browser"
+    ),
     "test:e2e": (
-        "bun run build:extension && playwright test --config playwright.config.ts "
-        "testing/e2e"
+        "python3 tools/dev/js_run.py build:web && python3 tools/dev/js_run.py "
+        "build:extension && playwright test --config playwright.config.ts testing/e2e"
     ),
     "test:accessibility": (
-        "bun run build:extension && playwright test --config playwright.config.ts "
+        "python3 tools/dev/js_run.py build:web && python3 tools/dev/js_run.py "
+        "build:extension && playwright test --config playwright.config.ts "
         "testing/accessibility"
     ),
-    "verify:browser": "bun run build:extension && python3 tools/verify_browser.py",
+    "verify:browser": (
+        "python3 tools/dev/js_run.py build:web && python3 tools/dev/js_run.py "
+        "build:extension && python3 tools/verify_browser.py"
+    ),
     "verify": (
-        "bun run lint:ts && bun run typecheck:ts && bun run verify:python && "
-        "bun run verify:browser && python3 -m tools.verify.main --checks "
+        "python3 tools/dev/js_run.py lint:ts && "
+        "python3 tools/dev/js_run.py typecheck:ts && "
+        "python3 tools/dev/js_run.py verify:python && "
+        "python3 tools/dev/js_run.py verify:browser && "
+        "python3 -m tools.verify.main --checks "
         "shape,docs,commentary,governance,headers,security,html_ship,adr,"
         "workflows,suppressions,commit"
     ),
@@ -312,7 +323,44 @@ REQUIRED_PACKAGE_SCRIPTS = {
         "biome check package.json tsconfig.json playwright.config.ts apps packages "
         "tools/ts testing/e2e testing/ui testing/accessibility .github"
     ),
+    "deps:app": "python3 -m tools.dev.pip_install -r requirements-app.txt",
+    "deps:py": "python3 -m tools.dev.pip_install -r requirements-app.txt -r requirements-dev.txt",
+    "lint:py": (
+        "python3 tools/dev/js_run.py deps:py && "
+        "python3 -m ruff check apps/api apps/ingest python/common "
+        "python/evaluation tools testing"
+    ),
     "typecheck:ts": "tsc --noEmit --project tsconfig.json",
+    "typecheck:py": (
+        "python3 tools/dev/js_run.py deps:py && python3 -m basedpyright --warnings --baselinemode "
+        "lock --baselinefile .basedpyright-baseline.json apps/api apps/ingest "
+        "python/common python/evaluation tools testing"
+    ),
+    "typecheck:py:baseline": (
+        "python3 tools/dev/js_run.py deps:py && python3 -m basedpyright --warnings --writebaseline "
+        "--baselinefile .basedpyright-baseline.json apps/api apps/ingest "
+        "python/common python/evaluation tools testing"
+    ),
+    "verify:python": (
+        "python3 tools/dev/js_run.py deps:py && python3 -m ruff check apps/api apps/ingest "
+        "python/common python/evaluation tools testing && python3 -m basedpyright "
+        "--warnings --baselinemode lock --baselinefile .basedpyright-baseline.json "
+        "apps/api apps/ingest python/common python/evaluation tools testing && "
+        "python3 -m unittest "
+        "discover -s testing/unit -p 'test_*.py' -t . && python3 -m unittest "
+        "discover -s testing/contract -p 'test_*.py' -t ."
+    ),
+    "check:py:fast": (
+        "python3 tools/dev/js_run.py deps:py && "
+        "python3 -m ruff check apps/api apps/ingest python/common "
+        "python/evaluation tools testing && python3 -m basedpyright --warnings "
+        "--baselinemode lock --baselinefile .basedpyright-baseline.json apps/api "
+        "apps/ingest python/common python/evaluation tools testing && python3 -m "
+        "unittest discover -s "
+        "testing/unit -p 'test_*.py' -t . && python3 -m unittest discover -s "
+        "testing/contract -p 'test_*.py' -t ."
+    ),
+    "check:py:deps": "python3 tools/dev/js_run.py deps:py",
 }
 
 REQUIRED_DEV_DEPENDENCIES = {

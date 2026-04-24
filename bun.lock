@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "synawave-ce",
+      "name": "synaweave-ce",
       "devDependencies": {
         "@axe-core/playwright": "4.11.2",
         "@biomejs/biome": "1.9.4",

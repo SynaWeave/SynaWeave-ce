@@ -1,37 +1,37 @@
-* @SynaWave/core-maintainers
+* @SynaWeave/core-maintainers
 
 # Workstream-aligned domain defaults keep routine changes partitioned
 # without assuming narrower remote teams exist yet.
-.github/ @SynaWave/core-maintainers
-apps/ @SynaWave/core-maintainers
-docs/ @SynaWave/core-maintainers
-tools/ @SynaWave/core-maintainers
-packages/ @SynaWave/core-maintainers
-python/ @SynaWave/core-maintainers
-infra/ @SynaWave/core-maintainers
-infra/docker/ @SynaWave/platform-admins @SynaWave/core-maintainers
-infra/github/ @SynaWave/platform-admins @SynaWave/core-maintainers
-infra/policies/ @SynaWave/platform-admins @SynaWave/core-maintainers
-testing/ @SynaWave/core-maintainers
+.github/ @SynaWeave/core-maintainers
+apps/ @SynaWeave/core-maintainers
+docs/ @SynaWeave/core-maintainers
+tools/ @SynaWeave/core-maintainers
+packages/ @SynaWeave/core-maintainers
+python/ @SynaWeave/core-maintainers
+infra/ @SynaWeave/core-maintainers
+infra/docker/ @SynaWeave/platform-admins @SynaWeave/core-maintainers
+infra/github/ @SynaWeave/platform-admins @SynaWeave/core-maintainers
+infra/policies/ @SynaWeave/platform-admins @SynaWeave/core-maintainers
+testing/ @SynaWeave/core-maintainers
 
 # Protected governance and control paths keep stricter review owners.
-AGENTS.md @SynaWave/platform-admins
-GOVERNANCE.md @SynaWave/platform-admins
-CONTRIBUTING.md @SynaWave/platform-admins
-CODE_OF_CONDUCT.md @SynaWave/platform-admins
-SECURITY.md @SynaWave/platform-admins
-CLA.md @SynaWave/platform-admins
-NOTICE @SynaWave/platform-admins
-TRADEMARKS.md @SynaWave/platform-admins
-.env.example @SynaWave/platform-admins
-.github/CODEOWNERS @SynaWave/platform-admins
-.github/pull_request_template.md @SynaWave/platform-admins
+AGENTS.md @SynaWeave/platform-admins
+GOVERNANCE.md @SynaWeave/platform-admins
+CONTRIBUTING.md @SynaWeave/platform-admins
+CODE_OF_CONDUCT.md @SynaWeave/platform-admins
+SECURITY.md @SynaWeave/platform-admins
+CLA.md @SynaWeave/platform-admins
+NOTICE @SynaWeave/platform-admins
+TRADEMARKS.md @SynaWeave/platform-admins
+.env.example @SynaWeave/platform-admins
+.github/CODEOWNERS @SynaWeave/platform-admins
+.github/pull_request_template.md @SynaWeave/platform-admins
 
-.github/workflows/ @SynaWave/platform-admins
-tools/verify/ @SynaWave/platform-admins
-tools/hooks/ @SynaWave/platform-admins
+.github/workflows/ @SynaWeave/platform-admins
+tools/verify/ @SynaWeave/platform-admins
+tools/hooks/ @SynaWeave/platform-admins
 
-docs/planning/ @SynaWave/platform-admins @SynaWave/core-maintainers
-docs/adrs/ @SynaWave/platform-admins @SynaWave/core-maintainers
-docs/templates/ @SynaWave/platform-admins @SynaWave/core-maintainers
-docs/*.md @SynaWave/core-maintainers
+docs/planning/ @SynaWeave/platform-admins @SynaWeave/core-maintainers
+docs/adrs/ @SynaWeave/platform-admins @SynaWeave/core-maintainers
+docs/templates/ @SynaWeave/platform-admins @SynaWeave/core-maintainers
+docs/*.md @SynaWeave/core-maintainers

@@ -35,6 +35,10 @@ from tools.verify.policy import (
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
+def read_canonical_basedpyright_baseline() -> str:
+    return (REPO_ROOT / ".basedpyright-baseline.json").read_text(encoding="utf-8")
+
+
 def read_canonical_requirements_dev() -> str:
     return (REPO_ROOT / "requirements-dev.txt").read_text(encoding="utf-8")
 
@@ -60,36 +64,36 @@ def make_governance_tree(repo_root: Path) -> None:
     (repo_root / ".github" / "CODEOWNERS").write_text(
         "\n".join(
             [
-                "* @SynaWave/core-maintainers",
-                ".github/ @SynaWave/core-maintainers",
-                "apps/ @SynaWave/core-maintainers",
-                "docs/ @SynaWave/core-maintainers",
-                "tools/ @SynaWave/core-maintainers",
-                "packages/ @SynaWave/core-maintainers",
-                "python/ @SynaWave/core-maintainers",
-                "infra/ @SynaWave/core-maintainers",
-                "infra/docker/ @SynaWave/platform-admins @SynaWave/core-maintainers",
-                "infra/github/ @SynaWave/platform-admins @SynaWave/core-maintainers",
-                "infra/policies/ @SynaWave/platform-admins @SynaWave/core-maintainers",
-                "testing/ @SynaWave/core-maintainers",
-                "AGENTS.md @SynaWave/platform-admins",
-                "GOVERNANCE.md @SynaWave/platform-admins",
-                "CONTRIBUTING.md @SynaWave/platform-admins",
-                "CODE_OF_CONDUCT.md @SynaWave/platform-admins",
-                "SECURITY.md @SynaWave/platform-admins",
-                "CLA.md @SynaWave/platform-admins",
-                "NOTICE @SynaWave/platform-admins",
-                "TRADEMARKS.md @SynaWave/platform-admins",
-                ".env.example @SynaWave/platform-admins",
-                ".github/CODEOWNERS @SynaWave/platform-admins",
-                ".github/pull_request_template.md @SynaWave/platform-admins",
-                ".github/workflows/ @SynaWave/platform-admins",
-                "tools/verify/ @SynaWave/platform-admins",
-                "tools/hooks/ @SynaWave/platform-admins",
-                "docs/planning/ @SynaWave/platform-admins @SynaWave/core-maintainers",
-                "docs/adrs/ @SynaWave/platform-admins @SynaWave/core-maintainers",
-                "docs/templates/ @SynaWave/platform-admins @SynaWave/core-maintainers",
-                "docs/*.md @SynaWave/core-maintainers",
+                "* @SynaWeave/core-maintainers",
+                ".github/ @SynaWeave/core-maintainers",
+                "apps/ @SynaWeave/core-maintainers",
+                "docs/ @SynaWeave/core-maintainers",
+                "tools/ @SynaWeave/core-maintainers",
+                "packages/ @SynaWeave/core-maintainers",
+                "python/ @SynaWeave/core-maintainers",
+                "infra/ @SynaWeave/core-maintainers",
+                "infra/docker/ @SynaWeave/platform-admins @SynaWeave/core-maintainers",
+                "infra/github/ @SynaWeave/platform-admins @SynaWeave/core-maintainers",
+                "infra/policies/ @SynaWeave/platform-admins @SynaWeave/core-maintainers",
+                "testing/ @SynaWeave/core-maintainers",
+                "AGENTS.md @SynaWeave/platform-admins",
+                "GOVERNANCE.md @SynaWeave/platform-admins",
+                "CONTRIBUTING.md @SynaWeave/platform-admins",
+                "CODE_OF_CONDUCT.md @SynaWeave/platform-admins",
+                "SECURITY.md @SynaWeave/platform-admins",
+                "CLA.md @SynaWeave/platform-admins",
+                "NOTICE @SynaWeave/platform-admins",
+                "TRADEMARKS.md @SynaWeave/platform-admins",
+                ".env.example @SynaWeave/platform-admins",
+                ".github/CODEOWNERS @SynaWeave/platform-admins",
+                ".github/pull_request_template.md @SynaWeave/platform-admins",
+                ".github/workflows/ @SynaWeave/platform-admins",
+                "tools/verify/ @SynaWeave/platform-admins",
+                "tools/hooks/ @SynaWeave/platform-admins",
+                "docs/planning/ @SynaWeave/platform-admins @SynaWeave/core-maintainers",
+                "docs/adrs/ @SynaWeave/platform-admins @SynaWeave/core-maintainers",
+                "docs/templates/ @SynaWeave/platform-admins @SynaWeave/core-maintainers",
+                "docs/*.md @SynaWeave/core-maintainers",
                 "",
             ]
         )
@@ -137,6 +141,10 @@ def make_governance_tree(repo_root: Path) -> None:
         read_canonical_requirements_dev(),
         encoding="utf-8",
     )
+    _ = (repo_root / ".basedpyright-baseline.json").write_text(
+        read_canonical_basedpyright_baseline(),
+        encoding="utf-8",
+    )
     (repo_root / "tools" / "verify").mkdir(parents=True)
     (repo_root / "tools" / "verify" / "main.py").write_text(
         "from tools.verify.docs import check_docs\n"
@@ -169,6 +177,38 @@ class TestVerifyGovernance(unittest.TestCase):
             REQUIRED_DEV_DEPENDENCIES["@axe-core/playwright"],
             "4.11.2",
         )
+
+    def test_governance_pins_python_typecheck_with_basedpyright_baseline(self):
+        typecheck_script = REQUIRED_PACKAGE_SCRIPTS["typecheck:py"]
+        baseline_script = REQUIRED_PACKAGE_SCRIPTS["typecheck:py:baseline"]
+        verify_script = REQUIRED_PACKAGE_SCRIPTS["verify:python"]
+        fast_script = REQUIRED_PACKAGE_SCRIPTS["check:py:fast"]
+        deps_script = REQUIRED_PACKAGE_SCRIPTS["check:py:deps"]
+
+        self.assertEqual(deps_script, "python3 tools/dev/js_run.py deps:py")
+        self.assertIn("python3 -m basedpyright", typecheck_script)
+        self.assertNotIn("--writebaseline", typecheck_script)
+        self.assertIn("--baselinemode lock", typecheck_script)
+        self.assertIn("--warnings", typecheck_script)
+        self.assertIn(".basedpyright-baseline.json", typecheck_script)
+        self.assertIn("python3 -m basedpyright", baseline_script)
+        self.assertIn("--writebaseline", baseline_script)
+        self.assertNotIn("--baselinemode lock", baseline_script)
+        self.assertIn(".basedpyright-baseline.json", baseline_script)
+        self.assertIn("python3 -m basedpyright", verify_script)
+        self.assertNotIn("--writebaseline", verify_script)
+        self.assertIn("--baselinemode lock", verify_script)
+        self.assertIn("--warnings", verify_script)
+        self.assertIn(".basedpyright-baseline.json", verify_script)
+        self.assertIn("python3 -m basedpyright", fast_script)
+        self.assertNotIn("--writebaseline", fast_script)
+        self.assertIn("--baselinemode lock", fast_script)
+        self.assertIn("--warnings", fast_script)
+        self.assertIn(".basedpyright-baseline.json", fast_script)
+        self.assertIn("python3 tools/dev/js_run.py deps:py", typecheck_script)
+        self.assertIn("python3 tools/dev/js_run.py deps:py", baseline_script)
+        self.assertIn("python3 tools/dev/js_run.py deps:py", verify_script)
+        self.assertIn("python3 tools/dev/js_run.py deps:py", fast_script)
 
     def test_governance_passes_with_required_files_and_fields(self):
         with tempfile.TemporaryDirectory() as raw_tmp:
@@ -235,7 +275,7 @@ class TestVerifyGovernance(unittest.TestCase):
                 (repo_root / ".github" / "CODEOWNERS")
                 .read_text()
                 .replace(
-                    "infra/docker/ @SynaWave/platform-admins @SynaWave/core-maintainers\n",
+                    "infra/docker/ @SynaWeave/platform-admins @SynaWeave/core-maintainers\n",
                     "",
                 )
             )

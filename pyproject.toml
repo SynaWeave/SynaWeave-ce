@@ -12,20 +12,20 @@
 #   --> `build-system`
 #   --> `project`
 #   --> `tool.pytest.ini_options`
-#   --> `tool.pyright`
+#   --> `tool.basedpyright`
 #   --> `tool.ruff`
 #
 # - Consumed By:
-#   --> Python package tooling pytest pyright and ruff during local and CI verification
+#   --> Python package tooling pytest basedpyright and ruff during local and CI verification
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 [build-system]
 requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "synawave-ce"
+name = "synaweave-ce"
 version = "0.1.0"
-description = "Governed multi-surface repository scaffold for SynaWave"
+description = "Governed multi-surface repository scaffold for SynaWeave"
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "GPL-3.0-or-later" }
@@ -34,10 +34,28 @@ license = { text = "GPL-3.0-or-later" }
 testpaths = ["testing"]
 addopts = ["-q"]
 
-[tool.pyright]
+[tool.basedpyright]
 include = ["apps", "python", "testing", "tools"]
 extraPaths = ["."]
 pythonVersion = "3.11"
+typeCheckingMode = "recommended"
+deprecateTypingAliases = true
+strictGenericNarrowing = true
+reportAny = "warning"
+reportExplicitAny = "warning"
+reportImplicitStringConcatenation = "warning"
+reportMissingTypeArgument = "error"
+reportMissingParameterType = "warning"
+reportUnknownArgumentType = "warning"
+reportUnknownLambdaType = "warning"
+reportUnknownMemberType = "warning"
+reportUnknownParameterType = "warning"
+reportUnknownVariableType = "warning"
+reportPossiblyUnboundVariable = "error"
+reportUnusedCallResult = "warning"
+executionEnvironments = [
+  { root = ".", extraPaths = ["."] }
+]
 
 [tool.ruff]
 target-version = "py311"
