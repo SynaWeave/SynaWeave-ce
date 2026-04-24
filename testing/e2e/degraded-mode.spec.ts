@@ -332,5 +332,5 @@ async function expectTelemetry(
 }
 
 async function readWebToken(page: Page) {
-	return page.evaluate(() => localStorage.getItem("synawave.webToken"));
+	return page.evaluate(() => localStorage.getItem("synaweave.webToken"));
 }

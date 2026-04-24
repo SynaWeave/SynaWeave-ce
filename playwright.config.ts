@@ -30,6 +30,8 @@ const PLAYWRIGHT_API_BASE_URL =
 	`http://127.0.0.1:${PLAYWRIGHT_API_PORT}`;
 const PLAYWRIGHT_BASE_URL =
 	process.env.PLAYWRIGHT_BASE_URL || `http://127.0.0.1:${PLAYWRIGHT_WEB_PORT}`;
+const PLAYWRIGHT_OUTPUT_DIR =
+	process.env.PLAYWRIGHT_OUTPUT_DIR || "test-results";
 const CHROMIUM_LAUNCH_ARGS =
 	process.platform === "linux"
 		? ["--no-sandbox", "--disable-dev-shm-usage"]
@@ -41,6 +43,7 @@ export default defineConfig({
 	fullyParallel: false,
 	workers: 1,
 	timeout: 45_000,
+	outputDir: PLAYWRIGHT_OUTPUT_DIR,
 	expect: {
 		timeout: 10_000,
 	},
@@ -62,13 +65,13 @@ export default defineConfig({
 		? undefined
 		: [
 				{
-					command: `SYNAWAVE_WEB_BASE_URL=${PLAYWRIGHT_BASE_URL} python3 -m uvicorn apps.api.main:app --host 127.0.0.1 --port ${PLAYWRIGHT_API_PORT}`,
+					command: `APP_URL=${PLAYWRIGHT_BASE_URL} SYNAWAVE_WEB_BASE_URL=${PLAYWRIGHT_BASE_URL} python3 -m uvicorn apps.api.main:app --host 127.0.0.1 --port ${PLAYWRIGHT_API_PORT}`,
 					url: `${PLAYWRIGHT_API_BASE_URL}/health/ready`,
 					reuseExistingServer: false,
 					timeout: 120_000,
 				},
 				{
-					command: `python3 -m http.server ${PLAYWRIGHT_WEB_PORT} --directory apps/web`,
+					command: `python3 -m tools.dev.web_static_server --port ${PLAYWRIGHT_WEB_PORT} --directory build/web`,
 					url: PLAYWRIGHT_BASE_URL,
 					reuseExistingServer: false,
 					timeout: 120_000,

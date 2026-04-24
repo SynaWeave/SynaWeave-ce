@@ -25,21 +25,41 @@ with deterministic local server startup and teardown
 
 from __future__ import annotations
 
+import json
 import os
+import shutil
 import socket
 import subprocess
+import sys
 import time
 import urllib.error
 import urllib.request
+from collections.abc import Sequence
 from contextlib import suppress
 from dataclasses import dataclass
-from os import environ
 from pathlib import Path
 from typing import IO
+
+if __package__ in (None, ""):
+    repo_root = Path(__file__).resolve().parents[1]
+    if str(repo_root) not in sys.path:
+        sys.path.insert(0, str(repo_root))
+
+from tools.dev.js_run import build_command, resolve_runner
 
 READY_TIMEOUT_SECONDS = 120.0
 READY_POLL_SECONDS = 0.5
 LOG_TAIL_BYTES = 4000
+MANAGED_CHROMIUM_POLICY_DIR = Path("/etc/chromium/policies/managed")
+SYSTEM_CHROMIUM_CANDIDATES = ("chromium", "google-chrome", "google-chrome-stable")
+PLAYWRIGHT_BROWSER_DIR_NAMES = (
+    "chrome-linux",
+    "chrome-linux64",
+    "chrome-mac",
+    "chrome-mac-arm64",
+    "chrome-win",
+    "chrome-win64",
+)
 
 
 @dataclass(frozen=True)
@@ -55,7 +75,7 @@ class ServerSpec:
 @dataclass
 class StartedServer:
     spec: ServerSpec
-    process: subprocess.Popen
+    process: subprocess.Popen[str]
     log_handle: IO[str]
 
 
@@ -94,10 +114,11 @@ def _server_specs(repo_root: Path) -> tuple[ServerSpec, ...]:
             command=(
                 "python3",
                 "-m",
-                "http.server",
+                "tools.dev.web_static_server",
+                "--port",
                 str(web_port),
                 "--directory",
-                "apps/web",
+                "build/web",
             ),
             port=web_port,
             ready_url=web_base_url,
@@ -207,6 +228,120 @@ def _stop_servers(started_servers: list[StartedServer]) -> None:
         started.log_handle.close()
 
 
+def _iter_managed_policy_files() -> Sequence[Path]:
+    if not MANAGED_CHROMIUM_POLICY_DIR.is_dir():
+        return ()
+    return tuple(sorted(MANAGED_CHROMIUM_POLICY_DIR.glob("*.json")))
+
+
+def _managed_policy_blocks_browser() -> tuple[bool, list[str]]:
+    reasons: list[str] = []
+    for policy_path in _iter_managed_policy_files():
+        try:
+            payload_obj: object = json.loads(policy_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        if not isinstance(payload_obj, dict):
+            continue
+        payload: dict[object, object] = payload_obj
+        if payload.get("URLBlocklist") == ["*"]:
+            reasons.append(f"{policy_path}: URLBlocklist=*")
+        if payload.get("ExtensionInstallBlocklist") == ["*"]:
+            reasons.append(f"{policy_path}: ExtensionInstallBlocklist=*")
+    return bool(reasons), reasons
+
+
+def managed_policy_blocks_browser() -> tuple[bool, list[str]]:
+    return _managed_policy_blocks_browser()
+
+
+def _playwright_browser_installed() -> bool:
+    cache_dir = _playwright_cache_dir()
+    if cache_dir is None or not cache_dir.is_dir():
+        return False
+    return any(
+        path.is_dir()
+        for browser_dir in PLAYWRIGHT_BROWSER_DIR_NAMES
+        for path in cache_dir.glob(f"**/{browser_dir}")
+    )
+
+
+def _playwright_cache_dir(*, environ: dict[str, str] | None = None) -> Path | None:
+    environment = os.environ if environ is None else environ
+    configured_path = environment.get("PLAYWRIGHT_BROWSERS_PATH")
+    if configured_path:
+        return Path(configured_path).expanduser()
+    if sys.platform == "darwin":
+        return Path.home() / "Library" / "Caches" / "ms-playwright"
+    if sys.platform == "win32":
+        local_app_data = environment.get("LOCALAPPDATA")
+        if local_app_data:
+            return Path(local_app_data) / "ms-playwright"
+        return Path.home() / "AppData" / "Local" / "ms-playwright"
+    return Path.home() / ".cache" / "ms-playwright"
+
+
+def _detect_system_chromium() -> str | None:
+    for candidate in SYSTEM_CHROMIUM_CANDIDATES:
+        path = shutil.which(candidate)
+        if path is not None:
+            return path
+    return None
+
+
+def _prepare_browser_environment(*, api_port: int, web_port: int) -> dict[str, str]:
+    repo_root = _repo_root()
+    environment = dict(os.environ)
+    environment["PLAYWRIGHT_MANAGED_SERVERS"] = "1"
+    environment["PLAYWRIGHT_API_PORT"] = str(api_port)
+    environment["PLAYWRIGHT_API_BASE_URL"] = f"http://127.0.0.1:{api_port}"
+    environment["PLAYWRIGHT_WEB_PORT"] = str(web_port)
+    environment["PLAYWRIGHT_BASE_URL"] = f"http://127.0.0.1:{web_port}"
+    output_dir = repo_root / "build" / "verify-browser" / f"playwright-{int(time.time() * 1000)}"
+    output_dir.mkdir(parents=True, exist_ok=True)
+    environment["PLAYWRIGHT_OUTPUT_DIR"] = str(output_dir)
+
+    if environment.get("PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH") or environment.get("CHROMIUM_BIN"):
+        return environment
+
+    if _playwright_browser_installed():
+        return environment
+
+    system_chromium = _detect_system_chromium()
+    if system_chromium is None:
+        message = "".join(
+            [
+                "No Playwright-managed Chromium install was found and no system Chromium ",
+                "binary is available. Run the browser installer in a connected environment ",
+                "or set PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH explicitly.",
+            ]
+        )
+        raise RuntimeError(
+            message
+        )
+
+    blocked, reasons = _managed_policy_blocks_browser()
+    if blocked:
+        reason_text = "; ".join(reasons)
+        message = "".join(
+            [
+                "System Chromium is present but managed policies block repo browser ",
+                f"verification. Detected: {reason_text}. Remove or override those policies ",
+                "for this environment, or provide a Playwright-managed Chromium binary.",
+            ]
+        )
+        raise RuntimeError(
+            message
+        )
+
+    environment["PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH"] = system_chromium
+    return environment
+
+
+def prepare_browser_environment(*, api_port: int, web_port: int) -> dict[str, str]:
+    return _prepare_browser_environment(api_port=api_port, web_port=web_port)
+
+
 def _run_browser_command(
     repo_root: Path,
     script_name: str,
@@ -214,15 +349,11 @@ def _run_browser_command(
     api_port: int,
     web_port: int,
 ) -> int:
-    command = ("bun", "run", script_name)
+    runner = resolve_runner()
+    command = build_command(script_name, (), runner=runner)
     print(f"$ {' '.join(command)}")
 
-    environment = dict(environ)
-    environment["PLAYWRIGHT_MANAGED_SERVERS"] = "1"
-    environment["PLAYWRIGHT_API_PORT"] = str(api_port)
-    environment["PLAYWRIGHT_API_BASE_URL"] = f"http://127.0.0.1:{api_port}"
-    environment["PLAYWRIGHT_WEB_PORT"] = str(web_port)
-    environment["PLAYWRIGHT_BASE_URL"] = f"http://127.0.0.1:{web_port}"
+    environment = _prepare_browser_environment(api_port=api_port, web_port=web_port)
     result = subprocess.run(command, cwd=repo_root, check=False, env=environment)
     return result.returncode
 
