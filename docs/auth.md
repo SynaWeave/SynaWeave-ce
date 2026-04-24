@@ -23,7 +23,7 @@ This file does **not** define sprint execution sequencing, deploy topology, or p
 
 ## 🧭 Auth thesis
 
-SynaWave should not manage user passwords directly.
+SynaWeave should not manage user passwords directly.
 
 The platform auth model is intentionally passwordless and adapter-first:
 

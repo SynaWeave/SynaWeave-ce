@@ -1,184 +1,419 @@
-# 📜 Architecture
+# 🏗️ Architecture
 
 ## 🧩 Purpose
 
-This document defines the shared technical architecture of the repository.
-It is the canonical read for how runtime surfaces, shared packages, and Python modules fit together.
+This file explains the system design for SynaWeave CE.
+It is intentionally visual and diagram-heavy so the repo shows the product, platform, and pedagogy shape clearly.
 
-This file is the source of truth for:
-
-- the repository-wide platform shape and runtime map
-- how user flows move from client to durable state
-- how cross-surface contracts are versioned and enforced
-- how observability and security boundaries are attached
-
-This file does **not** define:
-
-- sprint execution details (`docs/planning/MASTER.md`)
-- governance details (`AGENTS.md`, `CONTRIBUTING.md`)
-- operational readiness status (`docs/operations.md`)
+For locked infra choices and naming rules, read:
+- `docs/infra.md`
+- `docs/legend.md`
 
 ---
 
-## 🧭 Architecture thesis
+## 🧠 Architecture thesis
 
-SynaWave is a shallow, multi-surface architecture with one shared contract layer.
+SynaWeave CE is a **knowledge-weaving learning OS**.
+It combines:
+- a capture engine
+- a knowledge engine
+- a study engine
+- an adaptive tutor
+- a visible data and ML platform
 
-The platform shape is intentionally strict:
-
-- one extension runtime (`apps/extension`)
-- one web control plane (`apps/web`)
-- one request-serving API boundary (`apps/api`)
-- one first job runtime (`apps/ingest`)
-- reserved future runtime homes for MCP, ML, and evaluation (`apps/mcp`, `apps/ml`, `apps/eval`)
-- shared TypeScript packages under `packages/`
-- reusable Python intelligence modules under `python/`
-
-Provider selection is intentionally adapter-first:
-
-- domain and contract layers stay provider-neutral, while provider-specific behavior lives behind owned adapters
-- Sprint 1 may name default adapter targets where the branch already proves one concrete path, but those defaults are not permanent lock-in
-- edge concerns stay adapter-owned, with Zuplo now selected as the current Sprint 1 target for CDN, caching, and API gateway insertion without making that provider part of the domain contract
-
-No second documentation runtime exists in `apps/`, and no other top-level app runtime is part of Sprint 1.
+The tutor is not just a chatbot.
+It is an orchestrator that chooses the right teaching mode for the learner, concept, and study goal.
 
 ---
 
-## 🧱 Topology
+## 🔒 Locked learning-system pillars
 
-### 🪟 User-facing runtimes
-
-- `apps/extension`: in-context capture and quick study shell
-- `apps/web`: authenticated workspace control plane
-
-### ⚙️ Runtime boundaries
-
-- `apps/api`: request-serving boundary and first durable write path
-- `apps/ingest`: job boundary for asynchronous operations
-
-### 🧪 Reserved later runtimes
-
-- `apps/mcp`: standardized tool interface surface
-- `apps/ml`: online and offline ML-serving or orchestration surface when separated from the API
-- `apps/eval`: evaluation and benchmark surface when separated from jobs or ML tooling
-
-### 🧩 Shared runtime surfaces
-
-- `packages/contracts`: typed shape contracts for all cross-surface payloads
-- `packages/config`: shared configuration contract and loading helpers for TypeScript runtimes
-- `packages/tokens`: visual and theme tokens
-- `packages/ui`: shared UI primitives
-- `python/common`: cross-cutting Python primitives (retry, errors, typing, telemetry helpers)
-- `python/data`: ingestion and data-prep primitives
-- `python/evaluation`: reusable evaluation utilities and offline scoring support
-- `python/graph`: graph modeling and relationship-oriented helpers
-- `python/models`: model-facing integration seams and shared model contracts
-- `python/retrieval`: retrieval utilities and retrieval-adjacent contracts
-- `python/training`: training and experiment-prep support kept outside app entrypoints
+These product pillars are non-negotiable inside the core architecture:
+- block-based second-brain workspace
+- deep-linked source provenance
+- spaced repetition and retrieval practice
+- Zettelkasten-style concept linking
+- Feynman-style explain-back tutoring
+- adaptive agentic tutoring
+- programming-native pedagogy for SWE, ML, and AI learners
+- learner-state modeling and personalization
+- graph-grounded retrieval and recommendation
+- evaluation and observability that remain visible as product assets
 
 ---
 
-## 🌐 Runtime and data flow
+## 🔒 Locked tutor contract
 
-The platform data path is explicit and short:
+The adaptive tutor must choose among multiple modes rather than collapsing every study event into one chat response.
 
-```text
-User action
-  -> apps/extension or apps/web
-  -> apps/api (public contract only)
-  -> Python/JS service modules
-  -> infra stores/services
-  -> response with stable contract + event telemetry
+The decision inputs are:
+- learner state
+- source type
+- concept difficulty
+- confidence and confusion signals
+- forgetting risk
+- study goal
+- interview readiness
+- modality fit for the concept
+
+The first locked mode family is:
+- free recall
+- fill in the blank
+- explain-back
+- conversation-style coaching
+- refined multiple choice
+- matching pairs
+- sequencing and ordering
+- hotspot and image mapping
+- branching scenarios
+- interview-style prompts
+- Parsons or code-ordering reconstruction
+- worked-example completion
+- debug-the-mistake
+- compare-and-justify
+- system-design walkthrough
+- experiment-analysis walkthrough
+
+---
+
+## 🌐 System map
+
+```mermaid
+flowchart TB
+    U[Learner]
+    EXT[SW extension
+thin capture client]
+    WEB[SW web
+control plane]
+    API[API
+FastAPI boundary]
+    CAP[Capture layer]
+    KN[Knowledge layer]
+    ST[Study layer]
+    PED[Pedagogy engine]
+    LM[Learner model]
+    RET[Retrieval + ranking]
+    EVAL[Evals + traces]
+    DB[(DB / PG)]
+    OBJ[(OBJ)]
+    GRAPH[(GRAPH)]
+
+    U --> EXT
+    U --> WEB
+    EXT --> API
+    WEB --> API
+    API --> CAP
+    API --> ST
+    API --> PED
+    CAP --> KN
+    KN --> DB
+    KN --> OBJ
+    KN --> GRAPH
+    PED --> LM
+    PED --> RET
+    PED --> ST
+    PED --> EVAL
+    LM --> DB
+    RET --> DB
+    RET --> GRAPH
+    ST --> DB
 ```
 
-Rules in this flow:
+---
 
-- every public payload crosses `packages/contracts`
-- every durable write passes through `apps/api`
-- job work can read and enrich durable state but does not own the primary user-facing contract
-- provider-specific stores, auth systems, and telemetry backends stay behind adapter seams instead of leaking into product contracts
+## 🧱 Product planes
 
-## 🔌 Adapter-first provider posture
+```mermaid
+flowchart LR
+    XP[Experience plane
+extension + web] --> PROD[Product plane
+API + study flows]
+    PROD --> DATA[Data plane
+ingest + clean + feature + index]
+    PROD --> AI[AI plane
+retrieval + tutor + eval]
+    PROD --> OPS[Ops plane
+trace + metric + log + alert]
+    DATA --> AI
+    AI --> OPS
+```
 
-The rebuild keeps provider choices behind adapters from the start.
+### Experience plane
+- extension side panel
+- web dashboard
+- block-based learning canvas
+- recommendations and tutor UI
 
-- Sprint 1 treats Supabase as the default adapter target for auth, operational Postgres, and storage-facing contracts because that target fits the current branch shape
-- that default target does not make Supabase part of the domain contract, and later replacements must preserve the same contract boundaries
-- Sprint 1 now names Zuplo as the current unified target for edge routing, CDN, caching, and API gateway concerns because one adapter-owned edge path is easier to document and govern than separate speculative vendors
-- that target remains an adapter decision, so future swaps must preserve the same public contracts, browser-safe boundaries, and server-only enforcement points
+### Product plane
+- API boundary
+- auth/session checks
+- study state writes
+- card editing and study history
+
+### Data plane
+- ingest
+- clean
+- chunk
+- label
+- embed
+- graph link
+- index
+- feature engineering
+
+### AI plane
+- retrieval
+- reranking
+- pedagogy engine
+- learner-state updates
+- recommendation logic
+- eval feedback loops
+
+### Ops plane
+- OTel traces
+- metrics
+- logs
+- eval dashboards
+- experiment records
 
 ---
 
-## 🔐 Security and trust boundaries
+## 📝 Capture-to-study flow
 
-Security is split by boundary class:
+```mermaid
+sequenceDiagram
+    participant L as Learner
+    participant X as Extension/Web
+    participant A as API
+    participant C as Capture
+    participant K as Knowledge
+    participant S as Study
+    participant P as Pedagogy
 
-### Browser boundaries
-
-- `apps/extension` and `apps/web` can only use browser-safe config values
-- no privileged credentials are allowed in browser bundles
-
-### Server boundaries
-
-- `apps/api` and `apps/ingest` can use server-only credentials through environment/classified config
-- all privileged operations must be auditable and isolated
-
-### Contract boundaries
-
-- only serialized, versioned payloads may cross runtime classes
-- contract evolution is backwards-compatible by default
-- every contract shift records migration or breakage context
-
----
-
-## 🧠 Repository-level domain split
-
-This architecture intentionally keeps shared responsibilities separated:
-
-- `apps/`: executable surfaces and integration shells
-- `packages/`: shared TypeScript boundaries and contracts
-- `python/`: shared intelligence modules and reusable domain logic
-- `infra/`: deployment, policy, and operations envelopes
-- `tools/verify`: executable repository assertions
-- `testing/`: quality signal taxonomy and guardrails
-
-No folder should hide mixed concerns across these lines.
+    L->>X: capture source / ask question / open study deck
+    X->>A: send normalized request
+    A->>C: persist raw source + metadata
+    C->>K: clean + chunk + embed + link
+    K-->>A: indexed study artifact
+    A->>P: request next learning action
+    P->>S: generate or select study block
+    S-->>X: card, quiz, hint, or coaching step
+    X-->>L: grounded study response
+```
 
 ---
 
-## 🧪 Observability and evidence model
+## 🤖 Pedagogy engine
 
-The observability model follows a single event model:
+The pedagogy engine is the tutor’s decision system.
+It should select mode based on:
+- learner state
+- source type
+- concept difficulty
+- confidence / confusion signal
+- forgetting risk
+- study goal
+- interview readiness
+- modality fit
 
-- traces, metrics, and logs are emitted by runtime surfaces
-- runtime exports route through OpenTelemetry collector pipelines
-- product-facing AI traces and online scores route through Langfuse adapters
-- offline experiment and offline evaluation evidence route through MLflow adapters
-
-Evidence obligations:
-
-- one reproducible trace for the critical path
-- one reproducible failure path with clear error metadata
-- one reproducible baseline metric per core runtime path
-- durable metric, trace, dashboard, and evaluation records must be preserved in versioned config, machine-readable artifacts, or replayable local stores
-
-Sprint 1 observability posture stays bounded and honest:
-
-- self-hosted Langfuse and MLflow are the current local proof backends, because the branch proves those paths without claiming managed service durability
-- managed Langfuse and managed MLflow remain valid later deployment targets as long as they stay behind the same adapters and evidence rules
-- collector routing, Prometheus metrics, Grafana dashboards, and versioned proof artifacts remain the durable review surface even when backend hosting changes later
+```mermaid
+flowchart TD
+    IN[Question / study event] --> SIG[Signals
+state + risk + goal + source]
+    SIG --> SEL{Mode select}
+    SEL --> FR[free recall]
+    SEL --> FIB[fill in blank]
+    SEL --> EXB[explain-back]
+    SEL --> COACH[coaching chat]
+    SEL --> MCQ[refined MCQ]
+    SEL --> MATCH[matching]
+    SEL --> ORDER[ordering / sequencing]
+    SEL --> HOT[hotspot / image map]
+    SEL --> BRANCH[branching scenario]
+    SEL --> INT[interview prompt]
+    SEL --> PARS[Parsons / code ordering]
+    SEL --> WORK[worked example]
+    SEL --> DEBUG[debug the mistake]
+    SEL --> CJ[compare and justify]
+    SEL --> SD[system design walkthrough]
+    SEL --> EXP[experiment analysis]
+    FR --> OUT[graded response + state update]
+    FIB --> OUT
+    EXB --> OUT
+    COACH --> OUT
+    MCQ --> OUT
+    MATCH --> OUT
+    ORDER --> OUT
+    HOT --> OUT
+    BRANCH --> OUT
+    INT --> OUT
+    PARS --> OUT
+    WORK --> OUT
+    DEBUG --> OUT
+    CJ --> OUT
+    SD --> OUT
+    EXP --> OUT
+```
 
 ---
 
-## 🧭 Governance-aligned design implications
+## 🧠 Learner-state model
 
-Sprint 1 architecture decisions are intentionally conservative:
+```mermaid
+flowchart LR
+    HIST[review history] --> LM[Learner model]
+    RESP[answer quality] --> LM
+    TIME[latency + spacing] --> LM
+    SRC[source confidence] --> LM
+    LM --> MAST[concept mastery]
+    LM --> MIS[misconception clusters]
+    LM --> RISK[forgetting risk]
+    LM --> READY[interview readiness]
+    LM --> MODE[preferred support mode]
+```
 
-- no second docs runtime in `apps/`
-- one repository-wide documentation root (`docs/`)
-- root `docs/` may be published statically, but remains the only canonical documentation source
-- no app-specific contracts outside the shared contract package
-- token-first UI language and shared design primitives
-- verified contracts and folders before feature expansion
+The learner model should track:
+- concept mastery
+- misconception clusters
+- question intent
+- source confidence
+- forgetting risk
+- interview readiness
+- preferred support mode
+- review history by concept and artifact type
 
-The next sprints may refine depth but may not discard these boundaries without a new ADR entry.
+---
+
+## 👨‍💻 SWE / ML / AI pedagogy layer
+
+This product is programming-native by design.
+The tutor must natively support:
+- code tracing
+- algorithm sequencing
+- pipeline ordering
+- architecture tradeoff reasoning
+- eval design
+- debugging and failure analysis
+- interview rehearsal
+- notebook and experiment interpretation
+
+```mermaid
+flowchart LR
+    CODE[code / notebook / design input] --> PED[Pedagogy engine]
+    PED --> TRACE[code tracing]
+    PED --> ORDER[algorithm or pipeline ordering]
+    PED --> NEXT[complete next step]
+    PED --> LINE[explain line / output]
+    PED --> DEBUG[debug mistake]
+    PED --> COMP[compare to reference]
+    PED --> ARCH[architecture sequencing]
+    PED --> EVAL[eval or hyperparam plan]
+```
+
+---
+
+## 🔍 Retrieval and recommendation stack
+
+```mermaid
+flowchart LR
+    SRC[raw sources] --> CLEAN[clean + chunk]
+    CLEAN --> EMB[embed]
+    CLEAN --> LINK[concept link]
+    LINK --> GRAPH[(GRAPH)]
+    EMB --> VEC[(VEC in PG)]
+    CLEAN --> DB[(DB)]
+    Q[study query] --> RET[retrieve]
+    RET --> VEC
+    RET --> GRAPH
+    RET --> DB
+    RET --> RANK[rank + fuse]
+    RANK --> PED[Pedagogy engine]
+```
+
+The first retrieval stack should stay simple where possible:
+- DB + pgvector first
+- graph augmentation where it materially improves the result
+- recommendation logic driven by learner state and study history
+
+---
+
+## 🧪 Evals and observability as product assets
+
+```mermaid
+flowchart LR
+    API --> TRACE[trace]
+    PED --> EVAL[eval]
+    JOB --> EXP[experiment]
+    TRACE --> LF[LF]
+    EVAL --> LF
+    EVAL --> MLF[MLF]
+    EXP --> MLF
+    JOB --> MF[MF]
+```
+
+These are not hidden admin leftovers.
+They should be visible in:
+- internal dashboards
+- tutor quality reviews
+- experiment comparisons
+- ingestion quality checks
+- recommendation quality checks
+
+---
+
+## 🔐 Fail-open and fail-closed architecture
+
+```mermaid
+flowchart LR
+    UX[learner-facing flow] --> OPEN[fail open where safe]
+    PRIV[privileged flow] --> CLOSED[fail closed]
+```
+
+Fail open examples:
+- recommendation refresh
+- non-critical graph enrichment
+- optional telemetry fan-out
+- best-effort tagging or grouping
+
+Fail closed examples:
+- auth/session checks
+- destructive writes
+- admin tools
+- billing and entitlements
+- policy enforcement
+
+---
+
+## 🧩 Open-core split
+
+```mermaid
+flowchart LR
+    CORE[AGPL core] --> EXT[extension]
+    CORE --> WEB[web app]
+    CORE --> API[API]
+    CORE --> QUIZ[quizzes]
+    CORE --> SRS[spaced repetition]
+    CORE --> LM[learner model]
+    CORE --> OBS[observability + evals]
+    CORE --> OPENAPI[open APIs + adapters]
+
+    PROP[proprietary layer] --> ADS[ads + targeting]
+    PROP --> BILL[billing + subscriptions]
+    PROP --> ENT[entitlements]
+    PROP --> PTS[wallet / rewards]
+    PROP --> GROW[growth analytics]
+```
+
+The AGPL core owns product learning value.
+The proprietary layer owns monetization and growth mechanics.
+
+---
+
+## 🚀 Deployment posture
+
+```mermaid
+flowchart LR
+    DEV[local docker] --> CR[Cloud Run first]
+    CR --> GKE[GKE later if needed]
+```
+
+The repo should already have the seams for the GKE pivot, but Cloud Run is still the right first hosted move.

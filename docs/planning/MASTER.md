@@ -195,11 +195,11 @@ These are implementation choices, not domain concepts. The core architecture mus
 
 ## 🧭 1. Overview
 
-This part defines the permanent product direction of SynaWave.
+This part defines the permanent product direction of SynaWeave.
 
 It answers five questions:
 
-* What class of product is SynaWave?
+* What class of product is SynaWeave?
 * What learning outcomes is it designed to create?
 * What systems must exist for the product to work as intended?
 * What architectural and product truths are non-negotiable?
@@ -266,7 +266,7 @@ Use this emoji system consistently across the packet for fast skimming and stabl
 
 ### 🎯 3.1 Product class
 
-SynaWave is a **knowledge-weaving learning operating system**.
+SynaWeave is a **knowledge-weaving learning operating system**.
 
 It is not defined primarily as:
 
@@ -281,7 +281,7 @@ Those are possible feature surfaces, but they are not the product class.
 
 The product class is defined by one core promise:
 
-> SynaWave should help a learner transform raw source material into structured knowledge, convert that knowledge into adaptive practice, and improve long-term retention through grounded, measurable learning loops.
+> SynaWeave should help a learner transform raw source material into structured knowledge, convert that knowledge into adaptive practice, and improve long-term retention through grounded, measurable learning loops.
 
 ### 🎯 3.2 Product objective
 
@@ -391,9 +391,9 @@ That means every major product milestone must make visible progress on at least 
 
 ### 🧠 4.1 Learning model
 
-SynaWave is built on the assumption that durable learning requires more than passive exposure. Educational psychology literature has repeatedly found that practice testing and distributed practice are among the highest-utility broadly applicable learning techniques, while self-explanation and interleaving remain valuable supporting methods. ([Sage Journals][1])
+SynaWeave is built on the assumption that durable learning requires more than passive exposure. Educational psychology literature has repeatedly found that practice testing and distributed practice are among the highest-utility broadly applicable learning techniques, while self-explanation and interleaving remain valuable supporting methods. ([Sage Journals][1])
 
-Therefore, SynaWave must treat:
+Therefore, SynaWeave must treat:
 
 * retrieval
 * spacing
@@ -492,11 +492,11 @@ These modes must exist because different knowledge types and learner states requ
 
 ### 🧪 4.8 Technical learning contract
 
-For SWE, ML, and AI learners, SynaWave must support programming-specific and systems-specific practice structures rather than forcing all learning into generic question types.
+For SWE, ML, and AI learners, SynaWeave must support programming-specific and systems-specific practice structures rather than forcing all learning into generic question types.
 
 Research on Parsons problems and related programming-learning methods continues to support their use for engagement, learning efficiency, and programming pattern recognition. ([Falmouth University Research Repository][3])
 
-That means SynaWave must support:
+That means SynaWeave must support:
 
 * code ordering
 * code tracing
@@ -649,7 +649,7 @@ These are non-negotiable truths unless explicitly changed by a later architectur
 
 ### 📏 6.1 Product invariants
 
-* SynaWave is a learning operating system, not a generic AI utility.
+* SynaWeave is a learning operating system, not a generic AI utility.
 * The workspace is a learning workspace, not a generic document surface.
 * The tutor is an adaptive orchestrator, not a generic chatbot.
 * Provenance is a permanent product requirement, not an optional enhancement.
@@ -764,7 +764,7 @@ Interpretation:
 
 Part 1 is correct only if a reader can answer all of these without consulting lower-level docs:
 
-* What kind of product is SynaWave?
+* What kind of product is SynaWeave?
 * What learning methods is it built around?
 * What systems must permanently exist?
 * What truths are non-negotiable?
@@ -780,7 +780,7 @@ If those answers are not clear after reading this section, this part is incomple
 
 ## 🧭 9. Overview
 
-This part defines the technical contract for how SynaWave will be built and judged.
+This part defines the technical contract for how SynaWeave will be built and judged.
 
 It answers these questions:
 
@@ -851,7 +851,7 @@ Bun supports monorepo workspaces directly, which keeps the workspace model simpl
 * the editor foundation is Tiptap
 
 **Why this is locked**
-Tiptap is a headless editor framework built on ProseMirror and is designed to support custom editor behavior through extensions, nodes, and marks. It is therefore a better fit for a block-first learning workspace than a generic rich-text field. Its headless model also supports strong product control rather than forcing SynaWave into a pre-shaped document UI. ([Tiptap][2])
+Tiptap is a headless editor framework built on ProseMirror and is designed to support custom editor behavior through extensions, nodes, and marks. It is therefore a better fit for a block-first learning workspace than a generic rich-text field. Its headless model also supports strong product control rather than forcing SynaWeave into a pre-shaped document UI. ([Tiptap][2])
 
 **Spec requirements**
 
@@ -1112,7 +1112,7 @@ These metrics are not optional because ingestion quality is one of the easiest w
 
 ### 🎯 12.1 Intelligence philosophy
 
-AI and ML in SynaWave exist to improve:
+AI and ML in SynaWeave exist to improve:
 
 * learning quality
 * adaptation quality
@@ -1151,7 +1151,7 @@ It must be able to combine:
 * retrieval must support citation generation
 * retrieval must support graceful degradation when some evidence layers are unavailable
 
-Industry-standard RAG evaluation guidance now commonly distinguishes retrieve-only and retrieve-and-generate evaluation and includes metrics such as context relevance, context coverage, correctness, completeness, faithfulness, citation precision, and citation coverage. SynaWave should align its retrieval and answer evaluation with that separation. ([AWS Documentation][9])
+Industry-standard RAG evaluation guidance now commonly distinguishes retrieve-only and retrieve-and-generate evaluation and includes metrics such as context relevance, context coverage, correctness, completeness, faithfulness, citation precision, and citation coverage. SynaWeave should align its retrieval and answer evaluation with that separation. ([AWS Documentation][9])
 
 ### 🤖 12.3 Tutor contract
 
@@ -1295,7 +1295,7 @@ These metric families are aligned with current RAG evaluation practice and gener
 
 ### 🎯 13.1 Proof philosophy
 
-SynaWave must be able to answer, from evidence rather than opinion:
+SynaWeave must be able to answer, from evidence rather than opinion:
 
 * Is the product working?
 * Is the AI working?
@@ -1413,7 +1413,7 @@ MLflow is part of the proof contract because it supports experiment tracking and
 
 ### 🎯 14.1 Trust philosophy
 
-Trust in SynaWave must be designed, not implied.
+Trust in SynaWeave must be designed, not implied.
 
 The product must be able to explain:
 
@@ -1427,7 +1427,7 @@ NIST’s AI Risk Management Framework and its generative AI profile make clear t
 
 ### 🛡️ 14.2 Trust requirements
 
-SynaWave must support:
+SynaWeave must support:
 
 * visible provenance
 * visible uncertainty where relevant
@@ -1457,7 +1457,7 @@ The platform must assume that generative and adaptive systems can fail in ways t
 
 ### 📏 14.4 Quality contract
 
-Quality in SynaWave is multi-dimensional.
+Quality in SynaWeave is multi-dimensional.
 
 It includes:
 
@@ -1530,7 +1530,7 @@ The following metric families must exist by the time the corresponding surfaces 
 
 ### 📏 14.7 Standard for claims
 
-SynaWave may only claim a quality attribute publicly when the proof layer supports it.
+SynaWeave may only claim a quality attribute publicly when the proof layer supports it.
 
 Examples:
 
@@ -1563,7 +1563,7 @@ If those answers are not clear after reading this section, Part 2 is incomplete.
 
 ## 🧭 16. Overview
 
-This part defines the roadmap contract for SynaWave.
+This part defines the roadmap contract for SynaWeave.
 
 It answers these questions:
 
@@ -1804,11 +1804,11 @@ Sprint 2 is the first sprint in which the product must behave like a real learni
 
 ### 🔀 Parallel deliverables
 
-#### 📥 Deliverable 1 — Capture and provenance
+#### 🚚 Deliverable 1 — 📥 Capture and provenance
 
 Purpose:
 
-* establish SynaWave as a serious “learn from real sources” product
+* establish SynaWeave as a serious “learn from real sources” product
 
 Must prove:
 
@@ -1825,7 +1825,7 @@ Investor-visible outcome:
 
 * the product has a credible source-to-learning story
 
-#### ✏️ Deliverable 2 — Workspace and note structure
+#### 🚚 Deliverable 2 — ✏️ Workspace and note structure
 
 Purpose:
 
@@ -1846,7 +1846,7 @@ Investor-visible outcome:
 
 * the product has a visually legible knowledge-work moat
 
-#### 🃏 Deliverable 3 — Practice and review core
+#### 🚚 Deliverable 3 — 🃏 Practice and review core
 
 Purpose:
 
@@ -1867,7 +1867,7 @@ Investor-visible outcome:
 
 * the product has a retention engine, not just content surfaces
 
-#### 🤖 Deliverable 4 — Guidance and organization intelligence
+#### 🚚 Deliverable 4 — 🤖 Guidance and organization intelligence
 
 Purpose:
 
@@ -1888,7 +1888,7 @@ Investor-visible outcome:
 
 * early intelligence is visible in the product path
 
-#### 👀 Deliverable 5 — Activation and proof baseline
+#### 🚚 Deliverable 5 — 👀 Activation and proof baseline
 
 Purpose:
 
@@ -1925,13 +1925,13 @@ Sprint 2 is complete only when:
 
 ### 🎯 Goal
 
-Turn SynaWave from a strong workspace into a strong learning experience.
+Turn SynaWeave from a strong workspace into a strong learning experience.
 
 Sprint 3 is the pedagogy sprint. It must make the product visibly better at producing learning, not just organization.
 
 ### 🔀 Parallel deliverables
 
-#### 📥 Deliverable 1 — Practice content expansion
+#### 🚚 Deliverable 1 — 📥 Practice content expansion
 
 Purpose:
 
@@ -1951,7 +1951,7 @@ Investor-visible outcome:
 
 * the product demonstrates broader learning utility without requiring more user effort
 
-#### ✏️ Deliverable 2 — Guided workspace support
+#### 🚚 Deliverable 2 — ✏️ Guided workspace support
 
 Purpose:
 
@@ -1971,7 +1971,7 @@ Investor-visible outcome:
 
 * the product demonstrates stronger educational design inside the workspace itself
 
-#### 🃏 Deliverable 3 — Quiz engine and memory systems
+#### 🚚 Deliverable 3 — 🃏 Quiz engine and memory systems
 
 Purpose:
 
@@ -1992,7 +1992,7 @@ Investor-visible outcome:
 
 * the product has a differentiated pedagogy engine and retention story
 
-#### 🤖 Deliverable 4 — Technical learner tracks
+#### 🚚 Deliverable 4 — 🤖 Technical learner tracks
 
 Purpose:
 
@@ -2012,7 +2012,7 @@ Investor-visible outcome:
 
 * the product has a focused and defensible niche within a broad learner market
 
-#### 👀 Deliverable 5 — Learning and engagement proof
+#### 🚚 Deliverable 5 — 👀 Learning and engagement proof
 
 Purpose:
 
@@ -2055,7 +2055,7 @@ Sprint 4 is where the product’s AI and ML depth must become obvious to both us
 
 ### 🔀 Parallel deliverables
 
-#### 📥 Deliverable 1 — Multimodal data engine
+#### 🚚 Deliverable 1 — 📥 Multimodal data engine
 
 Purpose:
 
@@ -2076,7 +2076,7 @@ Investor-visible outcome:
 
 * the platform demonstrates competence with messy real-world data, not only neat demos
 
-#### ✏️ Deliverable 2 — Knowledge graph and connected workspace
+#### 🚚 Deliverable 2 — ✏️ Knowledge graph and connected workspace
 
 Purpose:
 
@@ -2097,7 +2097,7 @@ Investor-visible outcome:
 
 * the platform demonstrates a genuine knowledge-weaving model
 
-#### 🃏 Deliverable 3 — Adaptive practice and recommendation
+#### 🚚 Deliverable 3 — 🃏 Adaptive practice and recommendation
 
 Purpose:
 
@@ -2118,7 +2118,7 @@ Investor-visible outcome:
 
 * adaptation is visible as a product capability, not only a backend claim
 
-#### 🤖 Deliverable 4 — Grounded tutor and learner model
+#### 🚚 Deliverable 4 — 🤖 Grounded tutor and learner model
 
 Purpose:
 
@@ -2140,11 +2140,11 @@ Investor-visible outcome:
 
 * the platform has a real learner model and grounded tutor story
 
-#### 👀 Deliverable 5 — AI and ML proof depth
+#### 🚚 Deliverable 5 — 👀 AI and ML proof depth
 
 Purpose:
 
-* establish SynaWave as a serious applied-AI and machine-learning system
+* establish SynaWeave as a serious applied-AI and machine-learning system
 
 Must prove:
 
@@ -2186,7 +2186,7 @@ Sprint 5 is where quality becomes legible and defendable.
 
 ### 🔀 Parallel deliverables
 
-#### 📥 Deliverable 1 — Source and trust hardening
+#### 🚚 Deliverable 1 — 📥 Source and trust hardening
 
 Purpose:
 
@@ -2207,7 +2207,7 @@ Investor-visible outcome:
 
 * trust is supported by visible mechanisms, not only policy language
 
-#### ✏️ Deliverable 2 — Workspace and user reliability
+#### 🚚 Deliverable 2 — ✏️ Workspace and user reliability
 
 Purpose:
 
@@ -2228,7 +2228,7 @@ Investor-visible outcome:
 
 * product reliability is credible for real user dependence
 
-#### 🃏 Deliverable 3 — Performance and efficiency
+#### 🚚 Deliverable 3 — 🃏 Performance and efficiency
 
 Purpose:
 
@@ -2249,7 +2249,7 @@ Investor-visible outcome:
 
 * the platform’s economics and scalability become easier to trust
 
-#### 🤖 Deliverable 4 — Trustworthy intelligence
+#### 🚚 Deliverable 4 — 🤖 Trustworthy intelligence
 
 Purpose:
 
@@ -2271,7 +2271,7 @@ Investor-visible outcome:
 
 * the AI layer looks production-worthy rather than experimental
 
-#### 👀 Deliverable 5 — Flagship proof surface
+#### 🚚 Deliverable 5 — 👀 Flagship proof surface
 
 Purpose:
 
@@ -2315,7 +2315,7 @@ Sprint 6 is about extension of the moat, not rescue of the core.
 
 ### 🔀 Parallel deliverables
 
-#### 📥 Deliverable 1 — Local source acceleration
+#### 🚚 Deliverable 1 — 📥 Local source acceleration
 
 Purpose:
 
@@ -2334,7 +2334,7 @@ Investor-visible outcome:
 
 * the platform has a credible path to stronger local differentiation
 
-#### ✏️ Deliverable 2 — Local workspace resilience
+#### 🚚 Deliverable 2 — ✏️ Local workspace resilience
 
 Purpose:
 
@@ -2354,7 +2354,7 @@ Investor-visible outcome:
 
 * the platform has a clear local-first trajectory
 
-#### 🃏 Deliverable 3 — Local review and study support
+#### 🚚 Deliverable 3 — 🃏 Local review and study support
 
 Purpose:
 
@@ -2373,7 +2373,7 @@ Investor-visible outcome:
 
 * the local path improves actual learning workflows, not just architecture diagrams
 
-#### 🤖 Deliverable 4 — Native intelligence seam
+#### 🚚 Deliverable 4 — 🤖 Native intelligence seam
 
 Purpose:
 
@@ -2393,7 +2393,7 @@ Investor-visible outcome:
 
 * the platform has a defensible long-term moat beyond the baseline web app pattern
 
-#### 👀 Deliverable 5 — Expansion proof
+#### 🚚 Deliverable 5 — 👀 Expansion proof
 
 Purpose:
 

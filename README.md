@@ -1,67 +1,78 @@
-# SynaWave
+# SynaWeave
 
-SynaWave is a governed, multi-surface repository for a knowledge-weaving learning platform. The current repo now includes a bounded Sprint 1 runtime slice across:
-- browser extension capture and workspace bridge
-- a web control plane shell
-- a FastAPI request boundary
-- a separate ingest job path
-- shared Python runtime helpers
-- locally generated runtime telemetry, optional compose-backed collector traces, and versioned eval/performance proof artifacts
+SynaWeave is a knowledge-weaving learning OS. The product thesis is a pedagogy engine that uses agentic mentoring to orchestrate adaptive tutoring so users can explore deeper, learn faster, and retain more.
 
-## What this repo contains
+## What this repo is building
 
-- `apps/` — runtime homes for `extension`, `web`, `api`, `ingest`, `ml`, `mcp`, and `eval`
-- `packages/` — shared TypeScript primitives and contracts
-- `python/` — shared runtime helpers and future intelligence modules
-- `infra/` — deployment, policy, and observability envelopes
-- `testing/` — quality taxonomy and verification layers
-- `tools/` — local checks and governance automation
-- `docs/` — canonical technical docs, planning, ADRs, and governance-linked specifications
+SynaWeave CE is the AGPL core for:
+- capture for text, notes, transcripts, and scraped sources
+- a knowledge engine for cleaning, chunking, embedding, graph linking, and indexing
+- a study engine for markdown-first cards, recommendations, and progress tracking
+- an adaptive tutor that chooses the right instructional mode instead of only answering questions
+- a visible data and ML platform for ingestion, evals, experiments, and observability
 
-## Current repo posture
+The current product posture is:
+- **Sprint 1:** publicly visible progress product
+- **Sprint 2:** ready to accept real public traffic
+- **later sprints:** deeper pedagogy, graph, eval, and monetization depth without changing the core contract
 
-- monorepo topology: enabled
-- root docs contract: enabled
-- governance artifacts: enabled
-- repo-control baseline: locally verifiable
-- first runtime proof path: integrated
-- first background job proof path: integrated
-- local metrics and trace artifacts: reproducible locally after runtime exercise
-- versioned repo-local eval fixture and proof artifact: integrated
-- runtime contract tests: integrated
-- browser vitals proof: integrated
-- telemetry hardening baseline: integrated
-- selected Zuplo edge target: documented
-- bounded D3 repo-local closeout evidence: integrated
-- bounded local Langfuse trace-plus-score proof: integrated
-- full platform-hosted D3 closeout: not yet proven
-- hosted merge enforcement: still requires GitHub-side confirmation
+## Repo shape
 
-The current local Sprint 1 proof path is:
-1. sign in from `apps/web` or `apps/extension`
-2. resolve the same user email and bridge code across both surfaces
-3. bootstrap one server-owned workspace through the API
-4. write one durable workspace action through the API
-5. run one separate ingest job to create a digest and evaluation record
-6. read the updated workspace state back through the browser surface
-7. inspect metrics at `/metrics` and the generated JSON artifacts under `build/runtime/` after exercising the runtime path
-8. compare repo-local proof outputs under `testing/evals/artifacts/` and `testing/performance/`
+- `apps/` — runtime surfaces
+- `packages/` — shared TypeScript contracts and packages
+- `python/` — shared Python intelligence and data modules
+- `infra/` — deploy, runtime, policy, and ops envelopes
+- `testing/` — contract, unit, browser, eval, and performance proof
+- `tools/` — repo verification and local automation
+- `docs/` — canonical technical docs
 
-This is a D2 runtime proof with bounded repo-local D3 closeout evidence. It now includes one repo-local MLflow-backed offline eval run and one bounded self-hosted local Langfuse proof path, but it is not a claim that hosted Langfuse operations, hosted or team-shared MLflow proof, browser-owned side-panel container automation, full browser-native observability routing, Cloud Run deployment, or broader platform-hosted D3 enforcement is complete.
+## Canonical docs
 
-## Repository-first entry points
-
-- [Architecture](docs/architecture.md)
+Start here in this order:
+- [Infra](docs/infra.md) — locked choices, hosting posture, config contract, provider seams
+- [Architecture](docs/architecture.md) — system map, flow diagrams, pedagogy engine, open-core split
+- [Legend](docs/legend.md) — approved short forms, naming rules, prefix rules
+- [Onboarding](docs/onboarding.md) — how a new dev should read and work in the repo
 - [Apps](docs/apps.md)
-- [Workflow](docs/workflow.md)
-- [Onboarding](docs/onboarding.md)
-- [Infra](docs/infra.md)
-- [Templates](docs/templates.md)
-- [Planning](docs/planning/MASTER.md)
+- [Packages](docs/packages.md)
+- [Python](docs/python.md)
 - [Testing](docs/testing.md)
-- [Operations status](docs/operations.md)
-- [Sprint 1 overview](docs/planning/sprint-001/overview.md)
-- [ADR index for Sprint 1](docs/adrs/sprint-001.md)
+- [Operations](docs/operations.md)
+- [Planning](docs/planning/MASTER.md)
+
+## Current platform thesis
+
+The repo is intentionally shaped for:
+- MLE, DS, SWE, and staff-level interview signaling
+- startup technical diligence and funding pitches
+- cheap early hosting with a clean scale path
+- provider swap flexibility at the adapter edge
+- visible eval and observability as product assets
+
+The locked runtime posture is:
+- thin extension client
+- web app as control plane
+- FastAPI as the main backend boundary
+- Bun as repo-wide package manager and task runner
+- Docker-first local and hosted packaging
+- Cloud Run first, with a fast later pivot path to GKE
+- Postgres as operational truth
+- object storage behind an S3-compatible seam
+- graph retrieval behind a graph adapter seam
+- evals and traces visible in product and ops workflows
+
+## Naming posture
+
+The repo now prefers short raw identifiers.
+Use generic names where the contract is provider-neutral, and provider names only where the adapter is truly provider-specific.
+See [docs/legend.md](docs/legend.md) for the approved registry.
+
+Examples:
+- `DB_URL`, not `SUPABASE_DATABASE_URL`
+- `OBJ_BUCKET`, not `BACKBLAZE_B2_OBJECT_STORAGE_BUCKET_NAME`
+- `LF_URL` for Langfuse adapter config
+- `SB_URL` only inside Supabase-specific adapter or deploy config
+- `GCP_PROJECT_ID` where the provider is actually the point
 
 ## Local setup
 
@@ -69,94 +80,16 @@ This is a D2 runtime proof with bounded repo-local D3 closeout evidence. It now 
 cp .env.example .env
 bun run hooks:install
 bun run deps:app
-python3 -m python.evaluation.runtime_eval
-docker compose -f infra/docker/langfuse-compose.yml up -d
-python3 -m python.evaluation.langfuse_local_proof
-python3 -m python.evaluation.verify_mlflow_run
-python3 -m tools.verify.main
-PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium bun run verify
+bun run verify:docs
 ```
 
-After the one-time `bun run hooks:install` wrapper install, the local `.git/hooks/*` scripts exec the current repo-owned hooks in `tools/hooks/`, so content updates to existing repo hook files are picked up automatically without recopying old bodies into `.git/hooks`. Re-run `bun run hooks:install` when repo hook filenames are added, removed, or renamed, or when local wrappers are missing or damaged, so the local wrapper set stays aligned. Those repo-owned hooks auto-run environment sync after dependency-changing checkout, merge, and rewrite flows. On push, `pre-push` still runs tracked Betterleaks first, then retries environment sync, then runs `bun run verify:push`. Hook-triggered Python sync prefers the repo-owned `.venv` when present and otherwise falls back to `python3 -m pip` automatically. Git does not provide a pre-pull hook here, so checkout, merge, and rewrite flows remain the pull-adjacent automation path. Use `bun run sync` only when a hook reports a real sync failure and you need to rerun it directly.
-
-## Local runtime commands
-
-```bash
-bun run dev:api
-bun run dev:web
-bun run build:extension
-bun run deps:browser
-bun run verify:browser
-```
-
-Short root aliases are available for the common runtime and verification commands: `bun run api`, `bun run web`, `bun run ext`, `bun run browser:install`, and `bun run check`.
-
-Open:
-- API: `http://127.0.0.1:8000`
-- Web shell: `http://127.0.0.1:3000`
-- Metrics: `http://127.0.0.1:8000/metrics`
-
-The extension source remains under `apps/extension/` and can be loaded unpacked in Chromium-based browsers for the local proof flow.
-
-Browser proof status:
-- `bun run test:e2e` covers the web-shell sign-in, workspace bootstrap, durable write, and digest path against the local runtime
-- `bun run test:contract` validates the shared runtime contract bundle against live API responses and extension message fixtures
-- `testing/performance/browser-shell-baseline.local-proof.v1.json` now tracks durable repo-local browser proof for web-shell Core Web Vitals plus separate side-panel open and popup boot timing
-- `bun run test:e2e` also uses the packaged extension options harness to trigger a real `chrome.sidePanel.open()` request and confirm that the browser-owned side-panel runtime booted `popup.html`, while writing web-shell and extension timing JSON under Playwright output artifacts
-- `bun run test:accessibility` runs Axe against the signed-in web shell and the packaged extension panel document
-- the repo still does not claim direct DOM inspection of the browser-owned side-panel container itself because Playwright only proves the open request plus runtime boot here, not the hidden Chromium container chrome
-
-## Development expectations
-
-- update docs when behavior or structure changes
-- keep package and app boundaries narrow
-- keep contracts versioned and testable
-- treat GitHub-hosted branch checks and rulesets as external settings until separately confirmed
-- treat security and dependency risk as first-class engineering work
-- update `docs/templates/` when a recurring doc shape changes across more than one governed artifact
-
-## Contributing quickly
-
-1. Follow commit conventions in `CONTRIBUTING.md`.
-2. Keep changes in the governed surface they touch (`docs`, `apps`, `packages`, `testing`, `infra`, `python`).
-3. Reuse the owner doc or template for the surface you change instead of creating a parallel format.
-4. Install the local hooks for your clone, then run the local verification commands before opening PRs.
+Use the lightest verification lane that matches the work you changed.
 
 ## License
 
-This project currently uses a **GNU General Public License family** license as defined by `LICENSE`.
-The full license text is in `LICENSE`.
+This project currently uses an AGPL-oriented open-core posture for the community repo.
+See `LICENSE` for the exact license text in the current branch.
 
-## Governance artifacts
+## Migration note
 
-- `AGENTS.md`
-- `GOVERNANCE.md`
-- `CONTRIBUTING.md`
-- `CODE_OF_CONDUCT.md`
-- `SECURITY.md`
-- `CLA.md`
-- `NOTICE`
-- `TRADEMARKS.md`
-
-## Local workflow shortcuts
-
-Use the lightest command that matches the work you are doing.
-
-### Deterministic repo checks
-- `python3 -m tools.verify.main`
-- `bun run verify`
-
-### Faster local Python lane
-- `bun run check:py:deps`
-- `bun run check:py:fast`
-
-### Browser verification and triage
-- `bun run check:browser`
-- `bun run triage:ports`
-- `bun run triage:browser`
-- `bun run triage:browser:repeat`
-
-### Push-ready flow
-- `bun run ready:push`
-
-`ready:push` is the safest single local command before push because it runs the push-safe verification lane and refreshes the environment sync stamp required by the pre-push hook.
+The repo is moving from older branding and long provider-heavy env names to `SynaWeave` plus shorter generic env contracts. During this transition, loaders may accept a small set of legacy aliases, but the canonical naming lives in `docs/legend.md` and `.env.example`.

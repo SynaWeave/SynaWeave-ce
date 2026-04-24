@@ -1,7 +1,7 @@
-SynaWave
-Copyright (c) 2026 SynaWave Contributors
+SynaWeave
+Copyright (c) 2026 SynaWeave Contributors
 
 This project includes open-source components from upstream dependency sources.
 See `LICENSE`, `pyproject.toml`, and `package.json` for dependency manifests when available.
 
-Please include this notice in derivative distributions that contain SynaWave source code.
+Please include this notice in derivative distributions that contain SynaWeave source code.

@@ -2,7 +2,7 @@
 
 ## 🧭 1. TL;DR
 
-This deliverable creates the first **real runtime path** for SynaWave.
+This deliverable creates the first **real runtime path** for SynaWeave.
 
 The current branch now proves that bounded runtime path. The monorepo shape, root docs spine, verifier, hooks, workflows, and reserved runtime homes existed first; D2 closeout now adds the bootable web, extension, API, ingest, durable-write, and cross-surface identity path those controls were meant to protect.
 
@@ -67,7 +67,7 @@ The historical prototype baseline was extension-first. The visible root included
 * stylesheets
 * one root `README.md`
 
-That historical context explains why D2 must prove a real runtime path instead of a shell-only scaffold. ([github.com](https://github.com/SynaWave/SynaWave-ce))
+That historical context explains why D2 must prove a real runtime path instead of a shell-only scaffold. ([github.com](https://github.com/SynaWeave/SynaWeave-ce))
 
 ### 📚 3.2 Current branch reality entering D2
 
@@ -89,7 +89,7 @@ The historical README described:
 * spaced repetition
 * TSV export
 
-It also listed later stretch goals such as TypeScript, note deletion, integrations, text-to-speech, tags and filtering, focus mode, smart grouping, stats, translation, theme support, research suggestions, and image cards. That historical backlog is now part of the rebuild sequencing rather than a reason to reopen D1 structure. ([github.com](https://github.com/SynaWave/SynaWave-ce))
+It also listed later stretch goals such as TypeScript, note deletion, integrations, text-to-speech, tags and filtering, focus mode, smart grouping, stats, translation, theme support, research suggestions, and image cards. That historical backlog is now part of the rebuild sequencing rather than a reason to reopen D1 structure. ([github.com](https://github.com/SynaWeave/SynaWeave-ce))
 
 ### ✅ 3.3 What D2 now proves
 

@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This document defines how repository authority, review posture, merge control, and protected-path policy work in SynaWave.
+This document defines how repository authority, review posture, merge control, and protected-path policy work in SynaWeave.
 
 ## Governance model
 

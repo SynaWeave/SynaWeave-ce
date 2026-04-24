@@ -1,6 +1,6 @@
 # Contributor License Agreement
 
-By contributing to SynaWave, you agree that:
+By contributing to SynaWeave, you agree that:
 
 - you have the right to submit the contribution
 - you grant the project the right to use, modify, and distribute your contribution under the project license

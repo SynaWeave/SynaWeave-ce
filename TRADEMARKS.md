@@ -2,7 +2,7 @@
 
 ## Brand terms
 
-- **SynaWave** is a working project name and may be used as a descriptive reference.
+- **SynaWeave** is a working project name and may be used as a descriptive reference.
 - use of the name in public-facing materials should be accurate and non-misleading.
 
 ## Trademark policy

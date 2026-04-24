@@ -1,6 +1,6 @@
 # AGENTS
 
-This repository is intentionally structured as a governed monorepo with strict boundaries.
+This repository is an intentionally overbuilt monorepo for a knowledge-weaving learning OS.
 
 ## Scope and intent
 
