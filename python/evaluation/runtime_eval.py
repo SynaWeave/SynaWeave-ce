@@ -31,7 +31,7 @@ import tempfile
 import uuid
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from python.common.runtime_store import RuntimeStore
 from python.common.runtime_time import utc_now_iso
@@ -123,6 +123,29 @@ def _portable_tracking_uri(tracking_uri: str) -> str:
 
 def _portable_artifact_ref(path: Path) -> str:
     return _portable_path_ref(path)
+
+
+def _required_str_attr(value: object, attr_name: str) -> str:
+    attr_value = getattr(value, attr_name, None)
+    if not isinstance(attr_value, str):
+        raise RuntimeError(f"MLflow object is missing string attribute '{attr_name}'")
+    return attr_value
+
+
+def _list_artifact_paths(client: object, run_id: str) -> list[str]:
+    list_artifacts = getattr(client, "list_artifacts", None)
+    if not callable(list_artifacts):
+        raise RuntimeError("MLflow client does not expose list_artifacts")
+
+    artifact_entries_obj = list_artifacts(run_id, path="runtime-eval")
+    if not isinstance(artifact_entries_obj, list):
+        raise RuntimeError("MLflow client returned non-list artifact entries")
+    artifact_entries = cast(list[object], artifact_entries_obj)
+
+    artifact_paths: list[str] = []
+    for artifact in artifact_entries:
+        artifact_paths.append(_required_str_attr(artifact, "path"))
+    return artifact_paths
 
 
 def _experiment_ledger_connection(tracking_uri: str) -> sqlite3.Connection:
@@ -404,12 +427,12 @@ def _write_mlflow_run(
                     artifact_location=artifact_location,
                 )
         else:
-            experiment_id = experiment.experiment_id
+            experiment_id = _required_str_attr(experiment, "experiment_id")
 
         run_id: str | None = None
-        with mlflow.start_run(experiment_id=experiment_id, run_name=run_name) as run:
-            run_id = run.info.run_id
-            mlflow.set_tags(
+        with mlflow.start_run(experiment_id=str(experiment_id), run_name=run_name) as run:
+            run_id = _required_str_attr(run.info, "run_id")
+            _ = mlflow.set_tags(
                 {
                     "proof_scope": "repo-local",
                     "proof_type": report["proofType"],
@@ -420,7 +443,7 @@ def _write_mlflow_run(
                     "hosted_mlflow_proven": "false",
                 }
             )
-            mlflow.log_params(
+            _ = mlflow.log_params(
                 {
                     "dataset_name": dataset["datasetName"],
                     "dataset_version": dataset["datasetVersion"],
@@ -429,7 +452,7 @@ def _write_mlflow_run(
                     "proof_type": report["proofType"],
                 }
             )
-            mlflow.log_metrics(
+            _ = mlflow.log_metrics(
                 _metric_bundle(
                     case_results,
                     metrics_snapshot,
@@ -450,20 +473,20 @@ def _write_mlflow_run(
                         **performance_snapshot,
                     },
                 }.items():
-                    (artifact_dir / file_name).write_text(
+                    _ = (artifact_dir / file_name).write_text(
                         json.dumps(payload, indent=2, sort_keys=True) + "\n",
                         encoding="utf-8",
                     )
 
-                mlflow.log_artifacts(str(artifact_dir), artifact_path="runtime-eval")
+                _ = mlflow.log_artifacts(str(artifact_dir), artifact_path="runtime-eval")
 
         if run_id is None:
             raise RuntimeError("MLflow run did not expose a run id")
 
         run_record = client.get_run(run_id)
-        artifact_files = [
-            artifact.path for artifact in client.list_artifacts(run_id, path="runtime-eval")
-        ]
+        artifact_files = _list_artifact_paths(client, run_id)
+        run_status = _required_str_attr(run_record.info, "status")
+        artifact_uri = _required_str_attr(run_record.info, "artifact_uri")
 
         return {
             "trackingUri": resolved_tracking_uri,
@@ -471,8 +494,8 @@ def _write_mlflow_run(
             "experimentId": experiment_id,
             "runId": run_id,
             "runName": run_name,
-            "runStatus": run_record.info.status,
-            "artifactUri": run_record.info.artifact_uri,
+            "runStatus": run_status,
+            "artifactUri": artifact_uri,
             "artifactFiles": artifact_files,
             "trackingBackend": "mlflow",
         }
