@@ -29,7 +29,7 @@ export const PLAYWRIGHT_API_BASE_URL =
 
 export async function prepareWebApiBase(page: Page) {
 	await page.addInitScript((apiBaseUrl: string) => {
-		localStorage.setItem("synawave.apiBaseUrl", apiBaseUrl);
+		localStorage.setItem("synaweave.apiBaseUrl", apiBaseUrl);
 	}, PLAYWRIGHT_API_BASE_URL);
 }
 
@@ -44,7 +44,7 @@ export async function prepareExtensionApiBase(page: Page) {
 				};
 			}
 		).chrome.storage.local.set({
-			"synawave.apiBaseUrl": apiBaseUrl,
+			"synaweave.apiBaseUrl": apiBaseUrl,
 		});
 	}, PLAYWRIGHT_API_BASE_URL);
 }
@@ -80,11 +80,13 @@ export async function readExtensionToken(page: Page) {
 			window as unknown as Window & {
 				chrome: {
 					storage: {
-						local: { get: (key: string) => Promise<Record<string, string>> };
+						local: {
+							get: (key: string | string[]) => Promise<Record<string, string>>;
+						};
 					};
 				};
 			}
-		).chrome.storage.local.get("synawave.extensionToken");
-		return data["synawave.extensionToken"] || null;
+		).chrome.storage.local.get(["synaweave.extensionToken"]);
+		return data["synaweave.extensionToken"] || null;
 	});
 }

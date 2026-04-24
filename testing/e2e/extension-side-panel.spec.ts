@@ -46,11 +46,11 @@ test("extension harness opens the browser-owned side panel and records runtime t
 
 		await page.goto(`chrome-extension://${extensionId}/options.html`);
 		await expect(
-			page.getByRole("button", { name: "Open SynaWave side panel" }),
+			page.getByRole("button", { name: "Open SynaWeave side panel" }),
 		).toBeVisible();
 
 		await page
-			.getByRole("button", { name: "Open SynaWave side panel" })
+			.getByRole("button", { name: "Open SynaWeave side panel" })
 			.click();
 		await expect(page.locator("#options-status-line")).toContainText(
 			"Side panel opened and reported popup runtime boot",
@@ -60,9 +60,9 @@ test("extension harness opens the browser-owned side panel and records runtime t
 			() =>
 				(
 					window as Window & {
-						__synawaveOptionsPanelEvidence?: PanelEvidence;
+						__synaweaveOptionsPanelEvidence?: PanelEvidence;
 					}
-				).__synawaveOptionsPanelEvidence,
+				).__synaweaveOptionsPanelEvidence,
 		);
 
 		expect(panelEvidence).toBeTruthy();
