@@ -1,5 +1,5 @@
 {
-	"name": "SynaWave Workspace Bridge",
+	"name": "SynaWeave Workspace Bridge",
 	"description": "Browser-side Sprint 1 bridge for shared identity, durable workspace actions, and digest proof.",
 	"version": "0.2.0",
 	"manifest_version": 3,
@@ -33,14 +33,14 @@
 				"default": "Ctrl+Shift+Y",
 				"mac": "Command+Shift+Y"
 			},
-			"description": "Open the SynaWave side panel"
+			"description": "Open the SynaWeave side panel"
 		},
 		"clip_selection": {
 			"suggested_key": {
 				"default": "Ctrl+Shift+K",
 				"mac": "Command+Shift+K"
 			},
-			"description": "Open the SynaWave side panel"
+			"description": "Open the SynaWeave side panel"
 		}
 	}
 }
