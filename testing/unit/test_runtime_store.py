@@ -116,6 +116,7 @@ class RuntimeStoreTest(unittest.TestCase):
         job = store.create_job(token, workspace_id, "idem-metrics-test")
         store.run_job(job["job_id"])
         snapshot = store.metrics_snapshot()
+        metrics_text = store.metrics_text()
 
         self.assertGreaterEqual(snapshot["auth_success_total"], 1)
         self.assertGreaterEqual(snapshot["workspace_action_total"], 1)
@@ -129,6 +130,8 @@ class RuntimeStoreTest(unittest.TestCase):
         self.assertEqual(snapshot["latest_job_id"], job["job_id"])
         self.assertEqual(snapshot["latest_job_trace_id"], f"trc_{job['job_id']}")
         self.assertNotIn("side_panel_open_timing_ms", snapshot)
+        self.assertIn("synaweave_auth_success_total", metrics_text)
+        self.assertNotIn("synawave_auth_success_total", metrics_text)
 
     def test_store_recovers_from_generated_malformed_runtime_database(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir_name:

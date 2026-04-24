@@ -1,7 +1,7 @@
 {
   "apiLatencyP95Ms": 94.9,
   "artifactVersion": "v1",
-  "generatedAt": "2026-04-18T16:11:01Z",
+  "generatedAt": "2026-04-23T00:02:03Z",
   "jobDurationP95Ms": 132.2,
   "proofType": "repo-local-performance-baseline",
   "sourceDataset": "v1",

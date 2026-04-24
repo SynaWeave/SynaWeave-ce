@@ -6,7 +6,7 @@
       "costMicros": 990,
       "digest": "capture: collector-routed traces require the compose stac | note: graph retrieval needs durable local evidence",
       "flow": "workspace_digest_v1",
-      "jobId": "job_ef3534bced47",
+      "jobId": "job_bed5aec251ea",
       "jobState": "succeeded",
       "label": "digest_density",
       "recentActionCount": 2,
@@ -17,7 +17,7 @@
       "costMicros": 486,
       "digest": "note: langfuse and hosted mlflow still need confirmati",
       "flow": "workspace_digest_v1",
-      "jobId": "job_746c03859b60",
+      "jobId": "job_1326ce302f89",
       "jobState": "succeeded",
       "label": "digest_density",
       "recentActionCount": 1,
@@ -26,30 +26,61 @@
   ],
   "datasetName": "runtime-digest-density",
   "datasetVersion": "v1",
-  "generatedAt": "2026-04-18T16:11:01Z",
+  "generatedAt": "2026-04-23T00:02:03Z",
   "localProof": {
     "confirmed": [
       "synthetic eval dataset is versioned under testing/evals/fixtures",
       "eval results are machine-readable and reproducible from python -m python.evaluation.runtime_eval",
       "performance evidence is derived from runtime telemetry emitted during the proof run",
       "AI-ready trace coverage is computed from durable runtime telemetry",
-      "one repo-local MLflow experiment run is written with metrics and eval artifacts from the same proof execution",
+      "one repo-local experiment run is written with metrics and eval artifacts from the same proof execution",
       "collector-routed trace export is proven separately through the compose-backed observability path"
     ],
     "notConfirmedHere": [
       "This harness does not by itself prove collector export, because it runs against an isolated runtime store",
       "Langfuse trace ingestion and online scores still require a reachable Langfuse deployment and credentials",
-      "This harness proves only repo-local MLflow tracking to the configured local URI, not hosted or team-shared MLflow durability",
+      "This harness proves repo-local experiment durability through either MLflow or the local tracking-ledger fallback, not team-shared operations",
       "GitHub rulesets required checks and hosted scanners still require GitHub-side confirmation"
     ]
   },
   "metricsSnapshot": {
     "ai_ready_trace_coverage": 1.0,
+    "api_error_total": 0,
+    "api_hotspots": [
+      {
+        "call_total": 1,
+        "error_total": 0,
+        "name": "POST /v1/jobs/workspace",
+        "p95_ms": 96.0
+      },
+      {
+        "call_total": 1,
+        "error_total": 0,
+        "name": "POST /v1/auth/link",
+        "p95_ms": 74.0
+      }
+    ],
     "api_latency_p95_ms": 94.9,
-    "auth_success_total": 2,
-    "captured_at": "2026-04-18T16:11:01Z",
+    "auth_success_total": 3,
+    "captured_at": "2026-04-23T00:02:03Z",
+    "degraded_event_total": 0,
+    "ingest_error_total": 0,
+    "ingest_hotspots": [
+      {
+        "call_total": 2,
+        "error_total": 0,
+        "name": "workspace_digest_v1",
+        "p95_ms": 132.2
+      }
+    ],
     "job_duration_p95_ms": 132.2,
+    "job_failure_total": 0,
     "job_success_total": 2,
+    "latest_job_id": "job_bed5aec251ea",
+    "latest_job_state": "succeeded",
+    "latest_job_trace_id": "trc_job_bed5aec251ea",
+    "runtime_readiness_error_total": 0,
+    "runtime_ready": 1,
     "trace_event_total": 6,
     "workspace_action_total": 3,
     "workspace_entry_timing_ms": 161.7
@@ -57,16 +88,17 @@
   "mlflow": {
     "artifactFiles": [
       "runtime-eval/dataset.json",
-      "runtime-eval/performance.json",
-      "runtime-eval/report.json"
+      "runtime-eval/report.json",
+      "runtime-eval/performance.json"
     ],
-    "artifactUri": "file:///Users/elijah/computing-local/SynaWave-ce/build/mlflow/artifacts/9e867d0fa40341deafed8d0b5e03bf73/artifacts",
-    "experimentId": "1",
-    "experimentName": "synawave-sprint1-runtime-eval-local",
-    "runId": "9e867d0fa40341deafed8d0b5e03bf73",
+    "artifactUri": "build/mlflow/artifacts/622d1886619b4fe19a855be2be12ba15/runtime-eval",
+    "experimentId": "exp-02a456c18080",
+    "experimentName": "synaweave-sprint1-runtime-eval-local",
+    "runId": "622d1886619b4fe19a855be2be12ba15",
     "runName": "runtime-digest-density-v1",
     "runStatus": "FINISHED",
-    "trackingUri": "http://127.0.0.1:5001"
+    "trackingBackend": "repo-local-ledger",
+    "trackingUri": "sqlite:///build/mlflow/mlflow.db"
   },
   "performanceSnapshot": {
     "apiLatencyP95Ms": 94.9,

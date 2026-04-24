@@ -1,5 +1,5 @@
 """  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-TL;DR  -->  own the first sqlite-backed runtime path for auth workspace jobs and telemetry
+TL;DR  -->  own the first DB-backed runtime path for auth workspace jobs and telemetry
 
 - Later Extension Points:
     --> swap the local sqlite proof store only when cloud-backed operational truth becomes durable
@@ -21,6 +21,7 @@ import json
 import os
 import sqlite3
 import statistics
+import time
 import uuid
 from contextlib import contextmanager
 from pathlib import Path
@@ -38,6 +39,9 @@ from python.common.runtime_paths import (
 )
 from python.common.runtime_time import utc_now_iso
 
+READ_RETRY_ATTEMPTS = 3
+READ_RETRY_SECONDS = 0.05
+
 
 class JobExecutionError(RuntimeError):
     def __init__(self, job_id: str, summary: str, error_detail: str) -> None:
@@ -54,9 +58,9 @@ def _dict_factory(cursor: sqlite3.Cursor, row: sqlite3.Row) -> dict[str, Any]:
 
 
 # ---------- connection context ----------
-# Keep sqlite connection setup centralized so API, ingest, and tests share one safe baseline.
+# Keep DB connection setup centralized so API, ingest, and tests share one safe baseline.
 def _configure_connection(connection: sqlite3.Connection) -> sqlite3.Connection:
-    connection.row_factory = _dict_factory
+    setattr(connection, "row_factory", _dict_factory)
     foreign_keys_cursor = connection.execute("pragma foreign_keys = on")
     foreign_keys_cursor.close()
     busy_timeout_cursor = connection.execute("pragma busy_timeout = 5000")
@@ -328,7 +332,7 @@ class RuntimeStore:
                         "(workspace_id, user_id, title, last_digest, updated_at) "
                         "values (?, ?, ?, ?, ?)"
                     ),
-                    (workspace_id, user_id, "SynaWave Workspace", "", created_at),
+                    (workspace_id, user_id, "SynaWeave Workspace", "", created_at),
                 )
                 current_user = connection.execute(
                     "select * from users where user_id = ?",
@@ -361,21 +365,26 @@ class RuntimeStore:
     # ---------- identity ----------
     # Keep identity lookup token-based so browser surfaces never need server-only lookup shortcuts.
     def _session_row_for_token(self, token: str) -> dict[str, Any]:
-        try:
-            with self._session() as connection:
-                session = connection.execute(
-                    "select * from sessions where token = ?",
-                    (token,),
-                ).fetchone()
-        except sqlite3.OperationalError as exc:
-            if "no such table" not in str(exc).lower():
-                raise
-            self._init_db()
-            with self._session() as connection:
-                session = connection.execute(
-                    "select * from sessions where token = ?",
-                    (token,),
-                ).fetchone()
+        session = None
+        for attempt in range(READ_RETRY_ATTEMPTS):
+            try:
+                with self._session() as connection:
+                    session = connection.execute(
+                        "select * from sessions where token = ?",
+                        (token,),
+                    ).fetchone()
+            except sqlite3.OperationalError as exc:
+                if "no such table" not in str(exc).lower():
+                    raise
+                self._init_db()
+                with self._session() as connection:
+                    session = connection.execute(
+                        "select * from sessions where token = ?",
+                        (token,),
+                    ).fetchone()
+            if session is not None or attempt == READ_RETRY_ATTEMPTS - 1:
+                break
+            time.sleep(READ_RETRY_SECONDS)
         if session is None:
             raise KeyError("unknown session token")
         return session
@@ -553,7 +562,7 @@ class RuntimeStore:
                     or existing["workspace_id"] != workspace["workspace_id"]
                 ):
                     raise PermissionError("job key already belongs to another workspace")
-                return existing
+                return dict(existing)
             connection.execute(
                 (
                     "insert into jobs "
@@ -574,10 +583,17 @@ class RuntimeStore:
                     0,
                 ),
             )
-        return self.job_view(job_id, user_id=user_id)
+            row = connection.execute(
+                "select * from jobs where job_id = ?",
+                (job_id,),
+            ).fetchone()
+            if row is None:
+                raise KeyError("unknown job")
+        return dict(row)
 
     def mark_job_failed(self, job_id: str, *, summary: str, error_detail: str) -> dict[str, Any]:
         finished_at = utc_now_iso()
+        row: dict[str, Any] | None = None
         with self._session() as connection:
             job = connection.execute(
                 "select * from jobs where job_id = ?",
@@ -592,6 +608,13 @@ class RuntimeStore:
                 ),
                 ("failed", summary, error_detail, finished_at, job_id),
             )
+            row_data = connection.execute(
+                "select * from jobs where job_id = ?",
+                (job_id,),
+            ).fetchone()
+            if row_data is None:
+                raise KeyError("unknown job")
+            row = dict(row_data)
         self.emit_telemetry(
             surface="ingest",
             name="workspace_digest_v1",
@@ -600,16 +623,23 @@ class RuntimeStore:
             trace_id=f"trc_{job_id}",
             detail=summary,
         )
-        return self.job_view(job_id)
+        if row is None:
+            raise KeyError("unknown job")
+        return row
 
     # ---------- job read ----------
     # Keep job reads separate so browser polling stays simple and consistent.
     def job_view(self, job_id: str, user_id: str | None = None) -> dict[str, Any]:
-        with self._session() as connection:
-            row = connection.execute(
-                "select * from jobs where job_id = ?",
-                (job_id,),
-            ).fetchone()
+        row = None
+        for attempt in range(READ_RETRY_ATTEMPTS):
+            with self._session() as connection:
+                row = connection.execute(
+                    "select * from jobs where job_id = ?",
+                    (job_id,),
+                ).fetchone()
+            if row is not None or attempt == READ_RETRY_ATTEMPTS - 1:
+                break
+            time.sleep(READ_RETRY_SECONDS)
         if row is None:
             raise KeyError("unknown job")
         if user_id is not None and row["user_id"] != user_id:
@@ -621,6 +651,7 @@ class RuntimeStore:
     def run_job(self, job_id: str) -> dict[str, Any]:
         failure: JobExecutionError | None = None
         eval_row: dict[str, Any] | None = None
+        row: dict[str, Any] | None = None
         summary = ""
         with self._session() as connection:
             job = connection.execute(
@@ -628,9 +659,19 @@ class RuntimeStore:
                 (job_id,),
             ).fetchone()
             if job is None:
+                connection.commit()
+                for _ in range(READ_RETRY_ATTEMPTS - 1):
+                    time.sleep(READ_RETRY_SECONDS)
+                    job = connection.execute(
+                        "select * from jobs where job_id = ?",
+                        (job_id,),
+                    ).fetchone()
+                    if job is not None:
+                        break
+            if job is None:
                 raise KeyError("unknown job")
             if job["state"] == "succeeded":
-                return job
+                return dict(job)
             retry_count = job["retry_count"] + 1 if job["state"] == "failed" else job["retry_count"]
             connection.execute(
                 (
@@ -681,6 +722,13 @@ class RuntimeStore:
                     ("failed", failure_summary, error_detail, finished_at, job_id),
                 )
                 failure = JobExecutionError(job_id, failure_summary, error_detail)
+            row_data = connection.execute(
+                "select * from jobs where job_id = ?",
+                (job_id,),
+            ).fetchone()
+            if row_data is None:
+                raise KeyError("unknown job")
+            row = dict(row_data)
         if failure is not None:
             self.emit_telemetry(
                 surface="ingest",
@@ -700,7 +748,9 @@ class RuntimeStore:
             cost_micros=0 if eval_row is None else eval_row["cost_micros"],
             detail=summary,
         )
-        return self.job_view(job_id)
+        if row is None:
+            raise KeyError("unknown job")
+        return row
 
     # ---------- digest generation ----------
     # Keep the first digest heuristic transparent so later AI upgrades have a baseline.
@@ -796,21 +846,21 @@ class RuntimeStore:
     def metrics_text(self) -> str:
         snapshot = self.metrics_snapshot()
         lines = [
-            f'synawave_auth_success_total {snapshot["auth_success_total"]}',
-            f'synawave_workspace_action_total {snapshot["workspace_action_total"]}',
-            f'synawave_job_success_total {snapshot["job_success_total"]}',
-            f'synawave_job_failure_total {snapshot["job_failure_total"]}',
-            f'synawave_degraded_event_total {snapshot["degraded_event_total"]}',
-            f'synawave_trace_event_total {snapshot["trace_event_total"]}',
-            f'synawave_api_latency_p95_ms {snapshot["api_latency_p95_ms"]}',
-            f'synawave_job_duration_p95_ms {snapshot["job_duration_p95_ms"]}',
-            f'synawave_workspace_entry_timing_ms {snapshot["workspace_entry_timing_ms"]}',
-            f'synawave_ai_ready_trace_coverage {snapshot["ai_ready_trace_coverage"]}',
-            f'synawave_api_error_total {snapshot["api_error_total"]}',
-            f'synawave_ingest_error_total {snapshot["ingest_error_total"]}',
-            f'synawave_runtime_ready {snapshot["runtime_ready"]}',
+            f'synaweave_auth_success_total {snapshot["auth_success_total"]}',
+            f'synaweave_workspace_action_total {snapshot["workspace_action_total"]}',
+            f'synaweave_job_success_total {snapshot["job_success_total"]}',
+            f'synaweave_job_failure_total {snapshot["job_failure_total"]}',
+            f'synaweave_degraded_event_total {snapshot["degraded_event_total"]}',
+            f'synaweave_trace_event_total {snapshot["trace_event_total"]}',
+            f'synaweave_api_latency_p95_ms {snapshot["api_latency_p95_ms"]}',
+            f'synaweave_job_duration_p95_ms {snapshot["job_duration_p95_ms"]}',
+            f'synaweave_workspace_entry_timing_ms {snapshot["workspace_entry_timing_ms"]}',
+            f'synaweave_ai_ready_trace_coverage {snapshot["ai_ready_trace_coverage"]}',
+            f'synaweave_api_error_total {snapshot["api_error_total"]}',
+            f'synaweave_ingest_error_total {snapshot["ingest_error_total"]}',
+            f'synaweave_runtime_ready {snapshot["runtime_ready"]}',
             (
-                "synawave_runtime_readiness_error_total "
+                "synaweave_runtime_readiness_error_total "
                 f'{snapshot["runtime_readiness_error_total"]}'
             ),
         ]

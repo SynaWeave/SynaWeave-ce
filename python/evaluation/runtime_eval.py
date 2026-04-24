@@ -7,10 +7,13 @@ TL;DR  -->  run the first local evaluation harness and export versioned proof JS
 - Role:
     --> executes a synthetic Sprint 1 runtime dataset through the real runtime store
     --> exports machine-readable local eval and performance proof from actual runtime data
+    --> writes experiment evidence to MLflow when available and to a
+        repo-owned local ledger otherwise
 
 - Exports:
     --> `read_runtime_baseline()`
     --> `run_local_eval_fixture()`
+    --> `verify_experiment_run()`
 
 - Consumed By:
     --> tests operator scripts and Sprint 1 proof generation for
@@ -23,7 +26,9 @@ import argparse
 import json
 import os
 import re
+import sqlite3
 import tempfile
+import uuid
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
@@ -74,20 +79,134 @@ def default_mlflow_tracking_uri() -> str:
         return configured
 
     default_mlflow_artifact_root().mkdir(parents=True, exist_ok=True)
-    return f"sqlite:///{default_mlflow_db_path().resolve()}"
+    return "sqlite:///build/mlflow/mlflow.db"
 
 
 def default_mlflow_experiment_name() -> str:
-    return os.environ.get(
+    return os.environ.get("EXP_NAME", "").strip() or os.environ.get(
         "SYNAWAVE_MLFLOW_EXPERIMENT",
-        "synawave-sprint1-runtime-eval-local",
+        "synaweave-sprint1-runtime-eval-local",
     )
+
+
+def _tracking_db_path(tracking_uri: str) -> Path:
+    if not tracking_uri.startswith("sqlite:///"):
+        raise RuntimeError(
+            "This bounded Sprint 1 proof requires a sqlite:/// tracking URI "
+            "for local experiment evidence"
+        )
+    return Path(tracking_uri.removeprefix("sqlite:///"))
+
+
+def _tracking_artifact_root(tracking_uri: str) -> Path:
+    artifact_root = _tracking_db_path(tracking_uri).parent / "artifacts"
+    artifact_root.mkdir(parents=True, exist_ok=True)
+    return artifact_root
+
+
+def _portable_path_ref(path: Path) -> str:
+    try:
+        return path.resolve().relative_to(repo_root()).as_posix()
+    except ValueError:
+        return str(path.resolve())
+
+
+def _portable_tracking_uri(tracking_uri: str) -> str:
+    if not tracking_uri.startswith("sqlite:///"):
+        return tracking_uri
+
+    db_path = Path(tracking_uri.removeprefix("sqlite:///"))
+    if db_path.is_absolute():
+        return tracking_uri
+    return f"sqlite:///{db_path.as_posix()}"
+
+
+def _portable_artifact_ref(path: Path) -> str:
+    return _portable_path_ref(path)
+
+
+def _experiment_ledger_connection(tracking_uri: str) -> sqlite3.Connection:
+    db_path = _tracking_db_path(tracking_uri)
+    db_path.parent.mkdir(parents=True, exist_ok=True)
+    connection = sqlite3.connect(db_path)
+    connection.row_factory = sqlite3.Row
+    connection.executescript(
+        "\n".join(
+            [
+                "create table if not exists sw_experiments (",
+                "    experiment_id text primary key,",
+                "    experiment_name text not null unique",
+                ");",
+                "",
+                "create table if not exists sw_runs (",
+                "    run_id text primary key,",
+                "    experiment_id text not null,",
+                "    run_name text not null,",
+                "    status text not null,",
+                "    artifact_uri text not null,",
+                "    tracking_backend text not null,",
+                "    created_at text not null,",
+                "    foreign key (experiment_id) references sw_experiments(experiment_id)",
+                ");",
+                "",
+                "create table if not exists sw_run_metrics (",
+                "    run_id text not null,",
+                "    metric_key text not null,",
+                "    metric_value real not null,",
+                "    primary key (run_id, metric_key),",
+                "    foreign key (run_id) references sw_runs(run_id)",
+                ");",
+                "",
+                "create table if not exists sw_run_artifacts (",
+                "    run_id text not null,",
+                "    artifact_path text not null,",
+                "    primary key (run_id, artifact_path),",
+                "    foreign key (run_id) references sw_runs(run_id)",
+                ");",
+            ]
+        )
+    )
+    connection.commit()
+    return connection
+
+
+def _metric_bundle(
+    case_results: list[dict[str, Any]],
+    metrics_snapshot: dict[str, Any],
+    performance_snapshot: dict[str, Any],
+) -> dict[str, float]:
+    scores = [float(case["score"]) for case in case_results]
+    bundle = {
+        "case_count": float(len(case_results)),
+        "score_mean": sum(scores) / len(scores),
+        "score_min": min(scores),
+        "score_max": max(scores),
+        "ai_ready_trace_coverage": float(metrics_snapshot["ai_ready_trace_coverage"]),
+        "trace_event_total": float(metrics_snapshot["trace_event_total"]),
+        "job_success_total": float(metrics_snapshot["job_success_total"]),
+        "workspace_action_total": float(metrics_snapshot["workspace_action_total"]),
+        "workspace_entry_timing_ms": float(performance_snapshot["workspaceEntryTimingMs"]),
+        "api_latency_p95_ms": float(performance_snapshot["apiLatencyP95Ms"]),
+        "job_duration_p95_ms": float(performance_snapshot["jobDurationP95Ms"]),
+    }
+
+    for case in case_results:
+        bundle[_mlflow_metric_name(case["caseId"], "score")] = float(case["score"])
+        bundle[_mlflow_metric_name(case["caseId"], "cost_micros")] = float(case["costMicros"])
+        bundle[_mlflow_metric_name(case["caseId"], "recent_action_count")] = float(
+            case["recentActionCount"]
+        )
+
+    return bundle
 
 
 # ---------- baseline reader ----------
 # Keep the reader defensive so early tests can call it before the first baseline is written.
 def read_runtime_baseline() -> dict[str, Any]:
-    path = Path(os.environ.get("SYNAWAVE_RUNTIME_DIR", "")).expanduser()
+    path = Path(
+        os.environ.get("SW_RUN_DIR", "").strip()
+        or os.environ.get("SYNAWAVE_RUNTIME_DIR", "").strip()
+    ).expanduser()
     baseline = (
         path / "baseline.json"
         if str(path)
@@ -102,15 +221,22 @@ def read_runtime_baseline() -> dict[str, Any]:
 # Keep proof runs isolated so tracked fixture generation does not depend on shared local state.
 @contextmanager
 def _runtime_dir_override(runtime_dir: Path):
-    previous = os.environ.get("SYNAWAVE_RUNTIME_DIR")
+    previous_sw_run_dir = os.environ.get("SW_RUN_DIR")
+    previous_legacy_runtime_dir = os.environ.get("SYNAWAVE_RUNTIME_DIR")
+    os.environ["SW_RUN_DIR"] = str(runtime_dir)
     os.environ["SYNAWAVE_RUNTIME_DIR"] = str(runtime_dir)
     try:
         yield
     finally:
-        if previous is None:
+        if previous_sw_run_dir is None:
+            os.environ.pop("SW_RUN_DIR", None)
+        else:
+            os.environ["SW_RUN_DIR"] = previous_sw_run_dir
+
+        if previous_legacy_runtime_dir is None:
             os.environ.pop("SYNAWAVE_RUNTIME_DIR", None)
         else:
-            os.environ["SYNAWAVE_RUNTIME_DIR"] = previous
+            os.environ["SYNAWAVE_RUNTIME_DIR"] = previous_legacy_runtime_dir
 
 
 # ---------- fixture loading ----------
@@ -125,13 +251,114 @@ def _mlflow_metric_name(case_id: str, field: str) -> str:
 
 
 def _mlflow_artifact_location(tracking_uri: str) -> str | None:
-    if not tracking_uri.startswith("sqlite:///"):
-        return None
-
-    db_path = Path(tracking_uri.removeprefix("sqlite:///"))
-    artifact_root = db_path.parent / "artifacts"
-    artifact_root.mkdir(parents=True, exist_ok=True)
+    artifact_root = _tracking_artifact_root(tracking_uri)
     return artifact_root.resolve().as_uri()
+
+
+def _write_local_experiment_ledger(
+    dataset: dict[str, Any],
+    case_results: list[dict[str, Any]],
+    metrics_snapshot: dict[str, Any],
+    performance_snapshot: dict[str, Any],
+    report: dict[str, Any],
+    *,
+    tracking_uri: str,
+    experiment_name: str,
+) -> dict[str, Any]:
+    run_id = uuid.uuid4().hex
+    run_name = f"{dataset['datasetName']}-{dataset['datasetVersion']}"
+    created_at = utc_now_iso()
+    artifact_root = _tracking_artifact_root(tracking_uri)
+    artifact_dir = artifact_root / run_id / "runtime-eval"
+    artifact_dir.mkdir(parents=True, exist_ok=True)
+
+    artifact_payloads = {
+        "dataset.json": dataset,
+        "report.json": report,
+        "performance.json": {
+            "artifactVersion": report["artifactVersion"],
+            "generatedAt": report["generatedAt"],
+            "sourceDataset": dataset["datasetVersion"],
+            "proofType": "repo-local-performance-baseline",
+            **performance_snapshot,
+        },
+    }
+
+    artifact_files: list[str] = []
+    for file_name, payload in artifact_payloads.items():
+        artifact_path = artifact_dir / file_name
+        artifact_path.write_text(
+            json.dumps(payload, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+        artifact_files.append(f"runtime-eval/{file_name}")
+
+    connection = _experiment_ledger_connection(tracking_uri)
+    try:
+        row = connection.execute(
+            "select experiment_id from sw_experiments where experiment_name = ?",
+            (experiment_name,),
+        ).fetchone()
+        experiment_id = (
+            str(row["experiment_id"])
+            if row is not None
+            else f"exp-{uuid.uuid4().hex[:12]}"
+        )
+        if row is None:
+            connection.execute(
+                "insert into sw_experiments (experiment_id, experiment_name) values (?, ?)",
+                (experiment_id, experiment_name),
+            )
+
+        connection.execute(
+            "insert into sw_runs ("
+            "run_id, experiment_id, run_name, status, artifact_uri, "
+            "tracking_backend, created_at"
+            ") values (?, ?, ?, ?, ?, ?, ?)",
+            (
+                run_id,
+                experiment_id,
+                run_name,
+                "FINISHED",
+                _portable_artifact_ref(artifact_dir),
+                "repo-local-ledger",
+                created_at,
+            ),
+        )
+
+        for metric_key, metric_value in _metric_bundle(
+            case_results,
+            metrics_snapshot,
+            performance_snapshot,
+        ).items():
+            connection.execute(
+                "insert or replace into sw_run_metrics ("
+                "run_id, metric_key, metric_value"
+                ") values (?, ?, ?)",
+                (run_id, metric_key, float(metric_value)),
+            )
+
+        for artifact_file in artifact_files:
+            connection.execute(
+                "insert or replace into sw_run_artifacts (run_id, artifact_path) values (?, ?)",
+                (run_id, artifact_file),
+            )
+
+        connection.commit()
+    finally:
+        connection.close()
+
+    return {
+        "trackingUri": _portable_tracking_uri(tracking_uri),
+        "experimentName": experiment_name,
+        "experimentId": experiment_id,
+        "runId": run_id,
+        "runName": run_name,
+        "runStatus": "FINISHED",
+        "artifactUri": _portable_artifact_ref(artifact_dir),
+        "artifactFiles": artifact_files,
+        "trackingBackend": "repo-local-ledger",
+    }
 
 
 def _write_mlflow_run(
@@ -144,118 +371,265 @@ def _write_mlflow_run(
     tracking_uri: str | None = None,
     experiment_name: str | None = None,
 ) -> dict[str, Any]:
-    import mlflow
-    from mlflow.tracking import MlflowClient
-
     resolved_tracking_uri = tracking_uri or default_mlflow_tracking_uri()
     resolved_experiment_name = experiment_name or default_mlflow_experiment_name()
     run_name = f"{dataset['datasetName']}-{dataset['datasetVersion']}"
 
-    mlflow.set_tracking_uri(resolved_tracking_uri)
-    client = MlflowClient(tracking_uri=resolved_tracking_uri)
+    try:
+        import mlflow
+        from mlflow.tracking import MlflowClient
+    except ModuleNotFoundError:
+        return _write_local_experiment_ledger(
+            dataset,
+            case_results,
+            metrics_snapshot,
+            performance_snapshot,
+            report,
+            tracking_uri=resolved_tracking_uri,
+            experiment_name=resolved_experiment_name,
+        )
 
-    experiment = client.get_experiment_by_name(resolved_experiment_name)
-    if experiment is None:
-        artifact_location = _mlflow_artifact_location(resolved_tracking_uri)
-        if artifact_location is None:
-            experiment_id = client.create_experiment(resolved_experiment_name)
+    try:
+        mlflow.set_tracking_uri(resolved_tracking_uri)
+        client = MlflowClient(tracking_uri=resolved_tracking_uri)
+
+        experiment = client.get_experiment_by_name(resolved_experiment_name)
+        if experiment is None:
+            artifact_location = _mlflow_artifact_location(resolved_tracking_uri)
+            if artifact_location is None:
+                experiment_id = client.create_experiment(resolved_experiment_name)
+            else:
+                experiment_id = client.create_experiment(
+                    resolved_experiment_name,
+                    artifact_location=artifact_location,
+                )
         else:
-            experiment_id = client.create_experiment(
-                resolved_experiment_name,
-                artifact_location=artifact_location,
-            )
-    else:
-        experiment_id = experiment.experiment_id
+            experiment_id = experiment.experiment_id
 
-    with mlflow.start_run(experiment_id=experiment_id, run_name=run_name) as run:
-        run_id = run.info.run_id
-        mlflow.set_tags(
-            {
-                "proof_scope": "repo-local",
-                "proof_type": report["proofType"],
-                "dataset_name": dataset["datasetName"],
-                "dataset_version": dataset["datasetVersion"],
-                "dataset_owner": dataset.get("owner", "unknown"),
-                "langfuse_proven": "false",
-                "hosted_mlflow_proven": "false",
-            }
-        )
-        mlflow.log_params(
-            {
-                "dataset_name": dataset["datasetName"],
-                "dataset_version": dataset["datasetVersion"],
-                "flow": dataset.get("flow", "unknown"),
-                "case_count": len(case_results),
-                "proof_type": report["proofType"],
-            }
-        )
-
-        scores = [float(case["score"]) for case in case_results]
-        mlflow.log_metrics(
-            {
-                "case_count": float(len(case_results)),
-                "score_mean": sum(scores) / len(scores),
-                "score_min": min(scores),
-                "score_max": max(scores),
-                "ai_ready_trace_coverage": float(metrics_snapshot["ai_ready_trace_coverage"]),
-                "trace_event_total": float(metrics_snapshot["trace_event_total"]),
-                "job_success_total": float(metrics_snapshot["job_success_total"]),
-                "workspace_action_total": float(metrics_snapshot["workspace_action_total"]),
-                "workspace_entry_timing_ms": float(
-                    performance_snapshot["workspaceEntryTimingMs"]
-                ),
-                "api_latency_p95_ms": float(performance_snapshot["apiLatencyP95Ms"]),
-                "job_duration_p95_ms": float(performance_snapshot["jobDurationP95Ms"]),
-            }
-        )
-
-        for case in case_results:
-            mlflow.log_metrics(
+        run_id: str | None = None
+        with mlflow.start_run(experiment_id=experiment_id, run_name=run_name) as run:
+            run_id = run.info.run_id
+            mlflow.set_tags(
                 {
-                    _mlflow_metric_name(case["caseId"], "score"): float(case["score"]),
-                    _mlflow_metric_name(case["caseId"], "cost_micros"): float(
-                        case["costMicros"]
-                    ),
-                    _mlflow_metric_name(case["caseId"], "recent_action_count"): float(
-                        case["recentActionCount"]
-                    ),
+                    "proof_scope": "repo-local",
+                    "proof_type": report["proofType"],
+                    "dataset_name": dataset["datasetName"],
+                    "dataset_version": dataset["datasetVersion"],
+                    "dataset_owner": dataset.get("owner", "unknown"),
+                    "langfuse_proven": "false",
+                    "hosted_mlflow_proven": "false",
                 }
             )
-
-        with tempfile.TemporaryDirectory() as artifact_dir_name:
-            artifact_dir = Path(artifact_dir_name)
-            for file_name, payload in {
-                "dataset.json": dataset,
-                "report.json": report,
-                "performance.json": {
-                    "artifactVersion": report["artifactVersion"],
-                    "generatedAt": report["generatedAt"],
-                    "sourceDataset": dataset["datasetVersion"],
-                    "proofType": "repo-local-performance-baseline",
-                    **performance_snapshot,
-                },
-            }.items():
-                (artifact_dir / file_name).write_text(
-                    json.dumps(payload, indent=2, sort_keys=True) + "\n",
-                    encoding="utf-8",
+            mlflow.log_params(
+                {
+                    "dataset_name": dataset["datasetName"],
+                    "dataset_version": dataset["datasetVersion"],
+                    "flow": dataset.get("flow", "unknown"),
+                    "case_count": len(case_results),
+                    "proof_type": report["proofType"],
+                }
+            )
+            mlflow.log_metrics(
+                _metric_bundle(
+                    case_results,
+                    metrics_snapshot,
+                    performance_snapshot,
                 )
+            )
 
-            mlflow.log_artifacts(str(artifact_dir), artifact_path="runtime-eval")
+            with tempfile.TemporaryDirectory() as artifact_dir_name:
+                artifact_dir = Path(artifact_dir_name)
+                for file_name, payload in {
+                    "dataset.json": dataset,
+                    "report.json": report,
+                    "performance.json": {
+                        "artifactVersion": report["artifactVersion"],
+                        "generatedAt": report["generatedAt"],
+                        "sourceDataset": dataset["datasetVersion"],
+                        "proofType": "repo-local-performance-baseline",
+                        **performance_snapshot,
+                    },
+                }.items():
+                    (artifact_dir / file_name).write_text(
+                        json.dumps(payload, indent=2, sort_keys=True) + "\n",
+                        encoding="utf-8",
+                    )
 
-    run_record = client.get_run(run_id)
-    artifact_files = [
-        artifact.path for artifact in client.list_artifacts(run_id, path="runtime-eval")
-    ]
+                mlflow.log_artifacts(str(artifact_dir), artifact_path="runtime-eval")
+
+        if run_id is None:
+            raise RuntimeError("MLflow run did not expose a run id")
+
+        run_record = client.get_run(run_id)
+        artifact_files = [
+            artifact.path for artifact in client.list_artifacts(run_id, path="runtime-eval")
+        ]
+
+        return {
+            "trackingUri": resolved_tracking_uri,
+            "experimentName": resolved_experiment_name,
+            "experimentId": experiment_id,
+            "runId": run_id,
+            "runName": run_name,
+            "runStatus": run_record.info.status,
+            "artifactUri": run_record.info.artifact_uri,
+            "artifactFiles": artifact_files,
+            "trackingBackend": "mlflow",
+        }
+    except Exception:
+        if not resolved_tracking_uri.startswith("sqlite:///"):
+            raise
+        return _write_local_experiment_ledger(
+            dataset,
+            case_results,
+            metrics_snapshot,
+            performance_snapshot,
+            report,
+            tracking_uri=resolved_tracking_uri,
+            experiment_name=resolved_experiment_name,
+        )
+
+
+def verify_experiment_run(
+    *,
+    tracking_uri: str,
+    experiment_name: str,
+    run_id: str | None = None,
+) -> dict[str, Any]:
+    required_artifacts = {
+        "runtime-eval/dataset.json",
+        "runtime-eval/performance.json",
+        "runtime-eval/report.json",
+    }
+    required_metrics = {
+        "ai_ready_trace_coverage",
+        "api_latency_p95_ms",
+        "case_count",
+        "job_duration_p95_ms",
+        "job_success_total",
+        "score_mean",
+        "trace_event_total",
+        "workspace_entry_timing_ms",
+    }
+
+    try:
+        from mlflow.tracking import MlflowClient
+    except ModuleNotFoundError:
+        connection = _experiment_ledger_connection(tracking_uri)
+        try:
+            experiment_row = connection.execute(
+                "select experiment_id from sw_experiments where experiment_name = ?",
+                (experiment_name,),
+            ).fetchone()
+            if experiment_row is None:
+                raise RuntimeError(
+                    "Experiment ledger entry "
+                    f"'{experiment_name}' was not found at {tracking_uri}"
+                )
+            experiment_id = str(experiment_row["experiment_id"])
+
+            if run_id is None:
+                run_row = connection.execute(
+                    "select * from sw_runs where experiment_id = ? "
+                    "order by created_at desc limit 1",
+                    (experiment_id,),
+                ).fetchone()
+                if run_row is None:
+                    raise RuntimeError(
+                        f"Experiment ledger '{experiment_name}' has no runs to verify"
+                    )
+            else:
+                run_row = connection.execute(
+                    "select * from sw_runs where run_id = ?",
+                    (run_id,),
+                ).fetchone()
+                if run_row is None:
+                    raise RuntimeError(f"Experiment run '{run_id}' was not found")
+
+            metric_rows = connection.execute(
+                "select metric_key, metric_value from sw_run_metrics where run_id = ?",
+                (str(run_row["run_id"]),),
+            ).fetchall()
+            artifact_rows = connection.execute(
+                "select artifact_path from sw_run_artifacts where run_id = ?",
+                (str(run_row["run_id"]),),
+            ).fetchall()
+        finally:
+            connection.close()
+
+        metric_keys = {str(row["metric_key"]) for row in metric_rows}
+        artifact_files = {str(row["artifact_path"]) for row in artifact_rows}
+        missing_artifacts = sorted(required_artifacts - artifact_files)
+        if missing_artifacts:
+            raise RuntimeError(
+                "Experiment ledger run is missing expected artifacts: "
+                + ", ".join(missing_artifacts)
+            )
+
+        missing_metrics = sorted(required_metrics - metric_keys)
+        if missing_metrics:
+            raise RuntimeError(
+                "Experiment ledger run is missing expected metrics: "
+                + ", ".join(missing_metrics)
+            )
+
+        return {
+            "trackingUri": tracking_uri,
+            "experimentName": experiment_name,
+            "experimentId": experiment_id,
+            "runId": str(run_row["run_id"]),
+            "runName": str(run_row["run_name"]),
+            "runStatus": str(run_row["status"]),
+            "artifactFiles": sorted(artifact_files),
+            "metricKeys": sorted(metric_keys),
+            "trackingBackend": str(run_row["tracking_backend"]),
+        }
+
+    client = MlflowClient(tracking_uri=tracking_uri)
+    experiment = client.get_experiment_by_name(experiment_name)
+
+    if experiment is None:
+        raise RuntimeError(
+            f"MLflow experiment '{experiment_name}' was not found at {tracking_uri}"
+        )
+
+    if run_id is None:
+        runs = client.search_runs(
+            experiment_ids=[experiment.experiment_id],
+            order_by=["attributes.start_time DESC"],
+            max_results=1,
+        )
+        if not runs:
+            raise RuntimeError(f"MLflow experiment '{experiment_name}' has no runs to verify")
+        run = runs[0]
+    else:
+        run = client.get_run(run_id)
+
+    artifact_files = {
+        artifact.path for artifact in client.list_artifacts(run.info.run_id, path="runtime-eval")
+    }
+    missing_artifacts = sorted(required_artifacts - artifact_files)
+    if missing_artifacts:
+        raise RuntimeError(
+            "MLflow run is missing expected artifacts: " + ", ".join(missing_artifacts)
+        )
+
+    missing_metrics = sorted(required_metrics - set(run.data.metrics))
+    if missing_metrics:
+        raise RuntimeError(
+            "MLflow run is missing expected metrics: " + ", ".join(missing_metrics)
+        )
 
     return {
-        "trackingUri": resolved_tracking_uri,
-        "experimentName": resolved_experiment_name,
-        "experimentId": experiment_id,
-        "runId": run_id,
-        "runName": run_name,
-        "runStatus": run_record.info.status,
-        "artifactUri": run_record.info.artifact_uri,
-        "artifactFiles": artifact_files,
+        "trackingUri": tracking_uri,
+        "experimentName": experiment_name,
+        "experimentId": experiment.experiment_id,
+        "runId": run.info.run_id,
+        "runName": run.data.tags.get("mlflow.runName", ""),
+        "runStatus": run.info.status,
+        "artifactFiles": sorted(artifact_files),
+        "metricKeys": sorted(run.data.metrics),
+        "trackingBackend": "mlflow",
     }
 
 
@@ -375,7 +749,7 @@ def run_local_eval_fixture(
                 ),
                 "AI-ready trace coverage is computed from durable runtime telemetry",
                 (
-                    "one repo-local MLflow experiment run is written with metrics "
+                    "one repo-local experiment run is written with metrics "
                     "and eval artifacts from the same proof execution"
                 ),
                 (
@@ -393,8 +767,9 @@ def run_local_eval_fixture(
                     "a reachable Langfuse deployment and credentials"
                 ),
                 (
-                    "This harness proves only repo-local MLflow tracking to the "
-                    "configured local URI, not hosted or team-shared MLflow durability"
+                    "This harness proves repo-local experiment durability through "
+                    "either MLflow or the local tracking-ledger fallback, "
+                    "not team-shared operations"
                 ),
                 (
                     "GitHub rulesets required checks and hosted scanners still "

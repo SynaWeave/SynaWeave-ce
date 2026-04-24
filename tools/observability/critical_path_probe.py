@@ -77,7 +77,7 @@ def wait_for_collector_evidence(trace_id: str, export_path: Path, timeout_second
     while time.time() - started_at <= timeout_seconds:
         current_text = export_path.read_text(encoding="utf-8") if export_path.exists() else ""
         delta = current_text[len(original_text) :]
-        if trace_id in delta and "synawave-api" in delta and "synawave-ingest" in delta:
+        if trace_id in delta and "sw-api" in delta and "sw-ingest" in delta:
             return delta
         time.sleep(0.5)
     raise RuntimeError(f"collector trace evidence for {trace_id} did not appear in {export_path}")
@@ -181,12 +181,12 @@ def main() -> int:
         args.timeout_seconds,
     )
     required_metrics = [
-        "synawave_api_latency_p95_ms",
-        "synawave_job_duration_p95_ms",
-        "synawave_ai_ready_trace_coverage",
-        "synawave_job_failure_total",
-        "synawave_runtime_ready",
-        "synawave_trace_event_total",
+        "synaweave_api_latency_p95_ms",
+        "synaweave_job_duration_p95_ms",
+        "synaweave_ai_ready_trace_coverage",
+        "synaweave_job_failure_total",
+        "synaweave_runtime_ready",
+        "synaweave_trace_event_total",
     ]
     missing_metrics = [name for name in required_metrics if name not in metrics.text]
     if missing_metrics:

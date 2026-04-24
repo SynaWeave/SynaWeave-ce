@@ -34,11 +34,11 @@ def default_langfuse_base_url() -> str:
 
 
 def default_langfuse_public_key() -> str:
-    return os.environ.get("LANGFUSE_PUBLIC_KEY", "synawave-local-public-key")
+    return os.environ.get("LANGFUSE_PUBLIC_KEY", "synaweave-local-public-key")
 
 
 def default_langfuse_secret_key() -> str:
-    return os.environ.get("LANGFUSE_SECRET_KEY", "synawave-local-secret-key")
+    return os.environ.get("LANGFUSE_SECRET_KEY", "synaweave-local-secret-key")
 
 
 def default_langfuse_output_path() -> Path:
@@ -52,7 +52,13 @@ def default_langfuse_output_path() -> Path:
 
 
 def _new_langfuse_client(*, base_url: str, public_key: str, secret_key: str):
-    from langfuse import Langfuse
+    try:
+        from langfuse import Langfuse
+    except ModuleNotFoundError as exc:
+        raise RuntimeError(
+            "Langfuse SDK is not installed. Install the runtime extras or "
+            "pass a client_factory for bounded local proof runs."
+        ) from exc
 
     return Langfuse(
         public_key=public_key,

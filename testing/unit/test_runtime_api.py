@@ -73,7 +73,7 @@ class RuntimeApiTest(unittest.TestCase):
 
         metrics = client.get("/metrics")
         self.assertEqual(metrics.status_code, 200)
-        self.assertIn("synawave_auth_success_total", metrics.text)
+        self.assertIn("synaweave_auth_success_total", metrics.text)
 
     def test_job_route_rejects_foreign_workspace(self) -> None:
         first = client.post(
@@ -280,7 +280,7 @@ class RuntimeApiTest(unittest.TestCase):
     def test_auth_bootstrap_rejects_non_loopback_host(
         self,
     ) -> None:
-        guarded_client = TestClient(app, base_url="https://api.synawave.example")
+        guarded_client = TestClient(app, base_url="https://api.synaweave.example")
 
         with patch("apps.api.main.LOCAL_PROOF_ONLY_AUTH", True):
             response = guarded_client.post(
