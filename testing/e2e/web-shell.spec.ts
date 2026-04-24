@@ -134,9 +134,9 @@ test("web shell signs in writes a durable action and runs a digest", async ({
 
 		(
 			globalThis as typeof globalThis & {
-				__synawaveWebVitals?: BrowserWebVitalsState;
+				__synaweaveWebVitals?: BrowserWebVitalsState;
 			}
-		).__synawaveWebVitals = vitalsState;
+		).__synaweaveWebVitals = vitalsState;
 	});
 
 	await prepareWebApiBase(page);
@@ -153,13 +153,15 @@ test("web shell signs in writes a durable action and runs a digest", async ({
 	});
 
 	await expect(
-		page.getByRole("heading", { name: "SynaWave Workspace" }),
+		page.getByRole("heading", { name: "SynaWeave Workspace" }),
 	).toBeVisible();
 	await page.getByLabel("Email").fill(email);
 	const signInStartedAt = await page.evaluate(() => performance.now());
 	await page.getByRole("button", { name: "Start workspace session" }).click();
 
-	await expect(page.getByRole("heading", { name: "Workspace" })).toBeVisible();
+	await expect(
+		page.getByRole("heading", { level: 2, name: "Workspace" }),
+	).toBeVisible();
 	const workspaceReadyAt = await page.evaluate(() => performance.now());
 	await expect(page.locator("#identity-email")).toHaveText(email);
 	await expect(page.locator("#bridge-code")).not.toHaveText("—");
@@ -189,9 +191,9 @@ test("web shell signs in writes a durable action and runs a digest", async ({
 		() =>
 			(
 				globalThis as typeof globalThis & {
-					__synawaveWebVitals?: WebVitalsEvidence;
+					__synaweaveWebVitals?: WebVitalsEvidence;
 				}
-			).__synawaveWebVitals,
+			).__synaweaveWebVitals,
 	);
 
 	const timing = {
@@ -252,7 +254,7 @@ test("web and extension resolve one live user workspace and bridge identity", as
 		await page.getByLabel("Email").fill(email);
 		await page.getByRole("button", { name: "Start workspace session" }).click();
 		await expect(
-			page.getByRole("heading", { name: "Workspace" }),
+			page.getByRole("heading", { level: 2, name: "Workspace" }),
 		).toBeVisible();
 		await expect(page.locator("#identity-email")).toHaveText(email);
 		await expect(page.locator("#bridge-code")).not.toHaveText("—");
@@ -263,7 +265,7 @@ test("web and extension resolve one live user workspace and bridge identity", as
 			.getByRole("button", { name: "Connect panel session" })
 			.click();
 		await expect(
-			extensionPage.getByRole("heading", { name: "Workspace" }),
+			extensionPage.getByRole("heading", { level: 2, name: "Workspace" }),
 		).toBeVisible();
 		await expect(extensionPage.locator("#ext-identity-email")).toHaveText(
 			email,

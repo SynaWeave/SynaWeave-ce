@@ -1,0 +1,13 @@
+{
+	"extends": "../../tsconfig.json",
+	"compilerOptions": {
+		"module": "ES2022",
+		"moduleResolution": "Bundler",
+		"noEmit": false,
+		"rootDir": ".",
+		"outDir": ".",
+		"types": []
+	},
+	"include": ["app.ts"],
+	"exclude": ["app.js"]
+}
