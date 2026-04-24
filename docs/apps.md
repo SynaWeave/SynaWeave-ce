@@ -48,8 +48,10 @@ The `apps/` folder contains these application boundaries:
 
 Each app must own one runtime concern only. If an app begins to own multiple unrelated concerns, the architecture should split it rather than let the boundary blur.
 
-In Deliverable 1, the reserved homes for web, API, ingest, MCP, ML, and evaluation are scaffold placeholders only.
-Ownership stays centralized in this document until later deliverables add runnable app internals.
+Sprint 1 no longer treats every reserved home as a placeholder. Extension, web, API, and ingest now participate in one bounded real runtime path, while MCP, ML, and eval remain reserved homes until their own runtime slices are activated.
+Ownership stays centralized in this document so later deliverables can deepen those boundaries without creating second owner docs.
+
+For the browser-client and web-client app classes, owned non-generated source files stay in `apps/` as TypeScript-first entrypoints, while compiled browser-ready artifacts stay generated under ignored `build/` output directories.
 
 ---
 
@@ -104,9 +106,9 @@ The browser extension is the thin MV3 client for in-context user workflows.
 - all cross-surface messages must be versionable and schema-validated
 
 ### 📚 Current target maturity
-Sprint 1 target: **scaffolded**  
-Sprint 2 target: **integrated**  
-Sprint 5 target: **production-ready**
+Sprint 1 target: **integrated**  
+Sprint 2 target: **production-ready**  
+Sprint 5 target: **hardened**
 
 ---
 
@@ -158,9 +160,9 @@ The web app is the authenticated control plane for the product.
 - web must be the canonical fallback surface for account recovery and session repair
 
 ### 📚 Current target maturity
-Sprint 1 target: **scaffolded**  
-Sprint 2 target: **integrated**  
-Sprint 5 target: **production-ready**
+Sprint 1 target: **integrated**  
+Sprint 2 target: **production-ready**  
+Sprint 5 target: **hardened**
 
 ---
 
@@ -212,9 +214,9 @@ The API is the first request-serving backend boundary.
 - request ID and version metadata are mandatory
 
 ### 📚 Current target maturity
-Sprint 1 target: **scaffolded**  
-Sprint 2 target: **integrated**  
-Sprint 5 target: **production-ready**
+Sprint 1 target: **integrated**  
+Sprint 2 target: **production-ready**  
+Sprint 5 target: **hardened**
 
 ---
 
@@ -256,9 +258,9 @@ The MCP app is the reusable tool surface for AI-facing interactions with the pla
 - all tool calls must be observable and testable
 
 ### 📚 Current target maturity
-Sprint 1 target: **scaffolded**  
-Sprint 4 target: **integrated**  
-Sprint 5 target: **production-ready**
+Sprint 1 target: **integrated**  
+Sprint 2 target: **production-ready**  
+Sprint 5 target: **hardened**
 
 ---
 

@@ -89,6 +89,7 @@ Current status: **integrated**
 Operational notes:
 
 * `apps/web` now provides a bootable static control-plane shell
+* `apps/web/app.ts`, `index.html`, and `styles.css` remain the owned web sources while local dev plus browser verification build the served artifact under ignored `build/web`
 * the web shell signs in, writes one durable action, runs the digest job, and reloads workspace truth
 
 ### ⚙️ API
@@ -156,10 +157,10 @@ Operational notes:
 * local git hooks exist under `tools/hooks/` and can be installed manually with `bun run hooks:install` for each clone
 * after the one-time `bun run hooks:install` wrapper install, the installed `.git/hooks/*` files delegate to `tools/hooks/*`, so content updates to existing repo hook files are picked up automatically without copying stale hook bodies forward
 * rerunning `bun run hooks:install` is only needed when repo hook filenames are added, removed, or renamed, or when local wrappers are missing or damaged for that clone; that reinstall also removes stale repo-managed hook names from older clones, including legacy copied hook bodies that predate the wrapper upgrade, without touching unrelated local custom hooks
-* local environment sync is tracked by a git-local stamp under `.git/synawave/environment-sync.json`
+* local environment sync is tracked by a git-local stamp under `.git/sw/env-sync.json`
 * `post-checkout`, `post-merge`, and `post-rewrite` auto-run environment sync when `package.json`, `bun.lock`, or `requirements-dev.txt` change; hook-triggered Python sync prefers `.venv/bin/python3` when the repo owns it and otherwise falls back to the system `python3 -m pip` command automatically
 * Git does not provide a pre-pull hook here; the automatic pull-like sync behavior comes from those existing post-checkout, post-merge, and post-rewrite hooks after branch-changing operations complete
-* `pre-commit` warns when the local environment stamp is stale before staged Betterleaks and protected verification run, while `pre-push` still runs tracked Betterleaks first, then retries automatic environment sync, then blocks if local tooling still remains incomplete before the push-safe verification lane runs; only the default `git push` hook presentation is compact and phase-labeled, while `bun run verify` itself remains the full local verification lane and the raw pre-push hook logs stay available through either `bun run prepush:full` or `SYNAWAVE_PRE_PUSH_OUTPUT=full git push`
+* `pre-commit` warns when the local environment stamp is stale before staged Betterleaks and protected verification run, while `pre-push` still runs tracked Betterleaks first, then retries automatic environment sync, then blocks if local tooling still remains incomplete before the push-safe verification lane runs; only the default `git push` hook presentation is compact and phase-labeled, while `bun run verify` itself remains the full local verification lane and the raw pre-push hook logs stay available through either `bun run prepush:full` or `SW_PRE_PUSH_OUTPUT=full git push` while the legacy `SYNAWAVE_PRE_PUSH_OUTPUT=full` alias still works
 * short root aliases exist for common local commands, including `bun run api`, `bun run web`, `bun run ext`, `bun run browser:install`, `bun run check`, `bun run hooks`, and `bun run sync`
 * `python3 -m tools.verify.main` is the repo-contained proof point for the D1 control baseline, so this section should not stay at **scaffolded** once those controls are aligned and passing locally
 * the hosted `repo-verify` workflow runs `bun run verify:push` on pushes and `bun run verify` on pull requests, so push events stay on the push-safe lane while pull requests still run the full hosted verification stack including ADR validation
@@ -202,7 +203,7 @@ Current status: **integrated**
 Operational notes:
 
 * local sqlite stores users, sessions, workspaces, actions, jobs, evals, and telemetry
-* the durable local state lives under `build/runtime/synawave.sqlite3`
+* the durable local state lives under `build/runtime/synaweave.sqlite3`
 
 ### 🪣 Artifact storage
 
@@ -245,9 +246,9 @@ Operational notes:
 * `/metrics` and `/v1/baseline` now append durable measurement history under `build/runtime/measurements.jsonl`, including hotspot summaries, failure or degraded-state counts, and latest replay job linkage that the dashboard and alerts expose where the current architecture supports them
 * the reproducible critical-path probe lives at `python3 -m tools.observability.critical_path_probe` and requires fresh replay-linked backend-log plus measurement-history evidence for its own job
 * malformed or corrupt runtime sqlite state is quarantined under `build/runtime/quarantine/` with a recovery record in `build/runtime/runtime-db-recovery.jsonl` instead of being silently deleted
-* `python3 -m python.evaluation.runtime_eval` now writes repo-local telemetry-derived eval and performance artifacts plus one self-hosted local MLflow run, but not collector export by itself
-* `python3 -m python.evaluation.langfuse_local_proof` proves one self-hosted local Langfuse trace and score write plus query path from the Sprint 1 dataset
-* `python3 -m python.evaluation.verify_mlflow_run` verifies that the latest self-hosted local MLflow run exists with the expected metrics and artifacts
+* `python3 -m python.evaluation.runtime_eval` now writes repo-local telemetry-derived eval and performance artifacts plus one local experiment-tracking run through MLflow when installed or the repo-owned ledger fallback when it is not, but not collector export by itself
+* `python3 -m python.evaluation.langfuse_local_proof` proves one bounded Langfuse trace and score write plus query path from the Sprint 1 dataset when the SDK and a reachable backend are available
+* `python3 -m python.evaluation.verify_mlflow_run` verifies that the latest local experiment run exists with the expected metrics and artifacts across either backend mode
 * managed Langfuse operations, managed or team-shared MLflow durability, and fuller browser-native observability proof remain later follow-on work rather than current runtime truth
 * critical-path observability claims are only durable when the branch records them through versioned dashboards or alerts, machine-readable proof artifacts, or replayable local stores
 
@@ -453,5 +454,5 @@ bun run prepush:full
 ```
 
 ```bash
-SYNAWAVE_PRE_PUSH_OUTPUT=full git push
+SW_PRE_PUSH_OUTPUT=full git push
 ```

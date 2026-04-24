@@ -9,7 +9,7 @@
 #   --> auto-initializes one local-only project so the repo can prove real trace and score writes
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-name: synawave-langfuse-local
+name: synaweave-langfuse-local
 
 services:
   langfuse-web:
@@ -29,9 +29,9 @@ services:
     environment:
       &langfuse_environment
       NEXTAUTH_URL: ${LANGFUSE_LOCAL_NEXTAUTH_URL:-http://127.0.0.1:3030}
-      NEXTAUTH_SECRET: ${LANGFUSE_LOCAL_NEXTAUTH_SECRET:-synawave-local-nextauth}
+      NEXTAUTH_SECRET: ${LANGFUSE_LOCAL_NEXTAUTH_SECRET:-synaweave-local-nextauth}
       DATABASE_URL: ${LANGFUSE_LOCAL_DATABASE_URL:-postgresql://${LANGFUSE_LOCAL_POSTGRES_USER:-postgres}:${LANGFUSE_LOCAL_POSTGRES_PASSWORD:-postgres}@${LANGFUSE_LOCAL_POSTGRES_HOST:-postgres}:${LANGFUSE_LOCAL_POSTGRES_PORT:-5432}/${LANGFUSE_LOCAL_POSTGRES_DB:-postgres}}
-      SALT: ${LANGFUSE_LOCAL_SALT:-synawave-local-salt}
+      SALT: ${LANGFUSE_LOCAL_SALT:-synaweave-local-salt}
       ENCRYPTION_KEY: ${LANGFUSE_LOCAL_ENCRYPTION_KEY:-0000000000000000000000000000000000000000000000000000000000000000}
       TELEMETRY_ENABLED: ${LANGFUSE_LOCAL_TELEMETRY_ENABLED:-false}
       CLICKHOUSE_MIGRATION_URL: ${LANGFUSE_LOCAL_CLICKHOUSE_MIGRATION_URL:-clickhouse://clickhouse:9000}
@@ -55,17 +55,17 @@ services:
       LANGFUSE_S3_MEDIA_UPLOAD_PREFIX: ${LANGFUSE_LOCAL_MEDIA_PREFIX:-media/}
       REDIS_HOST: ${LANGFUSE_LOCAL_REDIS_HOST:-redis}
       REDIS_PORT: ${LANGFUSE_LOCAL_REDIS_PORT:-6379}
-      REDIS_AUTH: ${LANGFUSE_LOCAL_REDIS_AUTH:-synawave-local-redis}
+      REDIS_AUTH: ${LANGFUSE_LOCAL_REDIS_AUTH:-synaweave-local-redis}
       REDIS_TLS_ENABLED: ${LANGFUSE_LOCAL_REDIS_TLS_ENABLED:-false}
-      LANGFUSE_INIT_ORG_ID: ${LANGFUSE_LOCAL_INIT_ORG_ID:-synawave-local}
-      LANGFUSE_INIT_ORG_NAME: ${LANGFUSE_LOCAL_INIT_ORG_NAME:-SynaWave Local}
+      LANGFUSE_INIT_ORG_ID: ${LANGFUSE_LOCAL_INIT_ORG_ID:-synaweave-local}
+      LANGFUSE_INIT_ORG_NAME: ${LANGFUSE_LOCAL_INIT_ORG_NAME:-SynaWeave Local}
       LANGFUSE_INIT_PROJECT_ID: ${LANGFUSE_LOCAL_INIT_PROJECT_ID:-sprint-1-local-proof}
       LANGFUSE_INIT_PROJECT_NAME: ${LANGFUSE_LOCAL_INIT_PROJECT_NAME:-Sprint 1 Local Proof}
-      LANGFUSE_INIT_PROJECT_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY:-synawave-local-public-key}
-      LANGFUSE_INIT_PROJECT_SECRET_KEY: ${LANGFUSE_SECRET_KEY:-synawave-local-secret-key}
+      LANGFUSE_INIT_PROJECT_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY:-synaweave-local-public-key}
+      LANGFUSE_INIT_PROJECT_SECRET_KEY: ${LANGFUSE_SECRET_KEY:-synaweave-local-secret-key}
       LANGFUSE_INIT_USER_EMAIL: ${LANGFUSE_LOCAL_INIT_USER_EMAIL:-langfuse-local@example.test}
-      LANGFUSE_INIT_USER_NAME: ${LANGFUSE_LOCAL_INIT_USER_NAME:-SynaWave Local Admin}
-      LANGFUSE_INIT_USER_PASSWORD: ${LANGFUSE_LOCAL_INIT_USER_PASSWORD:-synawave-local-password}
+      LANGFUSE_INIT_USER_NAME: ${LANGFUSE_LOCAL_INIT_USER_NAME:-SynaWeave Local Admin}
+      LANGFUSE_INIT_USER_PASSWORD: ${LANGFUSE_LOCAL_INIT_USER_PASSWORD:-synaweave-local-password}
 
   langfuse-worker:
     image: docker.io/langfuse/langfuse-worker:3
@@ -114,13 +114,13 @@ services:
     restart: unless-stopped
     command:
       - --requirepass
-      - ${LANGFUSE_LOCAL_REDIS_AUTH:-synawave-local-redis}
+      - ${LANGFUSE_LOCAL_REDIS_AUTH:-synaweave-local-redis}
       - --maxmemory-policy
       - noeviction
     volumes:
       - langfuse_redis_data:/data
     healthcheck:
-      test: ["CMD-SHELL", "redis-cli -a ${LANGFUSE_LOCAL_REDIS_AUTH:-synawave-local-redis} ping"]
+      test: ["CMD-SHELL", "redis-cli -a ${LANGFUSE_LOCAL_REDIS_AUTH:-synaweave-local-redis} ping"]
       interval: 3s
       timeout: 5s
       retries: 20

@@ -46,7 +46,7 @@ This means AI tools are support layers, not substitute authority.
 
 ## 🏗️ Product and system reality every contributor must know
 
-SynaWave is a governed, multi-surface study intelligence platform.
+SynaWeave is a governed, multi-surface study intelligence platform.
 
 The current real Sprint 1 runtime slice spans:
 
@@ -186,6 +186,10 @@ bun run deps:app
 bun run deps:browser
 ```
 
+Docker-backed dev container users can open the repo with `.devcontainer/devcontainer.json`; that image installs the `package.json`-pinned Bun release into `/usr/local/bin` so plain non-interactive shells can run Bun-based verification chains without waiting for profile startup.
+
+Repo package scripts resolve through `tools/dev/js_run.py`: Bun stays the default runner, while npm is the bounded fallback when review or container environments cannot provide Bun but still need the governed script contract.
+
 After the one-time `bun run hooks:install` wrapper install, the local `.git/hooks/*` entries become wrappers that delegate to the current repo-owned files in `tools/hooks/`, so content updates to existing repo hook files are picked up automatically without recopying old hook bodies into `.git/hooks`. Re-run `bun run hooks:install` when repo hook filenames are added, removed, or renamed, or when local wrappers are missing or damaged, so the local wrapper set stays aligned. That reinstall also removes stale repo-managed hook names from older clones, including legacy copied hook bodies that predate the wrapper upgrade, while leaving unrelated local custom hooks alone. Those repo-owned hooks own the normal environment-sync path for dependency-changing checkout, merge, rewrite, and push flows. Use `bun run sync` only when a hook reports a real sync failure and you need to rerun the sync command directly.
 
 ### Core verification commands
@@ -198,6 +202,7 @@ bun run verify
 ### Useful scoped commands
 
 ```bash
+bun run build:web
 bun run lint:ts
 bun run typecheck:ts
 bun run verify:python
@@ -213,6 +218,8 @@ bun run dev:api
 bun run dev:web
 bun run build:extension
 ```
+
+`bun run dev:web` now builds `apps/web` into `build/web` and serves that generated output through the plain static server.
 
 Short root aliases are also available for common runtime commands: `bun run api`, `bun run web`, `bun run ext`, and `bun run check`.
 
@@ -449,7 +456,7 @@ A contributor using this repo correctly should be able to:
 - open a PR that reviewers can trust
 - use AI review as extra signal without letting it replace repo discipline
 
-That is the workflow standard for SynaWave.
+That is the workflow standard for SynaWeave.
 
 ## Verification speed and triage
 
@@ -462,7 +469,7 @@ It does not automatically refresh the local environment sync stamp.
 
 `python3 -m tools.dev.sync_environment sync` refreshes the git-local environment stamp used by hooks.
 
-`git push` keeps the same governed pre-push gates, but that hook now runs the push-safe verification lane rather than the full local verification lane. Only the default hook presentation is compact and phase-labeled. Use either `bun run prepush:full` or `SYNAWAVE_PRE_PUSH_OUTPUT=full git push` when you want the full raw pre-push output instead.
+`git push` keeps the same governed pre-push gates, but that hook now runs the push-safe verification lane rather than the full local verification lane. Only the default hook presentation is compact and phase-labeled. Use either `bun run prepush:full` or `SW_PRE_PUSH_OUTPUT=full git push` when you want the full raw pre-push output instead.
 
 ### Recommended operator workflow
 - docs-only or governance-only work:

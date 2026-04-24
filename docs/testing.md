@@ -62,11 +62,11 @@ Changes in this repository must update the matching test or verification layers.
 
 * planning, ADR, governance, workflow, and hook changes require repo-control tests under `testing/unit/`
 * TypeScript code changes require the root TypeScript lint and typecheck gates plus the relevant test layers
-* Python code changes require the root Python lint and typecheck gates plus the relevant test layers
+* Python code changes require the root Python lint, basedpyright typecheck gate, and the relevant test layers
 * public contract changes require `testing/contract/`
 * UI and browser-surface changes require the relevant `testing/component/`, `testing/ui/`, `testing/e2e/`, or `testing/accessibility/` coverage
 * governed Python, TypeScript, JavaScript, workflow YAML, TOML, shell hook, dotenv example, and CSS files require canonical TL;DR header verification
-* repo-control and language-tooling changes must preserve the no-suppressions verification path for Python, TypeScript, and root config surfaces
+* repo-control and language-tooling changes must preserve the stricter Python typing and TypeScript verification paths together with the no-suppressions checks for root config surfaces
 * comment-bearing code and config files must preserve the comment-heavy commentary verification path and manual review expectations for HTML notes
 * ship-facing HTML changes must preserve source-comment safety and stripped production artifact verification
 * secret scanning must preserve the layered split of Betterleaks for fast gates TruffleHog for deep CI and the custom verifier for repo-specific policy checks
@@ -652,7 +652,7 @@ Current Sprint 1 repo-local proof path:
 * Langfuse proof command: `python3 -m python.evaluation.langfuse_local_proof`
 * MLflow verification probe: `python3 -m python.evaluation.verify_mlflow_run`
 
-These artifacts now prove repo-local runtime evaluation, telemetry-derived performance, one self-hosted local MLflow offline run, and one bounded self-hosted local Langfuse trace-plus-score path. They do **not** by themselves prove managed Langfuse operations, managed or team-shared MLflow durability, or GitHub-hosted merge controls.
+These artifacts now prove repo-local runtime evaluation, telemetry-derived performance, one local experiment-tracking run through MLflow when installed or the repo-owned ledger fallback when it is not, and one bounded Langfuse trace-plus-score path when that backend is reachable. They do **not** by themselves prove managed Langfuse operations, managed or team-shared MLflow durability, or GitHub-hosted merge controls.
 
 ### 📏 Durable recording rule
 
