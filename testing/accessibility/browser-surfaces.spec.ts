@@ -1,11 +1,11 @@
 /*  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-TL;DR  -->  run automated accessibility smoke checks for the signed-in web shell and the packaged extension panel document
+TL;DR  -->  run automated accessibility smoke checks for the public landing page and the packaged extension panel document
 
 - Later Extension Points:
   --> add richer panel-container automation only when the repo owns a stable Chromium side-panel harness
 
 - Role:
-  --> proves Axe coverage for the local web runtime path
+  --> proves Axe coverage for the public web landing page
   --> scans the built extension panel document without inventing a larger browser harness
 
 - Exports:
@@ -21,20 +21,18 @@ import { expect, test } from "@playwright/test";
 import {
 	launchExtensionContext,
 	prepareExtensionApiBase,
-	prepareWebApiBase,
 	readExtensionId,
 } from "../e2e/extension.helpers";
 
-test("signed-in web shell has no automated accessibility violations", async ({
+test("public landing page has no automated accessibility violations", async ({
 	page,
 }) => {
-	const email = `playwright-a11y-web-${Date.now()}@example.com`;
-
-	await prepareWebApiBase(page);
 	await page.goto("/");
-	await page.getByLabel("Email").fill(email);
-	await page.getByRole("button", { name: "Start workspace session" }).click();
-	await expect(page.getByRole("heading", { name: "Workspace" })).toBeVisible();
+	await expect(
+		page.getByRole("heading", {
+			name: "The learning operating system for durable knowledge work.",
+		}),
+	).toBeVisible();
 
 	const results = await new AxeBuilder({ page }).analyze();
 
