@@ -1,0 +1,22 @@
+#  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# TL;DR  -->  record the intended Cloud Run service shape for the request-serving Sprint 1 API runtime
+#
+# - Later Extension Points:
+#   --> add real secrets and image digests only when deployment automation becomes a tracked repo default
+#
+# - Role:
+#   --> preserves the target service contract for later deployment work
+#   --> gives the team one stable service manifest baseline instead of ad hoc platform recreation
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: synaweave-api
+spec:
+  template:
+    spec:
+      containers:
+        - image: gcr.io/PROJECT_ID/synaweave-api:latest
+          ports:
+            - containerPort: 8000

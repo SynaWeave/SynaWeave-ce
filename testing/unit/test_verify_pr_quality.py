@@ -51,9 +51,10 @@ class TestVerifyPrQuality(unittest.TestCase):
     def test_validate_pr_title_accepts_governed_title(self):
         self.assertEqual(validate_pr_title(VALID_TITLE), [])
 
-    def test_validate_pr_title_allows_optional_sprint_prefix(self):
+    def test_validate_pr_title_rejects_sprint_prefix(self):
         title = f"S001/d1 foundation --> {VALID_TITLE}"
-        self.assertEqual(validate_pr_title(title), [])
+        issues = validate_pr_title(title)
+        self.assertTrue(any("must use format" in issue for issue in issues))
 
     def test_validate_pr_title_rejects_short_subject(self):
         issues = validate_pr_title("fix(tools): short title")

@@ -7,7 +7,8 @@
 #
 # - Role:
 #   --> preserve tracked-file Betterleaks scanning before remote updates
-#   --> fail fast when local environment sync is stale before the full verification lane starts
+#   --> attempt hook-safe environment sync before the full verification lane starts
+#   --> fail fast when hook-safe sync cannot leave local tooling in a synced state
 #
 # - Exports:
 #   --> `pre-push` hook entrypoint
@@ -18,28 +19,5 @@
 use strict;
 use warnings;
 
-sub run_or_exit {
-    my (@command) = @_;
-    system @command;
-    my $exit_code = $? >> 8;
-    exit $exit_code if $exit_code != 0;
-}
-
-run_or_exit('python3', '-m', 'tools.security.betterleaks', '--mode', 'tracked', '--include-built-extension');
-
-my $sync_output = qx{python3 -m tools.dev.sync_environment check 2>&1};
-my $sync_exit = $? >> 8;
-
-if ($sync_exit == 1) {
-    print "pre-push: environment sync required; run python3 -m tools.dev.sync_environment sync\n";
-    exit 1;
-}
-
-if ($sync_exit == 2) {
-    print "pre-push: environment check failed; fix repo state before push\n";
-    exit 1;
-}
-
-exit $sync_exit if $sync_exit != 0;
-
-run_or_exit('bun', 'run', 'verify');
+exec 'python3', '-m', 'tools.dev.pre_push', @ARGV
+  or die "failed to launch tools.dev.pre_push: $!\n";

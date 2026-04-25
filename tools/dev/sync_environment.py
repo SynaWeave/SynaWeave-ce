@@ -21,22 +21,24 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import shutil
 import subprocess
 import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Sequence
 
-STAMP_VERSION = 1
+from tools.dev import pip_install
+
+STAMP_VERSION = 2
 EXIT_OK = 0
 EXIT_SYNC_NEEDED = 1
 EXIT_USAGE_ERROR = 2
 EXIT_SYNC_FAILED = 3
 
-STAMP_RELATIVE_PATH = Path("synaweave") / "environment-sync.json"
-JS_SYNC_COMMAND = ("bun", "install", "--frozen-lockfile")
-PYTHON_SYNC_COMMAND = ("python3", "-m", "pip", "install", "-r", "requirements-dev.txt")
-LOCAL_VENV_PYTHON = Path(".venv") / "bin" / "python3"
+STAMP_RELATIVE_PATH = Path("sw") / "env-sync.json"
+JS_SYNC_BUN_COMMAND = ("bun", "install", "--frozen-lockfile")
+JS_SYNC_NPM_COMMAND = ("npm", "install", "--no-package-lock")
 REQUIRED_WATCH_FILES = ("package.json", "requirements-dev.txt")
 OPTIONAL_WATCH_FILES = ("bun.lock",)
 JS_WATCH_FILES = ("package.json", "bun.lock")
@@ -56,8 +58,8 @@ class SyncPlan:
 
 @dataclass(frozen=True)
 class PythonSyncDecision:
-    command: tuple[str, ...] | None
-    warning: str | None
+    command: tuple[str, ...]
+    source: str
 
 
 def _parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
@@ -178,32 +180,25 @@ def _write_stamp(repo_root: Path, file_hashes: dict[str, str]) -> None:
     )
 
 
-def _build_python_sync_command(python_executable: str | Path) -> tuple[str, ...]:
-    return (str(python_executable), "-m", "pip", "install", "-r", "requirements-dev.txt")
+def _resolve_js_sync_command() -> tuple[str, ...]:
+    bun_path = shutil.which("bun")
+    if bun_path is not None:
+        return JS_SYNC_BUN_COMMAND
+
+    npm_path = shutil.which("npm")
+    if npm_path is not None:
+        return JS_SYNC_NPM_COMMAND
+
+    raise FileNotFoundError("missing both bun and npm on PATH for JS dependency sync")
 
 
-def _local_python_sync_command(repo_root: Path) -> tuple[str, ...] | None:
-    local_python = repo_root / LOCAL_VENV_PYTHON
-    if local_python.is_file():
-        return _build_python_sync_command(local_python)
-    return None
-
-
-def _resolve_python_sync(mode: str, repo_root: Path) -> PythonSyncDecision:
-    local_command = _local_python_sync_command(repo_root)
-    if local_command is not None:
-        return PythonSyncDecision(command=local_command, warning=None)
-
-    if mode == "hook":
-        return PythonSyncDecision(
-            command=None,
-            warning=(
-                "Python dependency changes detected, but hook auto-install stays disabled outside "
-                "a repo-owned .venv; run python3 -m tools.dev.sync_environment sync"
-            ),
-        )
-
-    return PythonSyncDecision(command=PYTHON_SYNC_COMMAND, warning=None)
+def _resolve_python_sync(repo_root: Path) -> PythonSyncDecision:
+    plan = pip_install.resolve_python_install_plan(
+        repo_root,
+        prefer_active_venv=False,
+    )
+    command = pip_install.build_install_command(plan, ("requirements-dev.txt",))
+    return PythonSyncDecision(command=command, source=plan.source)
 
 
 def _describe_group(name: str, changed_files: tuple[str, ...]) -> str:
@@ -246,8 +241,14 @@ def _run_sync(
     stamped_hashes, _ = _read_stamp(repo_root)
     synced_hashes = dict(stamped_hashes or {})
 
-    if plan.js_changed and _run_command(JS_SYNC_COMMAND, repo_root) != 0:
-        return EXIT_SYNC_FAILED
+    if plan.js_changed:
+        try:
+            js_sync_command = _resolve_js_sync_command()
+        except FileNotFoundError as exc:
+            print(f"ERROR: {exc}")
+            return EXIT_SYNC_FAILED
+        if _run_command(js_sync_command, repo_root) != 0:
+            return EXIT_SYNC_FAILED
 
     if plan.js_changed:
         for relative_path in JS_WATCH_FILES:
@@ -255,16 +256,14 @@ def _run_sync(
                 synced_hashes[relative_path] = current_hashes[relative_path]
 
     if plan.python_changed:
-        python_sync = _resolve_python_sync(mode, repo_root)
-        if python_sync.command is None:
-            if python_sync.warning is not None:
-                print(python_sync.warning)
-        else:
-            if _run_command(python_sync.command, repo_root) != 0:
-                return EXIT_SYNC_FAILED
-            for relative_path in PYTHON_WATCH_FILES:
-                if relative_path in current_hashes:
-                    synced_hashes[relative_path] = current_hashes[relative_path]
+        python_sync = _resolve_python_sync(repo_root)
+        if mode == "hook":
+            print(f"Python dependency sync using {python_sync.source}")
+        if _run_command(python_sync.command, repo_root) != 0:
+            return EXIT_SYNC_FAILED
+        for relative_path in PYTHON_WATCH_FILES:
+            if relative_path in current_hashes:
+                synced_hashes[relative_path] = current_hashes[relative_path]
 
     _write_stamp(repo_root, synced_hashes)
     print("Environment sync complete")

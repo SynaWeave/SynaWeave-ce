@@ -4,7 +4,7 @@
 
 This deliverable creates the first **real runtime path** for SynaWeave.
 
-The current branch already proves the governed repo foundation for that runtime path, but it does not yet prove the runtime itself. The monorepo shape, root docs spine, verifier, hooks, workflows, and reserved runtime homes now exist. D2 begins only after D1 aligns those repo controls and planning surfaces, and D2 is the first deliverable that must leave behind bootable product runtimes rather than documentation and governance structure.
+The current branch now proves that bounded runtime path. The monorepo shape, root docs spine, verifier, hooks, workflows, and reserved runtime homes existed first; D2 closeout now adds the bootable web, extension, API, ingest, durable-write, and cross-surface identity path those controls were meant to protect.
 
 This deliverable closes that gap by requiring one real end-to-end path:
 
@@ -91,9 +91,9 @@ The historical README described:
 
 It also listed later stretch goals such as TypeScript, note deletion, integrations, text-to-speech, tags and filtering, focus mode, smart grouping, stats, translation, theme support, research suggestions, and image cards. That historical backlog is now part of the rebuild sequencing rather than a reason to reopen D1 structure. ([github.com](https://github.com/SynaWeave/SynaWeave-ce))
 
-### 📏 3.3 What `main` does not yet prove
+### ✅ 3.3 What D2 now proves
 
-The current branch does **not** yet prove:
+The current branch now proves:
 
 * a web control plane
 * a request-serving backend
@@ -102,9 +102,10 @@ The current branch does **not** yet prove:
 * durable server-owned operational truth
 * one cross-surface identity path
 * baseline service and UI metrics
-* a DevSecOps path that blocks unsafe runtime changes at commit, push, and PR time
+* schema-driven contract coverage for the bounded public runtime interfaces
+* Zuplo as the selected edge target behind adapters while local proof remains direct-to-API
 
-D2 must prove those at the narrowest honest scope.
+D2 closes those gaps at the narrowest honest scope rather than treating broader hosting or edge activation as already finished.
 
 ---
 

@@ -1,0 +1,21 @@
+#  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# TL;DR  -->  record the intended Cloud Run job shape for the Sprint 1 ingest worker boundary
+#
+# - Later Extension Points:
+#   --> add retry limits and environment wiring only when job deployment becomes a tracked repo default
+#
+# - Role:
+#   --> preserves the managed run-to-completion job target for later deployment work
+#   --> keeps the Sprint 1 background boundary compatible with Cloud Run job semantics later
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+apiVersion: run.googleapis.com/v1
+kind: Job
+metadata:
+  name: synaweave-ingest
+spec:
+  template:
+    template:
+      spec:
+        containers:
+          - image: gcr.io/PROJECT_ID/synaweave-ingest:latest

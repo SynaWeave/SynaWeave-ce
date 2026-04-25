@@ -23,6 +23,8 @@ import re
 import shutil
 from pathlib import Path
 
+from tools.dev.typescript import run_tsc
+
 HTML_COMMENT_RE = re.compile(r"<!--.*?-->", re.DOTALL)
 
 
@@ -32,11 +34,39 @@ def strip_html_comments(text: str) -> str:
     return HTML_COMMENT_RE.sub("", text)
 
 
+def _compile_typescript_sources(source_dir: Path, output_dir: Path) -> None:
+    # Emit JavaScript runtime artifacts for extension entrypoints
+    # while source stays TypeScript-first
+    ts_paths = sorted(source_dir.glob("*.ts"))
+    if not ts_paths:
+        return
+
+    tsconfig_path = source_dir / "tsconfig.json"
+    if not tsconfig_path.exists():
+        raise FileNotFoundError(
+            f"missing extension TypeScript build config: {tsconfig_path}"
+        )
+
+    repo_root = Path(__file__).resolve().parents[2]
+    run_tsc(
+        repo_root=repo_root,
+        tsconfig_path=tsconfig_path,
+        output_dir=output_dir,
+        root_dir=source_dir,
+    )
+
+
 def build_extension(source_dir: Path, output_dir: Path) -> None:
     # Rebuild from scratch so old packaged files never survive after source changes
     if output_dir.exists():
         shutil.rmtree(output_dir)
-    shutil.copytree(source_dir, output_dir)
+    shutil.copytree(
+        source_dir,
+        output_dir,
+        ignore=shutil.ignore_patterns("*.ts", "*.d.ts", "tsconfig.json"),
+    )
+
+    _compile_typescript_sources(source_dir, output_dir)
 
     # Rewrite only HTML files so JS CSS and manifest assets preserve their source formatting
     for html_path in sorted(output_dir.glob("*.html")):

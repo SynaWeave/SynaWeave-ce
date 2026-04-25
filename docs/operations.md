@@ -60,55 +60,55 @@ The repository is no longer only a prototype extension tree. The current repo al
 * root governance artifacts
 * a shallow monorepo layout under `apps/`, `packages/`, `python/`, `infra/`, `testing/`, and `tools/`
 * a central repository verifier under `tools/verify/`
-* reserved runtime homes for extension, web, API, ingest, MCP, ML, and evaluation work
-* empty scaffold placeholders for the reserved web, API, ingest, MCP, ML, and evaluation homes under `apps/`
+* active runtime homes for extension, web, API, and ingest
+* shared runtime helpers under `python/common/`
+* a local runtime proof store under `build/runtime/`
 
 What it does **not** yet prove as operational truth:
 
-* a bootable web application
-* a bootable API service
-* a bootable job runtime
-* integrated auth across browser and web surfaces
+* cloud deployment proof
 * integrated graph, retrieval, or AI product flows
-* production-ready telemetry, dashboards, or experiment evidence
+* managed observability backends, deployed edge routing, or GitHub-side branch controls beyond the repo-local and documented hosted evidence already established
 
 ## 📦 Current surface status
 
 ### 🪟 Extension
 
-Current status: **scaffolded**
+Current status: **integrated**
 
 Operational notes:
 
-* the repository reserves `apps/extension` as the browser runtime home
-* the old prototype concept is historically validated, but the rebuilt extension is not yet operational truth
+* `apps/extension` now provides a real side-panel shell for sign-in, capture, durable actions, and digest replay
+* the extension shares identity continuity with the web shell through the API runtime
+* extension host access is now limited to the local API origins; broad page matching remains only for the bounded selection-capture content script path used in Sprint 1
 
 ### 🌐 Web
 
-Current status: **scaffolded**
+Current status: **integrated**
 
 Operational notes:
 
-* `apps/web` exists as an empty reserved control-plane placeholder
-* no bootable web proof exists yet in the rebuild tree
+* `apps/web` now provides a bootable static control-plane shell
+* `apps/web/app.ts`, `index.html`, and `styles.css` remain the owned web sources while local dev plus browser verification build the served artifact under ignored `build/web`
+* the web shell signs in, writes one durable action, runs the digest job, and reloads workspace truth
 
 ### ⚙️ API
 
-Current status: **scaffolded**
+Current status: **integrated**
 
 Operational notes:
 
-* `apps/api` exists as an empty reserved request-serving placeholder
-* no bootable service proof exists yet in the rebuild tree
+* `apps/api` now provides liveness, readiness, auth, identity, workspace, job, telemetry, baseline, and metrics routes
+* readiness only reports ready when the sqlite boundary and runtime artifact directory are available
 
 ### 📥 Ingest
 
-Current status: **scaffolded**
+Current status: **integrated**
 
 Operational notes:
 
-* `apps/ingest` exists as an empty reserved run-to-completion placeholder
-* no bootable job proof exists yet in the rebuild tree
+* `apps/ingest` now runs as a separate Python process
+* the worker turns recent workspace actions into a digest and evaluation record
 
 ### 🧰 MCP
 
@@ -143,9 +143,8 @@ Current status: **scaffolded**
 
 Operational notes:
 
-* root `docs/` is the canonical documentation system now
-* GitHub Pages is intended to publish static output from that source later
-* there is no separate documentation runtime in the repo
+* root `docs/` remains the canonical documentation system
+* there is still no separate documentation runtime in the repo
 
 ## 👀 Current quality posture
 
@@ -154,53 +153,57 @@ Current status: **integrated**
 Operational notes:
 
 * the repo already contains governance docs, workflows, hooks, and verifier code
+* runtime-focused unit tests now cover the API path and sqlite-backed runtime store
 * local git hooks exist under `tools/hooks/` and can be installed manually with `bun run hooks:install` for each clone
-* local environment sync is tracked by a git-local stamp under `.git/synaweave/environment-sync.json`
-* `post-checkout`, `post-merge`, and `post-rewrite` auto-sync Bun tooling when `package.json`, `bun.lock`, or `requirements-dev.txt` change, but they only auto-install Python dependencies when the repo owns `.venv/bin/python3`; otherwise they warn operators to run the canonical sync command manually
-* `pre-commit` warns when the local environment stamp is stale, while `pre-push` blocks stale state before the full verification lane runs
+* after the one-time `bun run hooks:install` wrapper install, the installed `.git/hooks/*` files delegate to `tools/hooks/*`, so content updates to existing repo hook files are picked up automatically without copying stale hook bodies forward
+* rerunning `bun run hooks:install` is only needed when repo hook filenames are added, removed, or renamed, or when local wrappers are missing or damaged for that clone; that reinstall also removes stale repo-managed hook names from older clones, including legacy copied hook bodies that predate the wrapper upgrade, without touching unrelated local custom hooks
+* local environment sync is tracked by a git-local stamp under `.git/sw/env-sync.json`
+* `post-checkout`, `post-merge`, and `post-rewrite` auto-run environment sync when `package.json`, `bun.lock`, or `requirements-dev.txt` change; hook-triggered Python sync prefers `.venv/bin/python3` when the repo owns it and otherwise falls back to the system `python3 -m pip` command automatically
+* Git does not provide a pre-pull hook here; the automatic pull-like sync behavior comes from those existing post-checkout, post-merge, and post-rewrite hooks after branch-changing operations complete
+* `pre-commit` warns when the local environment stamp is stale before staged Betterleaks and protected verification run, while `pre-push` still runs tracked Betterleaks first, reusing only git-local cached clean results for unchanged tracked files when the Betterleaks version and `.betterleaks.toml` still match, then retries automatic environment sync, then blocks if local tooling still remains incomplete before the push-safe verification lane runs; built extension artifacts still scan on every tracked run, only the default `git push` hook presentation is compact and phase-labeled, and the raw pre-push hook logs stay available through either `bun run prepush:full` or `SW_PRE_PUSH_OUTPUT=full git push` while the legacy `SYNAWAVE_PRE_PUSH_OUTPUT=full` alias still works
+* short root aliases exist for common local commands, including `bun run api`, `bun run web`, `bun run ext`, `bun run browser:install`, `bun run check`, `bun run hooks`, and `bun run sync`
 * `python3 -m tools.verify.main` is the repo-contained proof point for the D1 control baseline, so this section should not stay at **scaffolded** once those controls are aligned and passing locally
-* the hosted `repo-verify` workflow runs `bun run verify`, and that root script now includes ADR validation alongside the other repo-level checks
+* the hosted `repo-verify` workflow runs `bun run verify:push` on pushes and `bun run verify` on pull requests, so push events stay on the push-safe lane while pull requests still run the full hosted verification stack including ADR validation
 * the hosted `dependency-installability` workflow verifies clean Bun installs and direct Python dev-tool pins from the checked-in manifests without mutating the checked-out repository
+* local runtime metrics snapshots, measurement-history JSONL, backend correlation JSONL, traces, and sqlite-backed telemetry rows are generated under `build/runtime/` after exercising the runtime path or calling `/metrics`; they are local build artifacts, not tracked repo evidence
+* `python3 -m python.evaluation.runtime_eval` now regenerates versioned repo-local proof under `testing/evals/artifacts/runtime-digest-density.local-proof.v1.json` and `testing/performance/runtime-baseline.local-proof.v1.json`
+* the tracked proof artifacts are derived from actual runtime-store telemetry and eval writes, not from manual target notes alone
+* those repo-local eval and performance artifacts do not by themselves prove collector export; collector-routed trace proof is a separate local compose-backed path
+* `infra/docker/` contains local Prometheus, collector, and Grafana scaffolds for the runtime slice
 * hosted merge enforcement such as GitHub rulesets, required checks, and secret-scanning posture still requires GitHub-side confirmation before this file claims platform-enforced protection
-* online AI proof and offline experiment proof are planned, not yet operational
+* automated browser smoke and accessibility checks now cover the local web shell plus the packaged extension panel document
+* Playwright now uses the packaged extension options harness to issue a real `chrome.sidePanel.open()` request and confirm that the side-panel runtime booted `popup.html`
+* the repo still does not claim direct DOM inspection of the browser-owned side-panel container itself because Chromium does not expose that chrome to Playwright here
+* collector-routed API and ingest telemetry is locally reproducible through the optional compose-backed observability stack, but fuller browser-native and hosted deployment proof remain incomplete
 
 ## ☁️ Current runtime model
 
 The locked target model is documented in `docs/architecture.md` and `docs/infra.md`, but it is **not** yet operational truth.
 
-Today, the rebuild is best described as a governed platform scaffold with reserved runtime homes and documentation-first controls, not as a deployed multi-runtime product.
+Today, the rebuild is best described as a governed platform with one local runtime proof slice, not as a deployed multi-runtime product.
 
 ## 🔐 Current auth and identity status
 
-Current status: **planned**
+Current status: **integrated**
 
-Locked intended baseline:
+Operational notes:
 
-* passwordless email sign-in first
-* browser-safe public credentials only in browser surfaces
-* privileged credentials only in secure backend runtimes
-* PKCE-capable web flow
-* extension-safe session persistence
-
-This section must not claim auth is integrated until:
-
-* a user can sign in
-* session state persists correctly
-* backend identity verification succeeds
-* browser bundles contain no privileged credentials
+* a user can sign in from web or extension with an email-shaped local session flow
+* session state persists in browser storage across refresh or panel reopen within the bounded local proof path
+* backend identity verification succeeds through bearer-token lookup at the API boundary
+* browser bundles contain no privileged credentials in the current runtime slice
+* this remains an adapter-first Sprint 1 proof path, with Supabase-compatible auth as the default target rather than a permanent provider lock-in
 
 ## 🗃️ Current data-plane status
 
 ### 🗃️ Operational relational data
 
-Current status: **planned**
+Current status: **integrated**
 
-Target operational truth:
+Operational notes:
 
-* user profile and workspace records
-* operational study metadata
-* user-scoped product state
-* backend-owned metadata and runtime records
+* local sqlite stores users, sessions, workspaces, actions, jobs, evals, and telemetry
+* the durable local state lives under `build/runtime/synaweave.sqlite3`
 
 ### 🪣 Artifact storage
 
@@ -230,49 +233,53 @@ None of these may be treated as operational until the relevant runtime paths and
 
 ## 👀 Current observability status
 
-Current status: **planned**
+Current status: **integrated**
 
-The reviewed public repo materials do not currently show an operational observability stack in the rebuild state. The rebuild target is:
+Operational notes:
 
-* OpenTelemetry instrumentation
-* OpenTelemetry Collector
-* Prometheus
-* Grafana
-* Langfuse
-
-Operational truth begins only when:
-
-* traces are emitted
-* logs are structured
-* metrics are queryable
-* dashboards exist
-* AI-ready traces appear in Langfuse
-
-Until then, observability remains planned or scaffolded rather than integrated.
+* `infra/docker/docker-compose.yml` now runs the local API, collector, Prometheus, Grafana, and MLflow stack together
+* `infra/docker/langfuse-compose.yml` now offers a separate bounded self-hosted Langfuse proof stack for one local trace-plus-score path
+* API and ingest export OpenTelemetry traces through the local collector when the compose stack or matching env is enabled
+* web and extension requests send W3C `traceparent` headers for request continuity, but they do not yet run full browser OTel SDK instrumentation
+* local metrics remain queryable through `/metrics`, Prometheus, and the versioned Grafana dashboard plus alert rules under `infra/docker/`
+* API middleware and ingest now write structured backend correlation logs under `build/runtime/backend-logs.jsonl` so request ids, trace ids, and job ids can be compared across the critical path
+* `/metrics` and `/v1/baseline` now append durable measurement history under `build/runtime/measurements.jsonl`, including hotspot summaries, failure or degraded-state counts, and latest replay job linkage that the dashboard and alerts expose where the current architecture supports them
+* the reproducible critical-path probe lives at `python3 -m tools.observability.critical_path_probe` and requires fresh replay-linked backend-log plus measurement-history evidence for its own job
+* malformed or corrupt runtime sqlite state is quarantined under `build/runtime/quarantine/` with a recovery record in `build/runtime/runtime-db-recovery.jsonl` instead of being silently deleted
+* `python3 -m python.evaluation.runtime_eval` now writes repo-local telemetry-derived eval and performance artifacts plus one local experiment-tracking run through MLflow when installed or the repo-owned ledger fallback when it is not, but not collector export by itself
+* `python3 -m python.evaluation.langfuse_local_proof` proves one bounded Langfuse trace and score write plus query path from the Sprint 1 dataset when the SDK and a reachable backend are available
+* `python3 -m python.evaluation.verify_mlflow_run` verifies that the latest local experiment run exists with the expected metrics and artifacts across either backend mode
+* managed Langfuse operations, managed or team-shared MLflow durability, and fuller browser-native observability proof remain later follow-on work rather than current runtime truth
+* critical-path observability claims are only durable when the branch records them through versioned dashboards or alerts, machine-readable proof artifacts, or replayable local stores
 
 ## ✅ Current testing status
 
+Current status: **integrated**
+
+Operational notes:
+
+* unit tests now cover the runtime store and API critical path
+* schema-driven contract tests now validate live API envelopes and extension selection messages against `packages/contracts/runtime/public-interfaces.v1.json`
+* manual accessibility notes still exist under `testing/` for checks beyond current automation coverage
+* Playwright now proves the web-shell sign-in, workspace bootstrap, durable write, and digest smoke path against the local runtime, including one assembled flow that confirms the same user email, bridge code, and workspace id resolve across the live web shell and extension panel plus web-shell Core Web Vitals evidence in the browser timing artifact
+* Playwright also drives the packaged extension options harness to open the real side-panel runtime and records side-panel open plus popup boot timing evidence under test output artifacts
+* Playwright plus Axe now scan the signed-in web shell and the packaged extension panel document
+* the current extension proof still stops short of direct side-panel container DOM inspection because Chromium does not expose that browser chrome to Playwright here
+* `testing/performance/browser-shell-baseline.local-proof.v1.json` tracks the current repo-local browser baseline with web-shell Core Web Vitals and separate side-panel boot timing language
+* `testing/evals/fixtures/runtime-digest-density.v1.json` is the versioned Sprint 1 synthetic eval dataset
+* `testing/evals/artifacts/` and `testing/performance/runtime-baseline.local-proof.v1.json` now hold tracked repo-local machine-readable proof generated from the eval harness
+* those tracked artifacts prove the runtime-eval harness path, while compose-backed collector exports remain a separate observability proof path
+
+## 🔌 Current edge and gateway posture
+
 Current status: **planned**
 
-The rebuild target includes a root `testing/` taxonomy with:
+Operational notes:
 
-* unit
-* component
-* integration
-* contract
-* ui
-* e2e
-* security
-* performance
-* accessibility
-* evals
-
-This section must remain honest:
-
-* planned if only specified in docs
-* scaffolded if folders and baseline harnesses exist
-* integrated only when active tests run in CI
-* production-ready only when test gates are enforcing real quality expectations
+* Zuplo is the selected Sprint 1 target for unified edge, CDN, caching, and API gateway concerns
+* the current branch preserves those seams behind adapters and contract-stable public boundaries
+* the current local proof remains direct-to-API unless a Zuplo-backed path is explicitly booted and verified, so this section records a selected target rather than an integrated edge runtime
+* later activation must update this file when a concrete provider becomes bootable or integrated
 
 ## 🚦 Current CI and governance status
 
@@ -290,7 +297,9 @@ Operational truth begins when:
 Current posture:
 
 * workflows exist in the repository and are part of the governed control surface
-* `repo-verify` is the full hosted verification path; `dependency-installability` is a separate hosted supply-chain lane for clean dependency install checks; the path-filtered `docs-guard`, `governance-guard`, and `protected-paths` workflows are focused supplemental workflows for matching pull-request changes
+* GitHub rulesets are the first enforcement home for pull-request requirements, required statuses, stale approvals, and any merge-blocking CODEOWNERS review requirement
+* `repo-verify` runs the push-safe hosted verification path on pushes and the full hosted verification path on pull requests; `dependency-installability` is a separate hosted supply-chain lane for clean dependency install checks; the path-filtered `docs-guard`, `governance-guard`, and `protected-paths` workflows are focused supplemental workflows for matching pull-request changes
+* the CODEOWNERS file assigns platform-admin and core-maintainer ownership for protected-path review surfaces, but hosted merge blocking still depends on GitHub-side ruleset configuration
 * GitHub rulesets, branch protection, and secret-scanning enforcement remain external platform settings
 * merge-readiness claims must therefore distinguish local workflow and verifier evidence from hosted enforcement that still depends on those external controls being configured against the documented posture
 * this file must not describe the supplemental path-filtered workflows as confirmed GitHub-required ruleset checks unless that hosted enforcement is separately verified
@@ -401,3 +410,49 @@ This file works with:
 * sprint planning files for deliverable-specific status transitions
 
 This file should stay focused on **current operational truth**, not future design.
+
+## Browser verification triage
+
+When browser verification fails or appears flaky, do this in order:
+
+1. `bun run triage:ports`
+2. `bun run triage:browser`
+3. `bun run triage:browser:repeat`
+
+Interpretation:
+- repeated pass: likely startup timing or transient local state
+- repeated failure at same point: likely real regression
+- occupied ports before triage: likely process reuse or stale local runtime
+
+## Push-blocker triage
+
+If push fails with:
+
+`pre-push: automatic retry left local tooling incomplete; rerun python3 -m tools.dev.sync_environment sync to inspect the remaining issue before push`
+
+then a watched environment file changed:
+- `package.json`
+- `bun.lock`
+- `requirements-dev.txt`
+
+Run:
+
+```bash
+python3 -m tools.dev.sync_environment sync
+```
+
+Or use:
+
+```bash
+bun run ready:push
+```
+
+To inspect the full raw pre-push logs without changing the default compact `git push` workflow, use either escape hatch:
+
+```bash
+bun run prepush:full
+```
+
+```bash
+SW_PRE_PUSH_OUTPUT=full git push
+```

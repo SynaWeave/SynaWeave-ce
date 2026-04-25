@@ -1,0 +1,22 @@
+#  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# TL;DR  -->  provision the Sprint 1 critical-path dashboards from versioned repository artifacts
+#
+# - Later Extension Points:
+#   --> split dashboard providers only when runtime families become large enough to justify separate folders
+#
+# - Role:
+#   --> loads the local critical-path dashboard automatically at Grafana startup
+#   --> keeps dashboard ownership inside repo-reviewed infrastructure config instead of manual UI state
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+apiVersion: 1
+
+providers:
+  - name: synaweave-sprint1
+    orgId: 1
+    folder: Sprint 1
+    type: file
+    disableDeletion: false
+    editable: false
+    options:
+      path: /var/lib/grafana/dashboards

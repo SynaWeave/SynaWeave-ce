@@ -8,7 +8,7 @@ This document defines how repository authority, review posture, merge control, a
 
 - Root `docs/` is the only canonical technical documentation surface.
 - Planning intent is governed by `docs/planning/MASTER.md`, sprint planning files, and `docs/adrs/`.
-- Repository controls are implemented through `tools/verify/main.py`, `tools/hooks/`, `.github/workflows/`, `.github/pull_request_template.md`, `docs/templates/`, and protected-path ownership.
+- Repository controls are implemented through `tools/verify/main.py`, `tools/hooks/`, `.github/workflows/`, `.github/pull_request_template.md`, `docs/templates/`, `docs/workflow.md`, and protected-path ownership.
 
 ## Project roles
 
@@ -96,19 +96,25 @@ Security vulnerabilities, dependency incidents, contract breaks, and workflow-co
 
 ## Admin bypass posture
 
-Admin bypass, required checks, and branch protection are GitHub-side controls owned by the project owner and maintainers. This repository documents the expected posture, but GitHub rulesets remain the enforcement home for admin bypass decisions.
+Admin bypass, required checks, stale approvals, and CODEOWNERS review behavior are GitHub-side controls owned by the project owner and maintainers. This repository documents the expected posture, but GitHub rulesets remain the enforcement home for those merge-control decisions.
 
-Expected default-branch posture:
+Expected default-branch ruleset posture:
 
+- GitHub rulesets are the first enforcement home for pull-request requirements, required statuses, stale-approval dismissal, and any merge-blocking CODEOWNERS review requirement.
 - pull requests required for protected branches
 - direct pushes blocked for non-admin contributors
-- required checks include at least these repo-defined hosted check names when GitHub rulesets are configured to require them:
-  - `repo-verify / repo-verify` (from `.github/workflows/repo-verify.yml`; runs `bun run verify`, which includes ADR validation in the repo-level verification script)
+- required checks should include at least these repo-defined hosted check names when GitHub rulesets are configured to require them:
+  - `repo-verify / repo-verify` (from `.github/workflows/repo-verify.yml`; runs `bun run verify:push` on pushes and `bun run verify` on pull requests, with ADR validation staying in the pull-request lane)
   - `dependency-installability / dependency-installability` (from `.github/workflows/dependency-installability.yml`; proves clean Bun installs and direct Python dev-tool pins stay installable without mutating the checked-out repository)
   - `dependency-review / dependency-review` (the PR status stays required even when hosted review can only report that dependency graph support is unavailable)
   - `codeql / codeql-javascript-typescript`
   - `codeql / codeql-python`
-- CODEOWNERS review required for protected-path changes
+  - `CodeQL` when GitHub also reports the aggregate summary status alongside the per-language lanes
+  - `secret-scan-fast`
+  - `secret-scan-deep`
+  - `cla-check`
+  - `pr-quality`
+- CODEOWNERS file assigns platform-admin and core-maintainer owners for protected-path changes; merge-blocking CODEOWNERS review depends on GitHub rulesets enabling that requirement
 - stale approvals dismissed when protected-path diffs change materially
 - secret scanning and push protection enabled where the repository tier supports them
 

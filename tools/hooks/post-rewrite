@@ -32,11 +32,11 @@ while (my $line = <STDIN>) {
     my $changed = qx{git diff --name-only $old_ref $new_ref -- package.json bun.lock requirements-dev.txt 2>/dev/null};
     next if $changed eq q{};
 
-    print "post-rewrite: syncing local environment\n";
+    print "post-rewrite: auto-syncing local environment after rewrite\n";
     my $sync_exit = system('python3', '-m', 'tools.dev.sync_environment', 'sync', '--mode', 'hook') >> 8;
 
     if ($sync_exit != 0) {
-        print "post-rewrite: environment sync failed; run python3 -m tools.dev.sync_environment sync\n";
+        print "post-rewrite: automatic environment sync failed; rewrite finished, but rerun python3 -m tools.dev.sync_environment sync to inspect or complete setup\n";
     }
 
     last;

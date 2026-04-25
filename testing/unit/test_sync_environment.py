@@ -30,10 +30,28 @@ from unittest.mock import patch
 from tools.dev import sync_environment
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
+SYSTEM_PYTHON_SYNC_COMMAND = (
+    "python3",
+    "-m",
+    "pip",
+    "install",
+    "--user",
+    "--break-system-packages",
+    "-r",
+    "requirements-dev.txt",
+)
 
 
 def read_canonical_requirements_dev() -> str:
     return (REPO_ROOT / "requirements-dev.txt").read_text(encoding="utf-8")
+
+
+def bun_path_only(name: str) -> str | None:
+    return "/usr/bin/bun" if name == "bun" else None
+
+
+def npm_path_only(name: str) -> str | None:
+    return "/usr/bin/npm" if name == "npm" else None
 
 
 class TestSyncEnvironment(unittest.TestCase):
@@ -77,7 +95,10 @@ class TestSyncEnvironment(unittest.TestCase):
             repo_root = Path(raw_tmp)
             self.make_repo(repo_root)
 
-            with patch("tools.dev.sync_environment.subprocess.run") as mock_run:
+            with patch("tools.dev.sync_environment.subprocess.run") as mock_run, patch(
+                "tools.dev.sync_environment.shutil.which",
+                side_effect=bun_path_only,
+            ):
                 mock_run.return_value.returncode = 0
 
                 exit_code, output = self.capture_main(["sync", "--root", str(repo_root)])
@@ -86,13 +107,11 @@ class TestSyncEnvironment(unittest.TestCase):
             self.assertIn("Environment sync complete", output)
             self.assertEqual(mock_run.call_count, 2)
             self.assertEqual(
-                mock_run.call_args_list[0].args[0], sync_environment.JS_SYNC_COMMAND
+                mock_run.call_args_list[0].args[0], sync_environment.JS_SYNC_BUN_COMMAND
             )
-            self.assertEqual(
-                mock_run.call_args_list[1].args[0], sync_environment.PYTHON_SYNC_COMMAND
-            )
+            self.assertEqual(mock_run.call_args_list[1].args[0], SYSTEM_PYTHON_SYNC_COMMAND)
 
-            stamp_path = repo_root / ".git" / "synaweave" / "environment-sync.json"
+            stamp_path = repo_root / ".git" / "sw" / "env-sync.json"
             stamp_payload = json.loads(stamp_path.read_text(encoding="utf-8"))
             self.assertEqual(stamp_payload["version"], sync_environment.STAMP_VERSION)
             self.assertEqual(
@@ -114,7 +133,10 @@ class TestSyncEnvironment(unittest.TestCase):
                 read_canonical_requirements_dev() + "# updated\n", encoding="utf-8"
             )
 
-            with patch("tools.dev.sync_environment.subprocess.run") as mock_run:
+            with patch("tools.dev.sync_environment.subprocess.run") as mock_run, patch(
+                "tools.dev.sync_environment.shutil.which",
+                side_effect=bun_path_only,
+            ):
                 mock_run.return_value.returncode = 0
 
                 exit_code, output = self.capture_main(["sync", "--root", str(repo_root)])
@@ -122,7 +144,7 @@ class TestSyncEnvironment(unittest.TestCase):
             self.assertEqual(exit_code, sync_environment.EXIT_OK)
             self.assertIn("Environment sync complete", output)
             self.assertEqual(mock_run.call_count, 1)
-            self.assertEqual(mock_run.call_args.args[0], sync_environment.PYTHON_SYNC_COMMAND)
+            self.assertEqual(mock_run.call_args.args[0], SYSTEM_PYTHON_SYNC_COMMAND)
 
     def test_manual_sync_prefers_repo_owned_python_environment(self):
         with tempfile.TemporaryDirectory() as raw_tmp:
@@ -130,7 +152,10 @@ class TestSyncEnvironment(unittest.TestCase):
             self.make_repo(repo_root)
             local_python = self.make_local_venv(repo_root)
 
-            with patch("tools.dev.sync_environment.subprocess.run") as mock_run:
+            with patch("tools.dev.sync_environment.subprocess.run") as mock_run, patch(
+                "tools.dev.sync_environment.shutil.which",
+                side_effect=bun_path_only,
+            ):
                 mock_run.return_value.returncode = 0
 
                 exit_code, output = self.capture_main(["sync", "--root", str(repo_root)])
@@ -160,7 +185,10 @@ class TestSyncEnvironment(unittest.TestCase):
                 '{"name": "sample", "private": true}\n', encoding="utf-8"
             )
 
-            with patch("tools.dev.sync_environment.subprocess.run") as mock_run:
+            with patch("tools.dev.sync_environment.subprocess.run") as mock_run, patch(
+                "tools.dev.sync_environment.shutil.which",
+                side_effect=bun_path_only,
+            ):
                 mock_run.return_value.returncode = 0
 
                 exit_code, output = self.capture_main(["sync", "--root", str(repo_root)])
@@ -168,9 +196,9 @@ class TestSyncEnvironment(unittest.TestCase):
             self.assertEqual(exit_code, sync_environment.EXIT_OK)
             self.assertIn("Environment sync complete", output)
             self.assertEqual(mock_run.call_count, 1)
-            self.assertEqual(mock_run.call_args.args[0], sync_environment.JS_SYNC_COMMAND)
+            self.assertEqual(mock_run.call_args.args[0], sync_environment.JS_SYNC_BUN_COMMAND)
 
-    def test_hook_mode_skips_python_install_without_repo_owned_environment(self):
+    def test_hook_mode_falls_back_to_system_python_without_repo_owned_environment(self):
         with tempfile.TemporaryDirectory() as raw_tmp:
             repo_root = Path(raw_tmp)
             self.make_repo(repo_root)
@@ -188,13 +216,14 @@ class TestSyncEnvironment(unittest.TestCase):
                 )
 
             self.assertEqual(exit_code, sync_environment.EXIT_OK)
-            self.assertIn("hook auto-install stays disabled outside a repo-owned .venv", output)
-            self.assertEqual(mock_run.call_count, 0)
+            self.assertIn("Python dependency sync using system python", output)
+            self.assertIn("Environment sync complete", output)
+            self.assertEqual(mock_run.call_count, 1)
+            self.assertEqual(mock_run.call_args.args[0], SYSTEM_PYTHON_SYNC_COMMAND)
 
             exit_code, check_output = self.capture_main(["check", "--root", str(repo_root)])
-            self.assertEqual(exit_code, sync_environment.EXIT_SYNC_NEEDED)
-            self.assertIn("python: requirements-dev.txt", check_output)
-            self.assertNotIn("js:", check_output)
+            self.assertEqual(exit_code, sync_environment.EXIT_OK)
+            self.assertIn("Environment sync not needed", check_output)
 
     def test_hook_mode_installs_python_into_repo_owned_environment(self):
         with tempfile.TemporaryDirectory() as raw_tmp:
@@ -215,6 +244,7 @@ class TestSyncEnvironment(unittest.TestCase):
                 )
 
             self.assertEqual(exit_code, sync_environment.EXIT_OK)
+            self.assertIn("Python dependency sync using repo-owned .venv", output)
             self.assertIn("Environment sync complete", output)
             self.assertEqual(mock_run.call_count, 1)
             self.assertEqual(
@@ -229,29 +259,51 @@ class TestSyncEnvironment(unittest.TestCase):
                 ),
             )
 
+
+    def test_sync_falls_back_to_npm_when_bun_is_missing(self):
+        with tempfile.TemporaryDirectory() as raw_tmp:
+            repo_root = Path(raw_tmp)
+            self.make_repo(repo_root)
+
+            with patch("tools.dev.sync_environment.subprocess.run") as mock_run, patch(
+                "tools.dev.sync_environment.shutil.which",
+                side_effect=npm_path_only,
+            ):
+                mock_run.return_value.returncode = 0
+
+                exit_code, output = self.capture_main(["sync", "--root", str(repo_root)])
+
+            self.assertEqual(exit_code, sync_environment.EXIT_OK)
+            self.assertIn("Environment sync complete", output)
+            self.assertEqual(
+                mock_run.call_args_list[0].args[0],
+                sync_environment.JS_SYNC_NPM_COMMAND,
+            )
+
     def test_sync_returns_failure_without_writing_stamp_when_command_fails(self):
         with tempfile.TemporaryDirectory() as raw_tmp:
             repo_root = Path(raw_tmp)
             self.make_repo(repo_root)
 
             with patch("tools.dev.sync_environment.subprocess.run") as mock_run:
-                mock_run.return_value.returncode = 9
+                failed_result = mock_run.return_value
+                failed_result.returncode = 9
 
                 exit_code, output = self.capture_main(["sync", "--root", str(repo_root)])
 
             self.assertEqual(exit_code, sync_environment.EXIT_SYNC_FAILED)
             self.assertIn("Command failed with exit code 9", output)
             self.assertFalse(
-                (repo_root / ".git" / "synaweave" / "environment-sync.json").exists()
+                (repo_root / ".git" / "sw" / "env-sync.json").exists()
             )
 
     def test_check_recovers_from_invalid_stamp_as_sync_needed(self):
         with tempfile.TemporaryDirectory() as raw_tmp:
             repo_root = Path(raw_tmp)
             self.make_repo(repo_root)
-            stamp_path = repo_root / ".git" / "synaweave"
+            stamp_path = repo_root / ".git" / "sw"
             stamp_path.mkdir(parents=True)
-            (stamp_path / "environment-sync.json").write_text("not json\n", encoding="utf-8")
+            (stamp_path / "env-sync.json").write_text("not json\n", encoding="utf-8")
 
             exit_code, output = self.capture_main(["check", "--root", str(repo_root)])
 

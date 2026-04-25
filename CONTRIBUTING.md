@@ -2,7 +2,7 @@
 
 ## Quick start
 
-1. Read repository rules in `AGENTS.md` and planning context in `docs/planning/MASTER.md`.
+1. Read repository rules in `AGENTS.md`, workflow expectations in `docs/workflow.md`, onboarding context in `docs/onboarding.md`, and planning context in `docs/planning/MASTER.md`.
 2. Confirm your change scope in the relevant planning file.
 3. Check `docs/templates/` before creating any recurring planning, ADR, spec, or verification doc.
 4. Install the local git hooks for your clone:
@@ -13,11 +13,7 @@ bun run hooks:install
 
 This step is manual. The repository does not auto-install hooks for contributors or AI-agent operators.
 
-After installation, sync the local toolchain baseline once for the clone:
-
-```bash
-python3 -m tools.dev.sync_environment sync
-```
+After the one-time `bun run hooks:install` wrapper install, the local `.git/hooks/*` entries are thin wrappers that delegate to the current repo-owned files under `tools/hooks/`, so content updates to existing repo hook files are picked up automatically without reinstalling copied hook bodies. Re-run `bun run hooks:install` when repo hook filenames are added, removed, or renamed, or when local wrappers are missing or damaged, so the local wrapper set stays aligned. Hook-triggered Python sync prefers the repo-owned `.venv` when present and otherwise falls back to `python3 -m pip` automatically. Run `bun run sync` only when a hook reports a real sync failure and you need to rerun it directly.
 
 5. Make targeted edits and keep architecture changes ADR-backed.
 6. Run local verification:
@@ -86,13 +82,13 @@ Use `docs/legend.md` as the only shared abbreviation registry for reused short f
 
 Before opening PR:
 
-- run `bun run hooks:install` after cloning and rerun it if repo-owned hook files change
+- run `bun run hooks:install` after cloning; after that one-time wrapper install, content updates to existing repo hook files apply automatically, and you only need to rerun it when repo hook filenames are added, removed, or renamed, or when local `.git/hooks` wrappers are missing or damaged
 - expect local hooks to stay manual until an owner doc says otherwise
-- run `python3 -m tools.dev.sync_environment sync` after cloning, after dependency-file changes, or whenever hooks report stale local tooling
+- run `bun run sync` only when hooks report a real sync failure or when you want to rerun the sync command directly
 - expect `commit-msg` to enforce the commit subject contract before commits land
-- expect `post-checkout`, `post-merge`, and `post-rewrite` to auto-sync Bun tooling when `package.json`, `bun.lock`, or `requirements-dev.txt` change, and to leave Python dependency installs manual unless the repo owns `.venv/bin/python3`
+- expect `post-checkout`, `post-merge`, and `post-rewrite` to auto-run environment sync when `package.json`, `bun.lock`, or `requirements-dev.txt` change; they prefer the repo-owned `.venv/bin/python3` and otherwise fall back to the system `python3 -m pip` command automatically
 - expect `pre-commit` to warn on stale local environment state before staged Betterleaks scanning plus `bun run verify:protected`
-- expect `pre-push` to block stale local environment state before tracked-file Betterleaks scanning plus `bun run verify`
+- expect `pre-push` to run tracked-file Betterleaks first, reusing only git-local verified clean results for unchanged tracked files when config and Betterleaks version still match, then retry hook-safe environment sync, then run `bun run verify:push`, and to fail if local tooling still cannot be synced safely
 - treat the hook set as local churn reduction: it catches commit, secret, and repo-control issues before PR review
 - run `python3 -m tools.verify.main`
 - run `bun run verify` when code, hooks, workflows, or repo controls changed
@@ -111,6 +107,7 @@ Before opening PR:
 - keep HTML comments source-only and non-sensitive because shipped HTML comments are stripped at build time
 - install local hooks before relying on commit, push, and Betterleaks feedback in this clone
 - keep naming consistent with `docs/planning/MASTER.md` and shared short forms consistent with `docs/legend.md`
+- use short root aliases where they improve local command speed: `bun run api`, `bun run web`, `bun run ext`, `bun run check`, and `bun run hooks`
 - avoid changing existing conventions without an ADR-backed reason
 - update the owner doc or owning template instead of duplicating the same rule in multiple docs
 
@@ -119,3 +116,27 @@ Before opening PR:
 - never commit `.env` or secrets
 - classify new config in `docs/infra.md`
 - route schema and dependency changes through required checks in PR review
+
+## Local verification workflow
+
+Choose the narrowest command that still proves your change.
+
+### Fast local commands
+- `python3 -m tools.verify.main`
+- `bun run check:py:fast`
+- `bun run check:browser`
+- `bun run check:fast`
+
+### Browser triage helpers
+- `bun run triage:ports`
+- `bun run triage:browser`
+- `bun run triage:browser:repeat`
+
+### Before push
+Run:
+
+```bash
+bun run ready:push
+```
+
+This runs the push-safe verification lane and refreshes the local environment sync stamp so the pre-push hook does not reject an otherwise green change after `package.json`, `bun.lock`, or `requirements-dev.txt` edits.

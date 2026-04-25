@@ -1,0 +1,33 @@
+#  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# TL;DR  -->  route the local API and ingest OpenTelemetry traces through one collector-owned proof path
+#
+# - Later Extension Points:
+#   --> add metric and vendor exporters only when later observability surfaces become required local defaults
+#
+# - Role:
+#   --> receives OTLP traces from the Sprint 1 runtimes and writes reproducible local evidence
+#   --> keeps the collector topology stable while trace storage backends remain intentionally minimal
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+receivers:
+  otlp:
+    protocols:
+      http:
+        endpoint: 0.0.0.0:4318
+      grpc:
+        endpoint: 0.0.0.0:4317
+
+processors:
+  batch:
+
+exporters:
+  debug:
+  file:
+    path: /var/lib/otel/collector-traces.json
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [debug, file]

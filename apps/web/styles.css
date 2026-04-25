@@ -1,0 +1,176 @@
+/*  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+TL;DR  -->  style the public coming-soon landing page for the investor-facing web deploy target
+
+- Later Extension Points:
+  --> widen the stylesheet only when the public web surface graduates beyond one static landing page
+
+- Role:
+  --> gives the landing page one readable contrast-safe presentation layer
+  --> keeps the public GitHub Pages output polished without adding runtime dependencies
+
+- Exports:
+  --> landing-page class and element rules only
+
+- Consumed By:
+  --> `apps/web/index.html`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  */
+
+/* ---------- theme ---------- */
+:root {
+	--bg: #08111f;
+	--surface: #10213b;
+	--surface-strong: #0d1b33;
+	--text: #f4f8ff;
+	--muted: #8ea3c4;
+	--accent: #61d0ff;
+	--accent-strong: #87ddff;
+	--border: #24456f;
+}
+
+/* ---------- box model ---------- */
+* {
+	box-sizing: border-box;
+}
+
+/* ---------- page ---------- */
+body {
+	margin: 0;
+	min-height: 100vh;
+	background: linear-gradient(180deg, var(--bg), #0d1830 60%, #08111f);
+	color: var(--text);
+	font: 16px / 1.5 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+		sans-serif;
+}
+
+/* ---------- layout ---------- */
+.shell {
+	width: min(1080px, calc(100% - 2rem));
+	margin: 0 auto;
+	padding: 2rem 0 4rem;
+}
+
+.hero {
+	padding: 3rem;
+	margin-bottom: 1.25rem;
+}
+
+.card {
+	padding: 1.5rem;
+	margin-bottom: 1.25rem;
+	border: 1px solid var(--border);
+	border-radius: 1rem;
+	background: color-mix(in srgb, var(--surface) 92%, black 8%);
+	box-shadow: 0 14px 40px rgba(0, 0, 0, 0.24);
+}
+
+/* ---------- copy ---------- */
+.eyebrow {
+	margin: 0 0 0.5rem;
+	color: var(--accent);
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+	font-size: 0.8rem;
+}
+
+.lede,
+.contact p,
+.grid p {
+	color: var(--muted);
+}
+
+h1,
+h2,
+p {
+	margin-top: 0;
+}
+
+h1 {
+	max-width: 12ch;
+	margin-bottom: 1rem;
+	font-size: clamp(2.8rem, 6vw, 4.8rem);
+	line-height: 0.98;
+}
+
+h2 {
+	margin-bottom: 0.75rem;
+	font-size: 1.1rem;
+}
+
+/* ---------- actions ---------- */
+.actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.75rem;
+	margin-top: 1.5rem;
+}
+
+.button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 3rem;
+	padding: 0.85rem 1.2rem;
+	border: 1px solid transparent;
+	border-radius: 999px;
+	background: linear-gradient(180deg, var(--accent-strong), var(--accent));
+	color: #03101f;
+	font-weight: 700;
+	text-decoration: none;
+}
+
+.button-secondary {
+	border-color: var(--border);
+	background: transparent;
+	color: var(--text);
+}
+
+/* ---------- grid ---------- */
+.grid {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 1rem;
+}
+
+.grid article {
+	padding: 1.25rem;
+	border: 1px solid var(--border);
+	border-radius: 0.9rem;
+	background: color-mix(in srgb, var(--surface-strong) 88%, black 12%);
+}
+
+.quote {
+	padding-block: 2rem;
+	text-align: center;
+	font-size: clamp(1.2rem, 2vw, 1.6rem);
+}
+
+.contact {
+	max-width: 48rem;
+}
+
+a:focus-visible {
+	outline: 3px solid var(--accent-strong);
+	outline-offset: 3px;
+}
+
+@media (max-width: 800px) {
+	.hero {
+		padding: 2rem;
+	}
+
+	.grid {
+		grid-template-columns: 1fr;
+	}
+}
+
+@media (max-width: 560px) {
+	.shell {
+		width: min(100%, calc(100% - 1rem));
+		padding-top: 0.5rem;
+	}
+
+	.card,
+	.hero {
+		padding: 1.25rem;
+	}
+}

@@ -1,0 +1,72 @@
+{
+  "artifactVersion": "v1",
+  "cases": [
+    {
+      "caseId": "web-note-capture-digest",
+      "observationId": "2d761fa0b8083f9f",
+      "queriedScoreValue": 0.917,
+      "queriedTraceName": "workspace_digest_v1",
+      "scoreName": "digest_density",
+      "scoreValue": 0.917,
+      "traceId": "604d379c0f5e98e5c2cf5645d7e6eb3b",
+      "traceName": "workspace_digest_v1"
+    },
+    {
+      "caseId": "extension-note-digest",
+      "observationId": "23c54dd9e49ba60c",
+      "queriedScoreValue": 0.45,
+      "queriedTraceName": "workspace_digest_v1",
+      "scoreName": "digest_density",
+      "scoreValue": 0.45,
+      "traceId": "6abcbd7aea7a456c4cdb8928ef292e3d",
+      "traceName": "workspace_digest_v1"
+    }
+  ],
+  "datasetName": "runtime-digest-density",
+  "datasetVersion": "v1",
+  "generatedAt": "2026-04-18T16:11:25Z",
+  "langfuseBaseUrl": "http://127.0.0.1:3030",
+  "localProof": {
+    "confirmed": [
+      "local Langfuse authentication succeeded against a reachable service",
+      "Sprint 1 runtime-eval cases created queryable Langfuse traces",
+      "each ingested Sprint 1 trace has a queryable numeric score in Langfuse"
+    ],
+    "notConfirmedHere": [
+      "this bounded proof does not instrument the live web extension API and ingest runtimes end to end",
+      "this proof does not claim hosted Langfuse durability shared-team operations or production retention",
+      "MLflow offline experiment proof still requires its own reachable tracking backend"
+    ]
+  },
+  "metricsSnapshot": {
+    "ai_ready_trace_coverage": 1.0,
+    "api_latency_p95_ms": 94.9,
+    "auth_success_total": 2,
+    "captured_at": "2026-04-18T16:11:15Z",
+    "job_duration_p95_ms": 132.2,
+    "job_success_total": 2,
+    "trace_event_total": 6,
+    "workspace_action_total": 3,
+    "workspace_entry_timing_ms": 161.7
+  },
+  "performanceSnapshot": {
+    "apiLatencyP95Ms": 94.9,
+    "jobDurationP95Ms": 132.2,
+    "thresholdStatus": {
+      "apiLatencyP95": true,
+      "jobDurationP95": true,
+      "workspaceEntryTiming": true
+    },
+    "thresholds": {
+      "apiLatencyP95MsMax": 500,
+      "jobDurationP95MsMax": 1000,
+      "workspaceEntryTimingMsMax": 200
+    },
+    "traceEventTotal": 6,
+    "workspaceEntryTimingMs": 161.7
+  },
+  "proofRunId": "sprint1-langfuse-d27944788e2d",
+  "proofType": "local-langfuse-trace-score-proof",
+  "scoreCount": 2,
+  "traceCount": 2
+}

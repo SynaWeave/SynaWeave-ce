@@ -44,6 +44,8 @@ def make_docs_tree(repo_root: Path) -> None:
         "apps.md",
         "infra.md",
         "operations.md",
+        "workflow.md",
+        "onboarding.md",
         "testing.md",
         "python.md",
         "planning.md",

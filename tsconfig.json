@@ -1,11 +1,13 @@
 {
 	"compilerOptions": {
 		"target": "ES2022",
+		"lib": ["ES2022", "DOM", "DOM.Iterable", "esnext.disposable"],
 		"module": "NodeNext",
 		"moduleResolution": "NodeNext",
 		"strict": true,
 		"resolveJsonModule": true,
 		"allowJs": false,
+		"types": ["node"],
 		"esModuleInterop": true,
 		"forceConsistentCasingInFileNames": true,
 		"baseUrl": "."

@@ -1,12 +1,12 @@
 #  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# TL;DR  -->  run the full governed repository verification stack on pushes and pull requests
+# TL;DR  -->  run push-safe verification on pushes and the full governed repository verification stack on pull requests
 #
 # - Later Extension Points:
 #   --> add more hosted verification steps only when new default repo-control gates become durable
 #
 # - Role:
 #   --> installs the root verification toolchain for CI runs
-#   --> executes the full repository verification path used to guard the governed branch baseline
+#   --> executes the push-safe verification path on pushes and the full verification path on pull requests
 #
 # - Exports:
 #   --> `repo-verify / repo-verify` hosted check run
@@ -49,11 +49,33 @@ jobs:
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
 
+      - name: Cache Bun and Playwright assets
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.bun/install/cache
+            ~/.cache/ms-playwright
+          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock', 'package.json') }}
+
       - name: Install Bun dependencies
         run: |
           bun install --frozen-lockfile
 
-      - name: Run repository verification
+      - name: Install Playwright browsers
+        if: github.event_name == 'pull_request'
+        run: |
+          bun run deps:browser
+
+      - name: Run push verification
+        if: github.event_name == 'push'
+        env:
+          VERIFY_COMMIT_BASE: ${{ github.event.before }}
+          VERIFY_COMMIT_HEAD: ${{ github.sha }}
+        run: |
+          bun run verify:push
+
+      - name: Run pull-request verification
+        if: github.event_name == 'pull_request'
         env:
           VERIFY_COMMIT_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
           VERIFY_COMMIT_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}

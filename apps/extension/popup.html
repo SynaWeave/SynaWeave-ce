@@ -1,94 +1,62 @@
 <!DOCTYPE html>
-<!-- popup and side-panel shell for the bounded legacy flashcard workflow -->
-<!-- major regions stay obvious for reviewers reading markup without opening the extension -->
+<!-- side-panel shell for shared identity, durable actions, and digest proof in the extension runtime -->
+<!-- this shell mirrors the web path so Sprint 1 can prove the same user across both surfaces -->
 <html lang="en">
 
 <head>
-	<!-- document metadata stays minimal so popup boot stays easy to scan -->
 	<meta charset="UTF-8" />
-	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-	<title>Clip → Cards</title>
-	<link rel="stylesheet" href="styles.css" />
+	<title>SynaWeave Panel</title>
+	<link rel="stylesheet" href="./styles.css" />
 </head>
 
 <body>
-	<!-- top shell for title close action and primary toolbar buttons -->
-	<header class="navbar">
-		<div class="navbar_top">
-			<!-- close affordance stays first in markup so the button remains easy to find in review -->
-			<button id="btn-close_panel" class="close_button" aria-label="close panel">
-				&times;
-			</button>
-			<h1>Flash Card Clipper</h1>
-		</div>
+	<main class="panel-shell">
+		<header class="panel-hero">
+			<p class="eyebrow">Extension bridge</p>
+			<h1>SynaWeave</h1>
+			<p class="lede">Use the same email as the web shell, pull a page selection, then write a durable action and run the digest.</p>
+		</header>
 
-		<!-- grouped action row for refresh settings and export shortcuts -->
-		<nav class="toolbar">
-			<button id="btn-refresh">refresh</button>
-			<button id="btn-open-options" title="settings">settings</button>
-			<button id="btn-export_anki" title="download TSV for Anki">anki</button>
-			<button id="btn-copy_quizlet" title="copy TSV for Quizlet import">quizlet</button>
-		</nav>
-	</header>
+		<section id="auth-section" class="card">
+			<h2>Sign in</h2>
+			<label for="ext-email-input">Email</label>
+			<input id="ext-email-input" type="email" placeholder="you@example.com" />
+			<button id="ext-sign-in-button" type="button">Connect panel session</button>
+		</section>
 
-	<!-- quick-add form stays near the top because it is the fastest capture path -->
-	<section class="quick_add">
-		<h2>Quick Add</h2>
-		<div>
-			<h3>Front:</h3>
-			<textarea id="qa_front" placeholder="( question / prompt )" rows="3"></textarea>
-		</div>
+		<section id="workspace-section" class="card hidden">
+			<div class="row between">
+				<h2>Workspace</h2>
+				<button id="ext-sign-out-button" type="button">Sign out</button>
+			</div>
+			<p><strong>User:</strong> <span id="ext-identity-email">—</span></p>
+			<p><strong>Bridge code:</strong> <span id="ext-bridge-code">—</span></p>
+			<p><strong>Workspace:</strong> <span id="ext-workspace-id">—</span></p>
+			<label for="ext-action-input">Captured note</label>
+			<textarea id="ext-action-input" rows="4" placeholder="Pull a page selection or type a note here."></textarea>
+			<div class="row">
+				<button id="pull-selection-button" type="button">Pull page selection</button>
+				<button id="save-extension-action-button" type="button">Write durable action</button>
+			</div>
+			<button id="run-extension-job-button" type="button">Run digest job</button>
+			<p><strong>Latest digest:</strong> <span id="ext-last-digest">—</span></p>
+			<p><strong>Latest eval:</strong> <span id="ext-latest-eval">—</span></p>
+			<ul id="ext-recent-actions" class="list"></ul>
+		</section>
 
-		<div>
-			<h3>Back:</h3>
-			<textarea id="qa_back" placeholder="( answer / hint )" rows="3"></textarea>
-		</div>
+		<section id="ext-degraded-card" class="card degraded hidden" aria-live="polite">
+			<h2>Degraded mode</h2>
+			<p id="ext-degraded-message">A retryable runtime issue is holding the current session.</p>
+			<button id="ext-retry-button" type="button">Retry last request</button>
+		</section>
 
-		<div>
-			<h3>Tags:</h3>
-			<textarea id="qa_tags" placeholder="( space-separated )" rows="2"></textarea>
-		</div>
+		<section class="card">
+			<h2>Panel status</h2>
+			<p id="panel-status-line">Waiting for extension runtime.</p>
+		</section>
+	</main>
 
-		<div>
-			<button id="qa_createBtn">create card</button>
-		</div>
-	</section>
-
-	<!-- local note area stays separate so helper text does not mix with review cards -->
-	<section class="notes" id="note-written">
-		<h2>Helpful Notes</h2>
-		<textarea id="noteText" placeholder="Type your notes here..." rows="4"></textarea>
-		<button id="saveNoteBtn">Save Note</button>
-		<button id="savePageBtn">Save This Page!</button>
-		<ul id="notesContainer"></ul>
-	</section>
-
-	<!-- review region hides behind details so the capture path stays visually lighter by default -->
-	<section class="due">
-		<details>
-			<summary class="summary-h2">Review These Today ‼️</summary>
-
-			<ul id="due_list" class="card_list"></ul>
-			<template id="card_temp">
-				<li class="card">
-					<div class="front"></div>
-					<details class="answer">
-						<summary>show answer</summary>
-						<div class="back"></div>
-					</details>
-					<div class="rate">
-						<button id="again">try again</button>
-						<button id="hard">that was hard</button>
-						<button id="okay">I remembered, mostly</button>
-						<button id="easy">too easy</button>
-					</div>
-				</li>
-			</template>
-		</details>
-	</section>
-
-	<!-- popup script loads last so the DOM shell exists before handlers attach -->
 	<script src="./popup_script.js"></script>
 </body>
 

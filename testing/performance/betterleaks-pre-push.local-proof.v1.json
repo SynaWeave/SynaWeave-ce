@@ -1,0 +1,46 @@
+{
+  "artifactVersion": "v1",
+  "benchmarkType": "repo-local-betterleaks-pre-push-proof",
+  "branch": "s001/d2-and-d3",
+  "command": "python3 -m tools.security.betterleaks --mode tracked --include-built-extension",
+  "comparisonLabel": "cache-cold-full-rescan-equivalent-vs-cache-warm-unchanged-tree-equivalent",
+  "generatedAt": "2026-04-25T14:33:04Z",
+  "headBeforeCommits": "e35abff10a28454924dc0e21032f4f4b86b7ecbb",
+  "methodology": {
+    "cacheFile": ".git/sw/betterleaks-tracked-cache.json",
+    "notes": [
+      "True historical pre-change behavior was not rerun from an earlier commit.",
+      "The cold measurement deletes only the git-local tracked-scan cache, then runs the tracked Betterleaks command with built extension scanning enabled.",
+      "The warm measurement reruns the same command on the unchanged tree with the tracked-scan cache intact.",
+      "This preserves current tracked-file security semantics: tracked files remain fully rescanned when the cache is cold, config changes, version changes, or file content changes."
+    ],
+    "trackedFileCount": 229
+  },
+  "results": {
+    "cacheColdFullRescanEquivalent": {
+      "realSeconds": 14.69,
+      "scannerOutput": [
+        "10:32AM INF scanned ~1540707 bytes (1.54 MB) in 10.4s",
+        "10:32AM INF no leaks found",
+        "10:32AM INF scanned ~160006 bytes (160.01 KB) in 1.86s",
+        "10:32AM INF no leaks found",
+        "10:32AM INF scanned ~39176 bytes (39.18 KB) in 363ms",
+        "10:32AM INF no leaks found"
+      ],
+      "trackedRescanCount": 229
+    },
+    "cacheWarmUnchangedTreeEquivalent": {
+      "realSeconds": 2.17,
+      "scannerOutput": [
+        "10:32AM INF scanned ~39176 bytes (39.18 KB) in 479ms",
+        "10:32AM INF no leaks found",
+        "No changed tracked files to rescan with Betterleaks"
+      ],
+      "trackedRescanCount": 0
+    }
+  },
+  "summary": {
+    "realSecondsSaved": 12.52,
+    "warmVsColdSpeedup": 6.77
+  }
+}

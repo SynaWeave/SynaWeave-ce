@@ -1,0 +1,20 @@
+{
+  "apiLatencyP95Ms": 94.9,
+  "artifactVersion": "v1",
+  "generatedAt": "2026-04-23T00:02:03Z",
+  "jobDurationP95Ms": 132.2,
+  "proofType": "repo-local-performance-baseline",
+  "sourceDataset": "v1",
+  "thresholdStatus": {
+    "apiLatencyP95": true,
+    "jobDurationP95": true,
+    "workspaceEntryTiming": true
+  },
+  "thresholds": {
+    "apiLatencyP95MsMax": 500,
+    "jobDurationP95MsMax": 1000,
+    "workspaceEntryTimingMsMax": 200
+  },
+  "traceEventTotal": 6,
+  "workspaceEntryTimingMs": 161.7
+}

@@ -70,6 +70,14 @@ DEPENDENCY_INSTALL_CLEAN_CHECK_COMMAND = (
     "perl -e 'my @lines = qx/git status --porcelain/; if (@lines) { print STDERR @lines; "
     'exit 1; } print "Repository checkout remained clean.\\n";\''
 )
+CODEQL_PYTHON_WORKSPACE_ALIAS_COMMAND = (
+    "perl -MCwd=realpath -MFile::Basename=dirname -e "
+    "'my $real = realpath($ENV{RUNNER_WORKSPACE} // q{}); "
+    'die "RUNNER_WORKSPACE missing\\n" unless defined $real; '
+    'my $alias = dirname($real) . "/SynaWeave-ce"; '
+    'exit 0 if $alias eq $real || -e $alias; '
+    'symlink($real, $alias) or die "symlink $alias -> $real failed: $!\\n";\''
+)
 
 WORKFLOW_RUN_COMMANDS = {
     "dependency-installability.yml": (
@@ -116,6 +124,7 @@ WORKFLOW_RUN_COMMANDS = {
         "docker run --rm -v \"$PWD:/repo\" trufflesecurity/trufflehog:latest filesystem "
         "/repo/build/extension --results=verified,unknown --fail",
     ),
+    "codeql.yml": (CODEQL_PYTHON_WORKSPACE_ALIAS_COMMAND,),
 }
 
 WORKFLOW_USES = {
@@ -136,7 +145,6 @@ WORKFLOW_USES = {
     "codeql.yml": (
         "actions/checkout@v4",
         "github/codeql-action/init@v3",
-        "github/codeql-action/autobuild@v3",
         "github/codeql-action/analyze@v3",
     ),
 }
@@ -412,6 +420,33 @@ def _check_codeql_branches(document: dict[str, Any], path: Path, issues: List[st
     branches = [value for value in _coerce_list(push.get("branches")) if isinstance(value, str)]
     if branches != ["main"]:
         _add_issue(issues, f"workflow must limit CodeQL push branches to ['main']: {path.name}")
+
+    jobs = _coerce_mapping(document.get("jobs"))
+    analyze = _coerce_mapping(jobs.get("analyze"))
+    strategy = _coerce_mapping(analyze.get("strategy"))
+    matrix = _coerce_mapping(strategy.get("matrix"))
+    include = _coerce_list(matrix.get("include"))
+    expected_matrix = [
+        {"language": "javascript-typescript", "build-mode": "none"},
+        {"language": "python", "build-mode": "none"},
+    ]
+    if include != expected_matrix:
+        _add_issue(
+            issues,
+            "workflow must keep CodeQL language matrix on build-mode none for "
+            "javascript-typescript and python: "
+            f"{path.name}",
+        )
+
+    for step in _job_steps(document):
+        uses = step.get("uses")
+        if uses == "github/codeql-action/autobuild@v3":
+            _add_issue(
+                issues,
+                "workflow must not use CodeQL autobuild when build-mode is none: "
+                f"{path.name}",
+            )
+            break
 
 
 def _check_dependency_review(document: dict[str, Any], path: Path, issues: List[str]) -> None:

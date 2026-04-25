@@ -78,11 +78,19 @@ def make_skeleton(repo_root: Path, *, with_forbidden_file: bool = False) -> None
         (repo_root / "manifest.json").write_text("{\n}")
 
 
+def make_browser_ts_sources(repo_root: Path) -> None:
+    (repo_root / "apps" / "web" / "app.ts").write_text("export const app = true;\n")
+    (repo_root / "apps" / "extension" / "background.ts").write_text(
+        "export const background = true;\n"
+    )
+
+
 class TestVerifyShape(unittest.TestCase):
     def test_shape_allows_clean_topology(self):
         with tempfile.TemporaryDirectory() as raw_tmp:
             repo_root = Path(raw_tmp)
             make_skeleton(repo_root)
+            make_browser_ts_sources(repo_root)
             issues = check_shape(repo_root)
             self.assertEqual(issues, [])
 
@@ -135,6 +143,36 @@ class TestVerifyShape(unittest.TestCase):
             (repo_root / ".DS_Store").write_text("noise")
             issues = check_shape(repo_root)
             self.assertTrue(any("platform-generated repo noise" in issue for issue in issues))
+
+    def test_shape_rejects_generated_web_javascript_in_source_dir(self):
+        with tempfile.TemporaryDirectory() as raw_tmp:
+            repo_root = Path(raw_tmp)
+            make_skeleton(repo_root)
+            (repo_root / "apps" / "web" / "app.js").write_text("export {};\n")
+            issues = check_shape(repo_root)
+            self.assertIn(
+                (
+                    "forbidden generated browser JavaScript present in source app "
+                    "directory: apps/web/app.js"
+                ),
+                issues,
+            )
+
+    def test_shape_rejects_generated_extension_javascript_in_source_dir(self):
+        with tempfile.TemporaryDirectory() as raw_tmp:
+            repo_root = Path(raw_tmp)
+            make_skeleton(repo_root)
+            (repo_root / "apps" / "extension" / "background.js").write_text(
+                "export {};\n"
+            )
+            issues = check_shape(repo_root)
+            self.assertIn(
+                (
+                    "forbidden generated browser JavaScript present in source app "
+                    "directory: apps/extension/background.js"
+                ),
+                issues,
+            )
 
 
 if __name__ == "__main__":

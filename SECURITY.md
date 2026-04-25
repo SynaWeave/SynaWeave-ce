@@ -46,6 +46,7 @@ Security posture for repository changes is visible through:
 Fast scanning scope starts from the tracked-file boundary.
 
 - local and fast CI Betterleaks gates scan tracked repo files plus built extension artifacts
+- local tracked-mode Betterleaks may reuse a git-local cache for unchanged clean tracked files, but config or Betterleaks version changes invalidate that cache and built extension artifacts still scan every tracked run
 - gitignored cache and dependency paths do not define the trusted source surface
 - the custom security verifier parses `.gitignore` to confirm env-file ignore policy and reject any tracked env drift outside the example exception
 

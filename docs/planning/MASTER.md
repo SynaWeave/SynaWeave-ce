@@ -1804,7 +1804,7 @@ Sprint 2 is the first sprint in which the product must behave like a real learni
 
 ### 🔀 Parallel deliverables
 
-#### 📥 Deliverable 1 — Capture and provenance
+#### 🚚 Deliverable 1 — 📥 Capture and provenance
 
 Purpose:
 
@@ -1825,7 +1825,7 @@ Investor-visible outcome:
 
 * the product has a credible source-to-learning story
 
-#### ✏️ Deliverable 2 — Workspace and note structure
+#### 🚚 Deliverable 2 — ✏️ Workspace and note structure
 
 Purpose:
 
@@ -1846,7 +1846,7 @@ Investor-visible outcome:
 
 * the product has a visually legible knowledge-work moat
 
-#### 🃏 Deliverable 3 — Practice and review core
+#### 🚚 Deliverable 3 — 🃏 Practice and review core
 
 Purpose:
 
@@ -1867,7 +1867,7 @@ Investor-visible outcome:
 
 * the product has a retention engine, not just content surfaces
 
-#### 🤖 Deliverable 4 — Guidance and organization intelligence
+#### 🚚 Deliverable 4 — 🤖 Guidance and organization intelligence
 
 Purpose:
 
@@ -1888,7 +1888,7 @@ Investor-visible outcome:
 
 * early intelligence is visible in the product path
 
-#### 👀 Deliverable 5 — Activation and proof baseline
+#### 🚚 Deliverable 5 — 👀 Activation and proof baseline
 
 Purpose:
 
@@ -1931,7 +1931,7 @@ Sprint 3 is the pedagogy sprint. It must make the product visibly better at prod
 
 ### 🔀 Parallel deliverables
 
-#### 📥 Deliverable 1 — Practice content expansion
+#### 🚚 Deliverable 1 — 📥 Practice content expansion
 
 Purpose:
 
@@ -1951,7 +1951,7 @@ Investor-visible outcome:
 
 * the product demonstrates broader learning utility without requiring more user effort
 
-#### ✏️ Deliverable 2 — Guided workspace support
+#### 🚚 Deliverable 2 — ✏️ Guided workspace support
 
 Purpose:
 
@@ -1971,7 +1971,7 @@ Investor-visible outcome:
 
 * the product demonstrates stronger educational design inside the workspace itself
 
-#### 🃏 Deliverable 3 — Quiz engine and memory systems
+#### 🚚 Deliverable 3 — 🃏 Quiz engine and memory systems
 
 Purpose:
 
@@ -1992,7 +1992,7 @@ Investor-visible outcome:
 
 * the product has a differentiated pedagogy engine and retention story
 
-#### 🤖 Deliverable 4 — Technical learner tracks
+#### 🚚 Deliverable 4 — 🤖 Technical learner tracks
 
 Purpose:
 
@@ -2012,7 +2012,7 @@ Investor-visible outcome:
 
 * the product has a focused and defensible niche within a broad learner market
 
-#### 👀 Deliverable 5 — Learning and engagement proof
+#### 🚚 Deliverable 5 — 👀 Learning and engagement proof
 
 Purpose:
 
@@ -2055,7 +2055,7 @@ Sprint 4 is where the product’s AI and ML depth must become obvious to both us
 
 ### 🔀 Parallel deliverables
 
-#### 📥 Deliverable 1 — Multimodal data engine
+#### 🚚 Deliverable 1 — 📥 Multimodal data engine
 
 Purpose:
 
@@ -2076,7 +2076,7 @@ Investor-visible outcome:
 
 * the platform demonstrates competence with messy real-world data, not only neat demos
 
-#### ✏️ Deliverable 2 — Knowledge graph and connected workspace
+#### 🚚 Deliverable 2 — ✏️ Knowledge graph and connected workspace
 
 Purpose:
 
@@ -2097,7 +2097,7 @@ Investor-visible outcome:
 
 * the platform demonstrates a genuine knowledge-weaving model
 
-#### 🃏 Deliverable 3 — Adaptive practice and recommendation
+#### 🚚 Deliverable 3 — 🃏 Adaptive practice and recommendation
 
 Purpose:
 
@@ -2118,7 +2118,7 @@ Investor-visible outcome:
 
 * adaptation is visible as a product capability, not only a backend claim
 
-#### 🤖 Deliverable 4 — Grounded tutor and learner model
+#### 🚚 Deliverable 4 — 🤖 Grounded tutor and learner model
 
 Purpose:
 
@@ -2140,7 +2140,7 @@ Investor-visible outcome:
 
 * the platform has a real learner model and grounded tutor story
 
-#### 👀 Deliverable 5 — AI and ML proof depth
+#### 🚚 Deliverable 5 — 👀 AI and ML proof depth
 
 Purpose:
 
@@ -2186,7 +2186,7 @@ Sprint 5 is where quality becomes legible and defendable.
 
 ### 🔀 Parallel deliverables
 
-#### 📥 Deliverable 1 — Source and trust hardening
+#### 🚚 Deliverable 1 — 📥 Source and trust hardening
 
 Purpose:
 
@@ -2207,7 +2207,7 @@ Investor-visible outcome:
 
 * trust is supported by visible mechanisms, not only policy language
 
-#### ✏️ Deliverable 2 — Workspace and user reliability
+#### 🚚 Deliverable 2 — ✏️ Workspace and user reliability
 
 Purpose:
 
@@ -2228,7 +2228,7 @@ Investor-visible outcome:
 
 * product reliability is credible for real user dependence
 
-#### 🃏 Deliverable 3 — Performance and efficiency
+#### 🚚 Deliverable 3 — 🃏 Performance and efficiency
 
 Purpose:
 
@@ -2249,7 +2249,7 @@ Investor-visible outcome:
 
 * the platform’s economics and scalability become easier to trust
 
-#### 🤖 Deliverable 4 — Trustworthy intelligence
+#### 🚚 Deliverable 4 — 🤖 Trustworthy intelligence
 
 Purpose:
 
@@ -2271,7 +2271,7 @@ Investor-visible outcome:
 
 * the AI layer looks production-worthy rather than experimental
 
-#### 👀 Deliverable 5 — Flagship proof surface
+#### 🚚 Deliverable 5 — 👀 Flagship proof surface
 
 Purpose:
 
@@ -2315,7 +2315,7 @@ Sprint 6 is about extension of the moat, not rescue of the core.
 
 ### 🔀 Parallel deliverables
 
-#### 📥 Deliverable 1 — Local source acceleration
+#### 🚚 Deliverable 1 — 📥 Local source acceleration
 
 Purpose:
 
@@ -2334,7 +2334,7 @@ Investor-visible outcome:
 
 * the platform has a credible path to stronger local differentiation
 
-#### ✏️ Deliverable 2 — Local workspace resilience
+#### 🚚 Deliverable 2 — ✏️ Local workspace resilience
 
 Purpose:
 
@@ -2354,7 +2354,7 @@ Investor-visible outcome:
 
 * the platform has a clear local-first trajectory
 
-#### 🃏 Deliverable 3 — Local review and study support
+#### 🚚 Deliverable 3 — 🃏 Local review and study support
 
 Purpose:
 
@@ -2373,7 +2373,7 @@ Investor-visible outcome:
 
 * the local path improves actual learning workflows, not just architecture diagrams
 
-#### 🤖 Deliverable 4 — Native intelligence seam
+#### 🚚 Deliverable 4 — 🤖 Native intelligence seam
 
 Purpose:
 
@@ -2393,7 +2393,7 @@ Investor-visible outcome:
 
 * the platform has a defensible long-term moat beyond the baseline web app pattern
 
-#### 👀 Deliverable 5 — Expansion proof
+#### 🚚 Deliverable 5 — 👀 Expansion proof
 
 Purpose:
 

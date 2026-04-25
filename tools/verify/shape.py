@@ -18,8 +18,11 @@ TL;DR  -->  verify the governed repository topology shape and required scaffold 
 from __future__ import annotations
 
 import json
+from collections.abc import Iterator, Mapping
 from pathlib import Path
-from typing import List
+from typing import TypeAlias, cast
+
+JsonObject: TypeAlias = dict[str, object]
 
 REQUIRED_TOP_LEVEL_DIRS = [
     "apps",
@@ -86,12 +89,41 @@ FORBIDDEN_REPO_NOISE = {
 }
 
 
-def _add_issue(issues: List[str], message: str) -> None:
+FORBIDDEN_APP_GENERATED_JS_DIRS = {
+    "apps/web",
+    "apps/extension",
+}
+
+
+def _add_issue(issues: list[str], message: str) -> None:
     issues.append(message)
 
 
-def check_shape(repo_root: Path) -> List[str]:
-    issues: List[str] = []
+def _iter_string_values(value: object) -> Iterator[str]:
+    if not isinstance(value, list):
+        return
+
+    for item in cast(list[object], value):
+        if isinstance(item, str):
+            yield item
+
+
+def _load_json_object(path: Path) -> JsonObject:
+    decoded_value = cast(object, json.loads(path.read_text()))
+    if not isinstance(decoded_value, dict):
+        raise ValueError("package.json must contain a JSON object at the top level")
+
+    package_data: JsonObject = {}
+    for key, value in cast(dict[object, object], decoded_value).items():
+        if not isinstance(key, str):
+            raise ValueError("package.json must contain a JSON object at the top level")
+        package_data[key] = value
+
+    return package_data
+
+
+def check_shape(repo_root: Path) -> list[str]:
+    issues: list[str] = []
 
     for directory in REQUIRED_TOP_LEVEL_DIRS:
         path = repo_root / directory
@@ -123,8 +155,18 @@ def check_shape(repo_root: Path) -> List[str]:
                 continue
             _add_issue(
                 issues,
-                "forbidden platform-generated repo noise present: "
-                f"{path.relative_to(repo_root)}",
+                f"forbidden platform-generated repo noise present: {path.relative_to(repo_root)}",
+            )
+
+    for app_dir in sorted(FORBIDDEN_APP_GENERATED_JS_DIRS):
+        source_dir = repo_root / app_dir
+        if not source_dir.exists() or not source_dir.is_dir():
+            continue
+        for path in sorted(source_dir.rglob("*.js")):
+            _add_issue(
+                issues,
+                "forbidden generated browser JavaScript present in source app directory: "
+                + f"{path.relative_to(repo_root)}",
             )
 
     if (repo_root / "apps" / "docs").exists():
@@ -143,21 +185,25 @@ def check_shape(repo_root: Path) -> List[str]:
         _add_issue(issues, "package.json is required for workspace bootstrap")
     else:
         try:
-            package_data = json.loads(package_path.read_text())
+            package_data = _load_json_object(package_path)
         except json.JSONDecodeError as exc:
             _add_issue(issues, f"package.json is not valid JSON: {exc}")
+        except ValueError as exc:
+            _add_issue(issues, str(exc))
+            return issues
         else:
-            workspaces = package_data.get("workspaces", [])
-            missing = sorted(REQUIRED_WORKSPACE_PATTERNS.difference(set(workspaces)))
+            workspaces = set(_iter_string_values(package_data.get("workspaces")))
+            missing = sorted(REQUIRED_WORKSPACE_PATTERNS.difference(workspaces))
             if missing:
                 _add_issue(
                     issues,
-                    "package.json workspaces missing required entries: "
-                    + ", ".join(missing),
+                    f"package.json workspaces missing required entries: {', '.join(missing)}",
                 )
 
-            scripts = package_data.get("scripts", {})
-            if "verify" not in scripts:
+            scripts = package_data.get("scripts")
+            if not isinstance(scripts, Mapping):
+                _add_issue(issues, "package.json must define a verify script")
+            elif "verify" not in scripts:
                 _add_issue(issues, "package.json must define a verify script")
 
     return issues

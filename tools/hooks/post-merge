@@ -29,11 +29,11 @@ exit 0 if $old_ref eq q{} || $new_ref eq q{};
 my $changed = qx{git diff --name-only $old_ref $new_ref -- package.json bun.lock requirements-dev.txt 2>/dev/null};
 exit 0 if $changed eq q{};
 
-print "post-merge: syncing local environment\n";
+print "post-merge: auto-syncing local environment after merge\n";
 my $sync_exit = system('python3', '-m', 'tools.dev.sync_environment', 'sync', '--mode', 'hook') >> 8;
 
 if ($sync_exit != 0) {
-    print "post-merge: environment sync failed; run python3 -m tools.dev.sync_environment sync\n";
+    print "post-merge: automatic environment sync failed; merge finished, but rerun python3 -m tools.dev.sync_environment sync to inspect or complete setup\n";
 }
 
 exit 0;

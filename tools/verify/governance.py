@@ -24,6 +24,7 @@ from typing import List
 
 from tools.verify.policy import (
     CODEOWNERS_REQUIRED_LINES,
+    GOVERNED_GITHUB_POSTURE_PHRASES,
     GOVERNED_REQUIRED_STATUS_CHECKS,
     MIN_SUBJECT_WORDS,
     PR_TEMPLATE_REQUIRED_FIELDS,
@@ -147,6 +148,13 @@ def check_governance(repo_root: Path) -> List[str]:
     governance = repo_root / "GOVERNANCE.md"
     if governance.exists():
         governance_text = governance.read_text()
+        for phrase in GOVERNED_GITHUB_POSTURE_PHRASES:
+            if phrase not in governance_text:
+                _add_issue(
+                    issues,
+                    "GOVERNANCE.md must document GitHub posture phrase: "
+                    f"{phrase}",
+                )
         for status_check in GOVERNED_REQUIRED_STATUS_CHECKS:
             if status_check not in governance_text:
                 _add_issue(

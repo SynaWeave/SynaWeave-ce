@@ -36,21 +36,26 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language:
-          - javascript-typescript
-          - python
+        include:
+          - language: javascript-typescript
+            build-mode: none
+          - language: python
+            build-mode: none
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Create Python CodeQL workspace alias
+        if: matrix.language == 'python'
+        run: |
+          perl -MCwd=realpath -MFile::Basename=dirname -e 'my $real = realpath($ENV{RUNNER_WORKSPACE} // q{}); die "RUNNER_WORKSPACE missing\n" unless defined $real; my $alias = dirname($real) . "/SynaWeave-ce"; exit 0 if $alias eq $real || -e $alias; symlink($real, $alias) or die "symlink $alias -> $real failed: $!\n";'
+
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
           languages: "${{ matrix.language }}"
-
-      - name: Autobuild
-        uses: github/codeql-action/autobuild@v3
+          build-mode: "${{ matrix.build-mode }}"
 
       - name: Perform CodeQL analysis
         uses: github/codeql-action/analyze@v3

@@ -32,6 +32,7 @@ REQUIRED_GOVERNANCE_FILES = {
     "LICENSE",
     ".env.example",
     ".betterleaks.toml",
+    ".basedpyright-baseline.json",
     ".github/CODEOWNERS",
 }
 
@@ -41,6 +42,12 @@ GOVERNED_REQUIRED_STATUS_CHECKS = (
     "dependency-review / dependency-review",
     "codeql / codeql-javascript-typescript",
     "codeql / codeql-python",
+)
+
+GOVERNED_GITHUB_POSTURE_PHRASES = (
+    "Expected default-branch ruleset posture:",
+    "GitHub rulesets are the first enforcement home",
+    "CODEOWNERS file assigns platform-admin and core-maintainer owners for protected-path changes",
 )
 
 ROOT_DOC_FILES = (
@@ -53,6 +60,8 @@ ROOT_DOC_FILES = (
     "infra.md",
     "testing.md",
     "operations.md",
+    "workflow.md",
+    "onboarding.md",
     "design-system.md",
     "legend.md",
     "adrs.md",
@@ -266,15 +275,37 @@ SHARED_BANNED_PREFIXES = (
 )
 
 REQUIRED_PACKAGE_SCRIPTS = {
+    "deps:browser": "playwright install chromium",
+    "build:web": "python3 -m tools.web.build",
     "build:extension": "python3 -m tools.extension.build",
     "security:betterleaks:staged": "python3 -m tools.security.betterleaks --mode staged",
     "security:betterleaks:tracked": (
         "python3 -m tools.security.betterleaks --mode tracked --include-built-extension"
     ),
+    "test:browser": (
+        "python3 tools/dev/js_run.py verify:browser"
+    ),
+    "test:e2e": (
+        "python3 tools/dev/js_run.py build:web && python3 tools/dev/js_run.py "
+        "build:extension && playwright test --config playwright.config.ts testing/e2e"
+    ),
+    "test:accessibility": (
+        "python3 tools/dev/js_run.py build:web && python3 tools/dev/js_run.py "
+        "build:extension && playwright test --config playwright.config.ts "
+        "testing/accessibility"
+    ),
+    "verify:browser": (
+        "python3 tools/dev/js_run.py build:web && python3 tools/dev/js_run.py "
+        "build:extension && python3 tools/verify_browser.py"
+    ),
     "verify": (
-        "bun run lint && bun run typecheck && bun run test && python3 -m tools.verify.main "
-        "--checks shape,docs,commentary,governance,headers,security,html_ship,"
-        "adr,workflows,suppressions,commit"
+        "python3 tools/dev/js_run.py lint:ts && "
+        "python3 tools/dev/js_run.py typecheck:ts && "
+        "python3 tools/dev/js_run.py verify:python && "
+        "python3 tools/dev/js_run.py verify:browser && "
+        "python3 -m tools.verify.main --checks "
+        "shape,docs,commentary,governance,headers,security,html_ship,adr,"
+        "workflows,suppressions,commit"
     ),
     "verify:docs": "python3 -m tools.verify.main --checks docs,adr",
     "verify:adr": "python3 -m tools.verify.main --checks adr",
@@ -288,11 +319,54 @@ REQUIRED_PACKAGE_SCRIPTS = {
         "python3 -m tools.verify.main --checks "
         "shape,docs,commentary,governance,headers,security,adr,workflows,suppressions"
     ),
-    "lint:ts": "biome check package.json tsconfig.json apps packages tools/ts .github",
+    "lint:ts": (
+        "biome check package.json tsconfig.json playwright.config.ts apps packages "
+        "tools/ts testing/e2e testing/ui testing/accessibility .github"
+    ),
+    "deps:app": "python3 -m tools.dev.pip_install -r requirements-app.txt",
+    "deps:py": "python3 -m tools.dev.pip_install -r requirements-app.txt -r requirements-dev.txt",
+    "lint:py": (
+        "python3 tools/dev/js_run.py deps:py && "
+        "python3 -m ruff check apps/api apps/ingest python/common "
+        "python/evaluation tools testing"
+    ),
     "typecheck:ts": "tsc --noEmit --project tsconfig.json",
+    "typecheck:py": (
+        "python3 tools/dev/js_run.py deps:py && python3 -m basedpyright --warnings --baselinemode "
+        "lock --baselinefile .basedpyright-baseline.json apps/api apps/ingest "
+        "python/common python/evaluation tools testing"
+    ),
+    "typecheck:py:baseline": (
+        "python3 tools/dev/js_run.py deps:py && python3 -m basedpyright --warnings --writebaseline "
+        "--baselinefile .basedpyright-baseline.json apps/api apps/ingest "
+        "python/common python/evaluation tools testing"
+    ),
+    "verify:python": (
+        "python3 tools/dev/js_run.py deps:py && python3 -m ruff check apps/api apps/ingest "
+        "python/common python/evaluation tools testing && python3 -m basedpyright "
+        "--warnings --baselinemode lock --baselinefile .basedpyright-baseline.json "
+        "apps/api apps/ingest python/common python/evaluation tools testing && "
+        "python3 -m unittest "
+        "discover -s testing/unit -p 'test_*.py' -t . && python3 -m unittest "
+        "discover -s testing/contract -p 'test_*.py' -t ."
+    ),
+    "check:py:fast": (
+        "python3 tools/dev/js_run.py deps:py && "
+        "python3 -m ruff check apps/api apps/ingest python/common "
+        "python/evaluation tools testing && python3 -m basedpyright --warnings "
+        "--baselinemode lock --baselinefile .basedpyright-baseline.json apps/api "
+        "apps/ingest python/common python/evaluation tools testing && python3 -m "
+        "unittest discover -s "
+        "testing/unit -p 'test_*.py' -t . && python3 -m unittest discover -s "
+        "testing/contract -p 'test_*.py' -t ."
+    ),
+    "check:py:deps": "python3 tools/dev/js_run.py deps:py",
 }
 
 REQUIRED_DEV_DEPENDENCIES = {
+    "@axe-core/playwright": "4.11.2",
+    "@playwright/test": "1.59.1",
+    "@types/node": "22.13.4",
     "@biomejs/biome": "1.9.4",
     "typescript": "5.6.3",
 }

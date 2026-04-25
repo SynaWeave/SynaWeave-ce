@@ -24,6 +24,7 @@ from pathlib import Path
 
 from tools.verify.governance import check_governance
 from tools.verify.policy import (
+    GOVERNED_GITHUB_POSTURE_PHRASES,
     GOVERNED_REQUIRED_STATUS_CHECKS,
     MIN_SUBJECT_WORDS,
     PR_TEMPLATE_REQUIRED_FIELDS,
@@ -32,6 +33,10 @@ from tools.verify.policy import (
 )
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
+
+
+def read_canonical_basedpyright_baseline() -> str:
+    return (REPO_ROOT / ".basedpyright-baseline.json").read_text(encoding="utf-8")
 
 
 def read_canonical_requirements_dev() -> str:
@@ -106,7 +111,9 @@ def make_governance_tree(repo_root: Path) -> None:
     )
     (repo_root / "GOVERNANCE.md").write_text(
         "# Governance\n\n"
-        "Expected default-branch posture:\n\n"
+        "Expected default-branch ruleset posture:\n\n"
+        + "\n".join(f"- {phrase}" for phrase in GOVERNED_GITHUB_POSTURE_PHRASES[1:])
+        + "\n"
         + "\n".join(f"- `{status_check}`" for status_check in GOVERNED_REQUIRED_STATUS_CHECKS)
         + "\n"
     )
@@ -134,6 +141,10 @@ def make_governance_tree(repo_root: Path) -> None:
         read_canonical_requirements_dev(),
         encoding="utf-8",
     )
+    _ = (repo_root / ".basedpyright-baseline.json").write_text(
+        read_canonical_basedpyright_baseline(),
+        encoding="utf-8",
+    )
     (repo_root / "tools" / "verify").mkdir(parents=True)
     (repo_root / "tools" / "verify" / "main.py").write_text(
         "from tools.verify.docs import check_docs\n"
@@ -143,8 +154,61 @@ def make_governance_tree(repo_root: Path) -> None:
 class TestVerifyGovernance(unittest.TestCase):
     def test_governance_pins_verify_script_with_adr_enforcement(self):
         verify_script = REQUIRED_PACKAGE_SCRIPTS["verify"]
+        self.assertIn("verify:browser", verify_script)
         self.assertIn("adr", verify_script)
         self.assertIn("commit", verify_script)
+
+    def test_governance_pins_browser_verification_scripts(self):
+        self.assertEqual(
+            REQUIRED_PACKAGE_SCRIPTS["deps:browser"],
+            "playwright install chromium",
+        )
+        self.assertIn("build:extension", REQUIRED_PACKAGE_SCRIPTS["test:e2e"])
+        self.assertIn("playwright test", REQUIRED_PACKAGE_SCRIPTS["test:e2e"])
+        self.assertIn(
+            "testing/accessibility",
+            REQUIRED_PACKAGE_SCRIPTS["test:accessibility"],
+        )
+        self.assertEqual(
+            REQUIRED_DEV_DEPENDENCIES["@playwright/test"],
+            "1.59.1",
+        )
+        self.assertEqual(
+            REQUIRED_DEV_DEPENDENCIES["@axe-core/playwright"],
+            "4.11.2",
+        )
+
+    def test_governance_pins_python_typecheck_with_basedpyright_baseline(self):
+        typecheck_script = REQUIRED_PACKAGE_SCRIPTS["typecheck:py"]
+        baseline_script = REQUIRED_PACKAGE_SCRIPTS["typecheck:py:baseline"]
+        verify_script = REQUIRED_PACKAGE_SCRIPTS["verify:python"]
+        fast_script = REQUIRED_PACKAGE_SCRIPTS["check:py:fast"]
+        deps_script = REQUIRED_PACKAGE_SCRIPTS["check:py:deps"]
+
+        self.assertEqual(deps_script, "python3 tools/dev/js_run.py deps:py")
+        self.assertIn("python3 -m basedpyright", typecheck_script)
+        self.assertNotIn("--writebaseline", typecheck_script)
+        self.assertIn("--baselinemode lock", typecheck_script)
+        self.assertIn("--warnings", typecheck_script)
+        self.assertIn(".basedpyright-baseline.json", typecheck_script)
+        self.assertIn("python3 -m basedpyright", baseline_script)
+        self.assertIn("--writebaseline", baseline_script)
+        self.assertNotIn("--baselinemode lock", baseline_script)
+        self.assertIn(".basedpyright-baseline.json", baseline_script)
+        self.assertIn("python3 -m basedpyright", verify_script)
+        self.assertNotIn("--writebaseline", verify_script)
+        self.assertIn("--baselinemode lock", verify_script)
+        self.assertIn("--warnings", verify_script)
+        self.assertIn(".basedpyright-baseline.json", verify_script)
+        self.assertIn("python3 -m basedpyright", fast_script)
+        self.assertNotIn("--writebaseline", fast_script)
+        self.assertIn("--baselinemode lock", fast_script)
+        self.assertIn("--warnings", fast_script)
+        self.assertIn(".basedpyright-baseline.json", fast_script)
+        self.assertIn("python3 tools/dev/js_run.py deps:py", typecheck_script)
+        self.assertIn("python3 tools/dev/js_run.py deps:py", baseline_script)
+        self.assertIn("python3 tools/dev/js_run.py deps:py", verify_script)
+        self.assertIn("python3 tools/dev/js_run.py deps:py", fast_script)
 
     def test_governance_passes_with_required_files_and_fields(self):
         with tempfile.TemporaryDirectory() as raw_tmp:
@@ -171,6 +235,37 @@ class TestVerifyGovernance(unittest.TestCase):
             )
             issues = check_governance(repo_root)
             self.assertTrue(any("dependency-installability" in issue for issue in issues))
+
+    def test_governance_requires_rulesets_first_wording(self):
+        with tempfile.TemporaryDirectory() as raw_tmp:
+            repo_root = Path(raw_tmp)
+            make_governance_tree(repo_root)
+            (repo_root / "GOVERNANCE.md").write_text(
+                (repo_root / "GOVERNANCE.md")
+                .read_text()
+                .replace(
+                    "Expected default-branch ruleset posture:\n\n",
+                    "Expected default-branch posture:\n\n",
+                )
+            )
+            issues = check_governance(repo_root)
+            self.assertTrue(any("ruleset posture" in issue for issue in issues))
+
+    def test_governance_requires_codeowners_posture_note(self):
+        with tempfile.TemporaryDirectory() as raw_tmp:
+            repo_root = Path(raw_tmp)
+            make_governance_tree(repo_root)
+            (repo_root / "GOVERNANCE.md").write_text(
+                (repo_root / "GOVERNANCE.md")
+                .read_text()
+                .replace(
+                    "- CODEOWNERS file assigns platform-admin and core-maintainer "
+                    "owners for protected-path changes\n",
+                    "",
+                )
+            )
+            issues = check_governance(repo_root)
+            self.assertTrue(any("CODEOWNERS file assigns" in issue for issue in issues))
 
     def test_governance_requires_platform_admin_owners_for_infra_docker(self):
         with tempfile.TemporaryDirectory() as raw_tmp:

@@ -1,7 +1,7 @@
 {
-	"name": "Flash Card Clipper",
-	"description": "highlight text → create flashcards → review in side panel with spaced repetition; export tsv for anki/quizlet",
-	"version": "0.1.0",
+	"name": "SynaWeave Workspace Bridge",
+	"description": "Browser-side Sprint 1 bridge for shared identity, durable workspace actions, and digest proof.",
+	"version": "0.2.0",
 	"manifest_version": 3,
 	"icons": {
 		"128": "staticshock_icon.png"
@@ -15,27 +15,32 @@
 		}
 	},
 	"options_page": "./options.html",
-	"permissions": [
-		"activeTab",
-		"tabs",
-		"storage",
-		"scripting",
-		"clipboardWrite",
-		"alarms",
-		"sidePanel",
-		"contextMenus"
-	],
+	"permissions": ["activeTab", "tabs", "storage", "sidePanel", "contextMenus"],
+	"host_permissions": ["http://127.0.0.1/*", "http://localhost/*"],
 	"side_panel": {
 		"default_path": "./popup.html"
 	},
+	"content_scripts": [
+		{
+			"matches": ["<all_urls>"],
+			"js": ["foreground.js"],
+			"run_at": "document_idle"
+		}
+	],
 	"commands": {
+		"open-study-panel": {
+			"suggested_key": {
+				"default": "Ctrl+Shift+Y",
+				"mac": "Command+Shift+Y"
+			},
+			"description": "Open the SynaWeave side panel"
+		},
 		"clip_selection": {
 			"suggested_key": {
 				"default": "Ctrl+Shift+K",
 				"mac": "Command+Shift+K"
 			},
-			"description": "Create a flashcard from the current selection"
+			"description": "Open the SynaWeave side panel"
 		}
-	},
-	"host_permissions": ["<all_urls>"]
+	}
 }

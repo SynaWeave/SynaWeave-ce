@@ -1,25 +1,27 @@
 <!DOCTYPE html>
-<!-- placeholder options page for the bounded legacy extension shell -->
-<!-- keep the page purpose visible until the governed settings flow becomes real -->
+<!-- operator harness for the bounded side-panel open path in the real extension runtime -->
+<!-- this page exists so Chromium user-gesture opening stays explicit until governed settings land -->
 <html lang="en">
 
 <head>
-	<!-- keep the document shell minimal while the page is still a placeholder -->
+	<!-- keep the document shell minimal because this route only proves panel launch behavior -->
 	<meta charset="UTF-8" />
 	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-	<title>Flash Card Clipper Settings</title>
+	<title>SynaWeave Extension Harness</title>
 	<link rel="stylesheet" href="styles.css" />
 </head>
 
 <body>
-	<!-- visible placeholder copy so the empty options route still has operator context -->
+	<!-- keep the harness visible so operators can confirm Chromium side-panel boot evidence -->
 	<main>
-		<h1>Flash Card Clipper</h1>
-		<p>Settings are reserved for the governed extension flow.</p>
+		<h1>SynaWeave extension harness</h1>
+		<p>Use this route to request the browser-owned side panel and confirm the popup runtime reports boot evidence.</p>
+		<button id="open-side-panel-button" type="button">Open SynaWeave side panel</button>
+		<p id="options-status-line">No side-panel request has run from this harness yet.</p>
 	</main>
 
-	<!-- keep the placeholder script wired so the options entrypoint stays explicit -->
+	<!-- keep the harness script wired so the options entrypoint remains a real launch seam -->
 	<script src="./options_script.js"></script>
 </body>
 
