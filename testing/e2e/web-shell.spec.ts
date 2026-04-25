@@ -1,12 +1,12 @@
 /*  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-TL;DR  -->  prove the first web-shell runtime path plus one assembled cross-surface identity flow through sign-in workspace bootstrap durable write digest completion and browser timing capture
+TL;DR  -->  prove the public landing page renders as the bounded web surface and captures basic browser timing evidence
 
 - Later Extension Points:
-  --> add more browser journeys only when later Sprint work creates new critical runtime paths
+  --> add more public web journeys only when the landing page grows beyond one static investor-facing route
 
 - Role:
-  --> covers the bounded D3 smoke path for the local web shell and the stronger D2 cross-surface identity proof
-  --> keeps the browser proof anchored to real API-backed state changes across web and extension surfaces
+  --> covers the bounded smoke path for the static landing page
+  --> keeps one browser timing artifact for the public web surface without asserting retired auth shell behavior
 
 - Exports:
   --> Playwright smoke test only
@@ -17,14 +17,7 @@ TL;DR  -->  prove the first web-shell runtime path plus one assembled cross-surf
 
 import { writeFile } from "node:fs/promises";
 
-import { type Page, expect, test } from "@playwright/test";
-
-import {
-	launchExtensionContext,
-	prepareExtensionApiBase,
-	prepareWebApiBase,
-	readExtensionId,
-} from "./extension.helpers";
+import { expect, test } from "@playwright/test";
 
 type WebVitalsEvidence = {
 	cls: number;
@@ -35,19 +28,9 @@ type WebVitalsEvidence = {
 	supportedEntryTypes: string[];
 };
 
-type SurfaceIdentity = {
-	email: string;
-	bridgeCode: string;
-	workspaceId: string;
-};
-
-test("web shell signs in writes a durable action and runs a digest", async ({
+test("public landing page presents the coming-soon investor narrative", async ({
 	page,
 }, testInfo) => {
-	const stamp = Date.now();
-	const email = `playwright-web-${stamp}@example.com`;
-	const durableNote = `Playwright durable note ${stamp}`;
-
 	await page.addInitScript(() => {
 		type BrowserWebVitalsState = {
 			cls: number;
@@ -139,7 +122,6 @@ test("web shell signs in writes a durable action and runs a digest", async ({
 		).__synaweaveWebVitals = vitalsState;
 	});
 
-	await prepareWebApiBase(page);
 	await page.goto("/");
 	const navigationTiming = await page.evaluate(() => {
 		const entry = performance.getEntriesByType("navigation")[0];
@@ -153,39 +135,28 @@ test("web shell signs in writes a durable action and runs a digest", async ({
 	});
 
 	await expect(
-		page.getByRole("heading", { name: "SynaWeave Workspace" }),
+		page.getByRole("heading", {
+			name: "The learning operating system for durable knowledge work.",
+		}),
 	).toBeVisible();
-	await page.getByLabel("Email").fill(email);
-	const signInStartedAt = await page.evaluate(() => performance.now());
-	await page.getByRole("button", { name: "Start workspace session" }).click();
-
 	await expect(
-		page.getByRole("heading", { level: 2, name: "Workspace" }),
+		page.getByRole("heading", { level: 2, name: "What we are building" }),
 	).toBeVisible();
-	const workspaceReadyAt = await page.evaluate(() => performance.now());
-	await expect(page.locator("#identity-email")).toHaveText(email);
-	await expect(page.locator("#bridge-code")).not.toHaveText("—");
-	await expect(page.locator("#workspace-id")).toContainText("wsp_");
-
-	await page.getByLabel("Durable note").fill(durableNote);
-	const actionStartedAt = await page.evaluate(() => performance.now());
-	await page.getByRole("button", { name: "Write durable action" }).click();
-
-	await expect(page.locator("#recent-actions")).toContainText(durableNote);
-	const actionVisibleAt = await page.evaluate(() => performance.now());
-	await expect(page.locator("#status-line")).toHaveText(
-		"Durable action written through the API.",
+	await expect(
+		page.getByText("Public landing page • Coming soon"),
+	).toBeVisible();
+	await expect(
+		page.getByText("Sprint 1 is live as a governed foundation."),
+	).toBeVisible();
+	await expect(
+		page.getByRole("link", { name: "View investor snapshot" }),
+	).toBeVisible();
+	await expect(page.getByRole("link", { name: "Contact" })).toBeVisible();
+	await expect(page.getByLabel("Investor snapshot")).toBeVisible();
+	await expect(page.getByLabel("Positioning statement")).toContainText(
+		"durable learning infrastructure",
 	);
-
-	const digestStartedAt = await page.evaluate(() => performance.now());
-	await page.getByRole("button", { name: "Run digest job" }).click();
-
-	await expect(page.locator("#last-digest")).toContainText(durableNote);
-	await expect(page.locator("#latest-eval")).toContainText("digest_density");
-	const digestReadyAt = await page.evaluate(() => performance.now());
-	await expect(page.locator("#status-line")).toHaveText(
-		"Background digest completed and reloaded.",
-	);
+	await expect(page.getByLabel("Email")).toHaveCount(0);
 
 	const webVitals = await page.evaluate(
 		() =>
@@ -198,185 +169,30 @@ test("web shell signs in writes a durable action and runs a digest", async ({
 
 	const timing = {
 		browserProofLimit:
-			"Core Web Vitals proof is bounded to the web shell page. Extension timing evidence is tracked separately as side-panel open and popup boot timing, not as Core Web Vitals.",
+			"Core Web Vitals proof is bounded to the public landing page only.",
 		navigationTiming,
 		webVitals,
-		workspaceReadyMs: Number((workspaceReadyAt - signInStartedAt).toFixed(2)),
-		actionRoundTripMs: Number((actionVisibleAt - actionStartedAt).toFixed(2)),
-		digestRoundTripMs: Number((digestReadyAt - digestStartedAt).toFixed(2)),
 	};
 
 	expect(webVitals).toBeTruthy();
 	if (!webVitals) {
-		throw new Error("Missing web-shell vitals evidence from the browser run.");
+		throw new Error(
+			"Missing landing-page vitals evidence from the browser run.",
+		);
 	}
 	expect(webVitals.lcpMs).toBeGreaterThan(0);
 	expect(webVitals.cls).toBeGreaterThanOrEqual(0);
 	expect(webVitals.fcpMs).toBeGreaterThan(0);
-	if (webVitals.supportedEntryTypes.includes("event")) {
+	if (
+		webVitals.supportedEntryTypes.includes("event") &&
+		webVitals.interactionEventCount > 0
+	) {
 		expect(webVitals.inpMs).toBeGreaterThan(0);
 	}
 
-	expect(timing.workspaceReadyMs).toBeGreaterThan(0);
-	expect(timing.actionRoundTripMs).toBeGreaterThan(0);
-	expect(timing.digestRoundTripMs).toBeGreaterThan(0);
-
 	await writeFile(
-		testInfo.outputPath("web-shell-timing.json"),
+		testInfo.outputPath("web-landing-page-timing.json"),
 		`${JSON.stringify(timing, null, 2)}\n`,
 		"utf-8",
 	);
 });
-
-test("web and extension resolve one live user workspace and bridge identity", async ({
-	browserName,
-	page,
-}, testInfo) => {
-	expect(browserName).toBe("chromium");
-
-	const stamp = Date.now();
-	const email = `playwright-shared-identity-${stamp}@example.com`;
-	const webNote = `Playwright shared web note ${stamp}`;
-	const extensionNote = `Playwright shared extension note ${stamp}`;
-	const context = await launchExtensionContext(
-		testInfo.outputPath("extension-shared-identity-profile"),
-	);
-
-	try {
-		const extensionId = await readExtensionId(context);
-		const extensionPage = await context.newPage();
-
-		await prepareWebApiBase(page);
-		await page.goto("/");
-		await extensionPage.goto(`chrome-extension://${extensionId}/popup.html`);
-		await prepareExtensionApiBase(extensionPage);
-
-		await page.getByLabel("Email").fill(email);
-		await page.getByRole("button", { name: "Start workspace session" }).click();
-		await expect(
-			page.getByRole("heading", { level: 2, name: "Workspace" }),
-		).toBeVisible();
-		await expect(page.locator("#identity-email")).toHaveText(email);
-		await expect(page.locator("#bridge-code")).not.toHaveText("—");
-		await expect(page.locator("#workspace-id")).toContainText("wsp_");
-
-		await extensionPage.getByLabel("Email").fill(email);
-		await extensionPage
-			.getByRole("button", { name: "Connect panel session" })
-			.click();
-		await expect(
-			extensionPage.getByRole("heading", { level: 2, name: "Workspace" }),
-		).toBeVisible();
-		await expect(extensionPage.locator("#ext-identity-email")).toHaveText(
-			email,
-		);
-		await expect(extensionPage.locator("#ext-bridge-code")).not.toHaveText("—");
-		await expect(extensionPage.locator("#ext-workspace-id")).toContainText(
-			"wsp_",
-		);
-
-		const webIdentity = await readSurfaceIdentity(page, {
-			email: "#identity-email",
-			bridgeCode: "#bridge-code",
-			workspaceId: "#workspace-id",
-		});
-		const extensionIdentity = await readSurfaceIdentity(extensionPage, {
-			email: "#ext-identity-email",
-			bridgeCode: "#ext-bridge-code",
-			workspaceId: "#ext-workspace-id",
-		});
-
-		expect(extensionIdentity).toEqual(webIdentity);
-
-		await page.getByLabel("Durable note").fill(webNote);
-		await page.getByRole("button", { name: "Write durable action" }).click();
-		await expect(page.locator("#recent-actions")).toContainText(webNote);
-
-		await extensionPage.reload();
-		await expect(extensionPage.locator("#ext-recent-actions")).toContainText(
-			webNote,
-		);
-
-		await extensionPage.getByLabel("Captured note").fill(extensionNote);
-		await extensionPage
-			.getByRole("button", { name: "Write durable action" })
-			.click();
-		await expect(extensionPage.locator("#ext-recent-actions")).toContainText(
-			extensionNote,
-		);
-
-		await page.reload();
-		await expect(page.locator("#recent-actions")).toContainText(extensionNote);
-
-		await Promise.all([
-			extensionPage.waitForResponse(
-				(response) =>
-					response.url().endsWith("/v1/jobs/workspace") && response.ok(),
-			),
-			extensionPage.getByRole("button", { name: "Run digest job" }).click(),
-		]);
-		await extensionPage.reload();
-		await expect(extensionPage.locator("#ext-last-digest")).toContainText(
-			extensionNote,
-		);
-		await expect(extensionPage.locator("#ext-latest-eval")).toContainText(
-			"digest_density",
-		);
-
-		await page.reload();
-		await expect(page.locator("#last-digest")).toContainText(extensionNote);
-		await expect(page.locator("#latest-eval")).toContainText("digest_density");
-
-		const refreshedWebIdentity = await readSurfaceIdentity(page, {
-			email: "#identity-email",
-			bridgeCode: "#bridge-code",
-			workspaceId: "#workspace-id",
-		});
-		const refreshedExtensionIdentity = await readSurfaceIdentity(
-			extensionPage,
-			{
-				email: "#ext-identity-email",
-				bridgeCode: "#ext-bridge-code",
-				workspaceId: "#ext-workspace-id",
-			},
-		);
-
-		expect(refreshedWebIdentity).toEqual(webIdentity);
-		expect(refreshedExtensionIdentity).toEqual(webIdentity);
-
-		await writeFile(
-			testInfo.outputPath("cross-surface-identity-proof.json"),
-			`${JSON.stringify(
-				{
-					email,
-					identity: webIdentity,
-					proof: {
-						matchedAcrossSurfaces: true,
-						webActionVisibleInExtension: webNote,
-						extensionActionVisibleInWeb: extensionNote,
-						lastDigest: await page.locator("#last-digest").textContent(),
-						latestEval: await page.locator("#latest-eval").textContent(),
-					},
-				},
-				null,
-				2,
-			)}\n`,
-			"utf-8",
-		);
-	} finally {
-		await context.close();
-	}
-});
-
-async function readSurfaceIdentity(
-	page: Page,
-	selectors: { email: string; bridgeCode: string; workspaceId: string },
-): Promise<SurfaceIdentity> {
-	return {
-		email: (await page.locator(selectors.email).textContent())?.trim() || "",
-		bridgeCode:
-			(await page.locator(selectors.bridgeCode).textContent())?.trim() || "",
-		workspaceId:
-			(await page.locator(selectors.workspaceId).textContent())?.trim() || "",
-	};
-}
