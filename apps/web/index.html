@@ -1,70 +1,74 @@
 <!DOCTYPE html>
-<!-- authenticated web control-plane shell for the first Sprint 1 runtime path -->
-<!-- this page proves sign-in workspace bootstrap durable actions and job visibility -->
+<!-- public coming-soon landing page for the investor-facing web surface -->
+<!-- this page replaces the authenticated sprint shell with a static push-to-main deploy target -->
 <html lang="en">
 
 <head>
-	<!-- keep the head small so local static serving stays easy to inspect and debug -->
+	<!-- keep the head small so local static serving and Pages deployment stay simple -->
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-	<title>SynaWeave Workspace</title>
+	<meta
+		name="description"
+		content="SynaWeave is building a governed learning operating system for durable knowledge work. Public landing page with investor-ready positioning and a coming-soon signal."
+	/>
+	<title>SynaWeave | Coming Soon</title>
 	<link rel="stylesheet" href="./styles.css" />
 </head>
 
 <body>
-	<!-- keep one centered shell so the first proof page remains visually simple -->
+	<!-- keep one centered landing page so public deployment remains simple and legible -->
 	<main class="shell">
-		<!-- keep the app header visible so the runtime proof reads like one coherent surface -->
-		<header class="hero">
-			<p class="eyebrow">Sprint 1 • D2 runtime • D3 baseline</p>
-			<h1>SynaWeave Workspace</h1>
-			<p class="lede">Sign in with an email, create a durable action, run the background digest, and confirm the same identity in the extension.</p>
+		<header class="hero card">
+			<p class="eyebrow">Public landing page • Coming soon</p>
+			<h1>The learning operating system for durable knowledge work.</h1>
+			<p class="lede">
+				SynaWeave is building a governed platform that turns research, notes,
+				and workflows into a compounding knowledge system teams can trust.
+			</p>
+			<div class="actions" aria-label="Primary actions">
+				<a class="button" href="#investor-snapshot">View investor snapshot</a>
+				<a class="button button-secondary" href="#contact">Contact</a>
+			</div>
 		</header>
 
-		<!-- keep sign-in isolated so signed-out and signed-in states remain easy to test -->
-		<section id="auth-card" class="card">
-			<h2>Sign in</h2>
-			<label for="email-input">Email</label>
-			<input id="email-input" type="email" placeholder="you@example.com" />
-			<button id="sign-in-button" type="button">Start workspace session</button>
-			<p class="hint">Use the same email in the extension to prove cross-surface identity continuity.</p>
+		<section id="investor-snapshot" class="card grid" aria-label="Investor snapshot">
+			<article>
+				<h2>What we are building</h2>
+				<p>
+					A knowledge-weaving learning OS that helps people capture signal,
+					structure understanding, and keep high-value context durable across time.
+				</p>
+			</article>
+			<article>
+				<h2>Why now</h2>
+				<p>
+					Modern work produces more fragments than systems of record. SynaWeave is
+					designed to turn that fragmentation into retained, reusable intelligence.
+				</p>
+			</article>
+			<article>
+				<h2>Current status</h2>
+				<p>
+					Sprint 1 is live as a governed foundation. Product previews, deeper proof
+					points, and narrative materials follow in the next lanes.
+				</p>
+			</article>
 		</section>
 
-		<!-- keep workspace reads hidden until auth succeeds so route behavior fails closed by default -->
-		<section id="workspace-card" class="card hidden">
-			<div class="row between">
-				<h2>Workspace</h2>
-				<button id="sign-out-button" type="button">Sign out</button>
-			</div>
-			<p><strong>User:</strong> <span id="identity-email">—</span></p>
-			<p><strong>Bridge code:</strong> <span id="bridge-code">—</span></p>
-			<p><strong>Workspace:</strong> <span id="workspace-id">—</span></p>
-			<label for="action-input">Durable note</label>
-			<textarea id="action-input" rows="4" placeholder="Capture the first durable workspace thought here."></textarea>
-			<div class="row">
-				<button id="save-action-button" type="button">Write durable action</button>
-				<button id="run-job-button" type="button">Run digest job</button>
-			</div>
-			<p><strong>Latest digest:</strong> <span id="last-digest">—</span></p>
-			<p><strong>Latest eval:</strong> <span id="latest-eval">—</span></p>
-			<ul id="recent-actions" class="list"></ul>
+		<section class="card quote" aria-label="Positioning statement">
+			<p>
+				“From scattered study artifacts to durable learning infrastructure.”
+			</p>
 		</section>
 
-		<section id="degraded-card" class="card degraded hidden" aria-live="polite">
-			<h2>Degraded mode</h2>
-			<p id="degraded-message">A retryable runtime issue is holding the current session.</p>
-			<button id="retry-button" type="button">Retry last request</button>
-		</section>
-
-		<!-- keep runtime status always visible so operators can diagnose the proof path quickly -->
-		<section class="card">
-			<h2>Runtime status</h2>
-			<p id="status-line">Waiting for local runtime.</p>
+		<section id="contact" class="card contact">
+			<h2>Investor access</h2>
+			<p>
+				This public page is intentionally minimal. Private walkthroughs and deeper
+				materials can be shared through the existing investor introduction channel.
+			</p>
 		</section>
 	</main>
-
-	<!-- keep the browser logic separate so the shell markup stays readable -->
-	<script src="./app.js"></script>
 </body>
 
 </html>
