@@ -1,15 +1,15 @@
 /*  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-TL;DR  -->  style the first authenticated web control-plane shell for the Sprint 1 runtime proof path
+TL;DR  -->  style the public coming-soon landing page for the investor-facing web deploy target
 
 - Later Extension Points:
-  --> widen the stylesheet only when richer workspace routes and shared token consumption become durable
+  --> widen the stylesheet only when the public web surface graduates beyond one static landing page
 
 - Role:
-  --> gives the static web shell one clean readable and contrast-safe presentation layer
-  --> keeps the first proof page usable for demos baseline checks and early live debugging
+  --> gives the landing page one readable contrast-safe presentation layer
+  --> keeps the public GitHub Pages output polished without adding runtime dependencies
 
 - Exports:
-  --> web-shell class and element rules only
+  --> landing-page class and element rules only
 
 - Consumed By:
   --> `apps/web/index.html`
@@ -19,12 +19,12 @@ TL;DR  -->  style the first authenticated web control-plane shell for the Sprint
 :root {
 	--bg: #08111f;
 	--surface: #10213b;
+	--surface-strong: #0d1b33;
 	--text: #f4f8ff;
 	--muted: #8ea3c4;
 	--accent: #61d0ff;
+	--accent-strong: #87ddff;
 	--border: #24456f;
-	--warn-border: #dca551;
-	--warn-surface: #39260f;
 }
 
 /* ---------- box model ---------- */
@@ -44,31 +44,23 @@ body {
 
 /* ---------- layout ---------- */
 .shell {
-	width: min(920px, calc(100% - 2rem));
+	width: min(1080px, calc(100% - 2rem));
 	margin: 0 auto;
-	padding: 2rem 0 3rem;
+	padding: 2rem 0 4rem;
 }
 
 .hero {
-	margin-bottom: 1rem;
+	padding: 3rem;
+	margin-bottom: 1.25rem;
 }
 
 .card {
-	padding: 1rem;
-	margin-bottom: 1rem;
+	padding: 1.5rem;
+	margin-bottom: 1.25rem;
 	border: 1px solid var(--border);
 	border-radius: 1rem;
 	background: color-mix(in srgb, var(--surface) 92%, black 8%);
 	box-shadow: 0 14px 40px rgba(0, 0, 0, 0.24);
-}
-
-.degraded {
-	border-color: var(--warn-border);
-	background: color-mix(in srgb, var(--warn-surface) 80%, var(--surface) 20%);
-}
-
-.hidden {
-	display: none;
 }
 
 /* ---------- copy ---------- */
@@ -81,64 +73,104 @@ body {
 }
 
 .lede,
-.hint {
+.contact p,
+.grid p {
 	color: var(--muted);
 }
 
-/* ---------- controls ---------- */
-label,
-input,
-textarea,
-button {
-	display: block;
-	width: 100%;
+h1,
+h2,
+p {
+	margin-top: 0;
 }
 
-input,
-textarea,
-button {
-	margin-top: 0.5rem;
-	border-radius: 0.75rem;
-	border: 1px solid var(--border);
+h1 {
+	max-width: 12ch;
+	margin-bottom: 1rem;
+	font-size: clamp(2.8rem, 6vw, 4.8rem);
+	line-height: 0.98;
 }
 
-input,
-textarea {
-	padding: 0.8rem 0.9rem;
-	background: rgba(4, 11, 24, 0.55);
+h2 {
+	margin-bottom: 0.75rem;
+	font-size: 1.1rem;
+}
+
+/* ---------- actions ---------- */
+.actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.75rem;
+	margin-top: 1.5rem;
+}
+
+.button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 3rem;
+	padding: 0.85rem 1.2rem;
+	border: 1px solid transparent;
+	border-radius: 999px;
+	background: linear-gradient(180deg, var(--accent-strong), var(--accent));
+	color: #03101f;
+	font-weight: 700;
+	text-decoration: none;
+}
+
+.button-secondary {
+	border-color: var(--border);
+	background: transparent;
 	color: var(--text);
 }
 
-button {
-	padding: 0.85rem 1rem;
-	background: linear-gradient(180deg, var(--accent), #3dbaf0);
-	color: #03101f;
-	font-weight: 700;
-	cursor: pointer;
+/* ---------- grid ---------- */
+.grid {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 1rem;
 }
 
-/* ---------- rows ---------- */
-.row {
-	display: flex;
-	gap: 0.75rem;
-	align-items: center;
+.grid article {
+	padding: 1.25rem;
+	border: 1px solid var(--border);
+	border-radius: 0.9rem;
+	background: color-mix(in srgb, var(--surface-strong) 88%, black 12%);
 }
 
-.between {
-	justify-content: space-between;
+.quote {
+	padding-block: 2rem;
+	text-align: center;
+	font-size: clamp(1.2rem, 2vw, 1.6rem);
 }
 
-.row > * {
-	flex: 1 1 0;
+.contact {
+	max-width: 48rem;
 }
 
-/* ---------- list ---------- */
-.list {
-	padding-left: 1.25rem;
-	margin: 1rem 0 0;
+a:focus-visible {
+	outline: 3px solid var(--accent-strong);
+	outline-offset: 3px;
 }
 
-.list li {
-	margin-bottom: 0.35rem;
-	color: var(--muted);
+@media (max-width: 800px) {
+	.hero {
+		padding: 2rem;
+	}
+
+	.grid {
+		grid-template-columns: 1fr;
+	}
+}
+
+@media (max-width: 560px) {
+	.shell {
+		width: min(100%, calc(100% - 1rem));
+		padding-top: 0.5rem;
+	}
+
+	.card,
+	.hero {
+		padding: 1.25rem;
+	}
 }
